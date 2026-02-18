@@ -76,7 +76,7 @@ Incluye funcionalidades específicas para **viajes con mascotas**, aportando un 
 - Firebase  
 
 ### Base de datos
-- MySQL  
+- Firebase Firestore
 
 ### APIs externas
 - Amadeus / Booking / Airbnb  
