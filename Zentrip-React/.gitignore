@@ -14,3 +14,5 @@ Zentrip-Node/serviceAccountKey.json
 # Otros
 .DS_Store
 npm-debug.log*
+
+Zentrip-React/src/components/auth/register/firebaseConfig.js
