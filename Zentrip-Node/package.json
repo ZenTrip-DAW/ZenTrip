@@ -15,5 +15,8 @@
     "url": "https://github.com/ZenTrip-DAW/ZenTrip/issues"
   },
   "homepage": "https://github.com/ZenTrip-DAW/ZenTrip#readme",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
 }
