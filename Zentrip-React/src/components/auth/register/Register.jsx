@@ -1,16 +1,8 @@
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from './firebaseConfig';
 import { useState } from 'react';
 
 const Register = () => {
-
-    // const [formulario, setFormulario] = useState([]);
-    // const [error, setError] = useState(false);
-    // const [success, setSuccess] = useState(false);
-
-    // const OnChangeHandler = (e) => {
-    //     setFormulario({ ...formulario, [e.target.name]: e.target.value })
-    // }
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -42,6 +34,25 @@ const Register = () => {
         }
     };
 
+    const handleGoogleSignUp = async () => {
+        const provider = new GoogleAuthProvider();
+        try {
+            
+            const result = await signInWithPopup(auth, provider);
+            
+        } catch (error) {
+            console.error('Error al registrarse/iniciar sesión con Google:', error.message);
+
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            
+            if (errorCode === 'auth/popup-closed-by-user') {
+                alert('El registro/inicio de sesión con Google fue cancelado.');
+            } else {
+                alert(`Error al registrarse con Google: ${errorMessage}`);
+            }
+        }
+    };
 
 
     return (
@@ -114,6 +125,7 @@ const Register = () => {
                             <button
                                 type="button"
                                 className="mt-6 inline-flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-medium text-white transition hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+                                onClick={handleGoogleSignUp}
                             >
                                 <span className="grid h-5 w-5 place-items-center rounded bg-white text-slate-900 text-[10px] font-bold">
                                     G
@@ -154,7 +166,9 @@ const Register = () => {
                                             onChange={(e) => setPassword(e.target.value)}
                                         />
                                     </div>
-                                    {/* <div>
+                                    {/* 
+                                    
+                                    <div>
                                         <label className="text-xs text-white/70">Repetir contraseña</label>
                                         <input
                                             type="password"
@@ -199,6 +213,7 @@ const Register = () => {
                             </form>
                             {success && <p style={{ color: 'green' }}>¡Registro exitoso!</p>}
                             {error && <p style={{ color: 'red' }}>Error: {error}</p>}
+                            {error && <p style={{ color: 'red' }}>Error: {error}</p>} {/*QUITAR ESTO CUANDO ESTÉ HECHO EL REDIRECT*/}
                         </div>
                     </div>
                 </div>
