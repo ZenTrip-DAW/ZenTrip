@@ -1,8 +1,12 @@
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from './firebaseConfig';
+import { auth, db } from './firebaseConfig';
+import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Register = () => {
+
+    const navigate = useNavigate();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -14,19 +18,37 @@ const Register = () => {
         setError(null); // Limpiar errores previos
         setSuccess(false); // Limpiar éxito previo
 
+    ///LOGEO CON CORREO Y CONTRASEÑA
+
+
         try {
             // Crea un nuevo usuario con email y contraseña
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            console.log("Usuario registrado:", userCredential.user);
+            const user = userCredential.user;
+            console.log("Usuario registrado:", user);
 
-            // Opcional: Obtener el token de ID después del registro
-            const idToken = await userCredential.user.getIdToken();
-            console.log("Token de ID:", idToken);
+            // Crea el documento vacío en Firestore con solo el email y uid
+            await setDoc(doc(db, 'usuarios', user.uid), {
+                uid: user.uid,
+                email: user.email,
+                nombre: '',
+                apellidos: '',
+                username: '',
+                bio: '',
+                telefono: '',
+                pais: '',
+                fotoPerfil: '',
+                idioma: 'Español',
+                moneda: 'EUR €',
+                viajesSoloGrupo: 'ambos',
+                petFriendly: false,
+            });
 
-            setSuccess(true);
-            // Aquí podrías redirigir al usuario o actualizar el estado de la aplicación
-            // Por ejemplo, almacenar el token en localStorage o un contexto global
+            // Obtener el token de ID después del registro
+            const idToken = await user.getIdToken();
             localStorage.setItem('firebaseIdToken', idToken);
+            setSuccess(true);
+            navigate('/perfil/editar');
 
         } catch (err) {
             console.error("Error al registrarse:", err.message);
@@ -34,12 +56,35 @@ const Register = () => {
         }
     };
 
+    ///LOGEO CON GOOGLE
+
     const handleGoogleSignUp = async () => {
         const provider = new GoogleAuthProvider();
         try {
             
             const result = await signInWithPopup(auth, provider);
-            
+            const user = result.user;
+
+            // Crea el documento en Firestore si es la primera vez
+            const [nombre = '', ...resto] = (user.displayName || '').split(' ');
+            await setDoc(doc(db, 'usuarios', user.uid), {
+                uid: user.uid,
+                email: user.email,
+                nombre,
+                apellidos: resto.join(' '),
+                username: '',
+                bio: '',
+                telefono: '',
+                pais: '',
+                fotoPerfil: user.photoURL || '',
+                idioma: 'Español',
+                moneda: 'EUR €',
+                viajesSoloGrupo: 'ambos',
+                petFriendly: false,
+            }, { merge: true }); // merge:true para no sobreescribir si ya existe
+
+            navigate('/perfil/editar');
+
         } catch (error) {
             console.error('Error al registrarse/iniciar sesión con Google:', error.message);
 
