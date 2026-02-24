@@ -251,7 +251,7 @@ const Register = () => {
 
                                 <p className="pt-1 text-center text-xs text-white/55">
                                     ¿Ya tienes cuenta?{" "}
-                                    <button type="button" className="font-medium text-sky-300 hover:text-sky-200">
+                                    <button type="button" className="font-medium text-sky-300 hover:text-sky-200" onClick={() => navigate('/Auth/Login')}>
                                         Inicia sesión
                                     </button>
                                 </p>
