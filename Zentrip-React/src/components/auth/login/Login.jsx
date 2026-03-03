@@ -1,7 +1,75 @@
 import { useNavigate } from 'react-router-dom';
-
+import { useState } from 'react';
+import { sendEmailVerification, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { auth } from '../register/firebaseConfig';
+{/*Si el correo no está verificado, muestra un mensaje de error y ofrece la opción de reenviar el correo de verificación. */}
 export default function Login() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
+  const [canResendVerification, setCanResendVerification] = useState(false);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    setInfo('');
+    setCanResendVerification(false);
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      if (!user.emailVerified) {
+        setError('Tu correo aún no está verificado. Revisa tu bandeja de entrada.');
+        setCanResendVerification(true);
+        await signOut(auth);
+        return;
+      }
+
+      const idToken = await user.getIdToken();
+      localStorage.setItem('firebaseIdToken', idToken);
+      navigate('/perfil/editar');
+    } catch (loginError) {
+      setCanResendVerification(false);
+      setError('No se pudo iniciar sesión. Revisa email y contraseña.');
+      console.error('Error al iniciar sesión:', loginError.message);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setError('');
+    setInfo('');
+
+    if (!email || !password) {
+      setError('Para reenviar la verificación, introduce email y contraseña.');
+      return;
+    }
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      if (user.emailVerified) {
+        setInfo('Tu correo ya está verificado. Ya puedes iniciar sesión.');
+        setCanResendVerification(false);
+        await signOut(auth);
+        return;
+      }
+
+      await sendEmailVerification(user, {
+        url: `${window.location.origin}/Auth/Login`
+      });
+      setInfo('Correo de verificación reenviado. Revisa también spam/promociones.');
+      setCanResendVerification(true);
+      await signOut(auth);
+    } catch (resendError) {
+      setError('No fue posible reenviar el correo de verificación.');
+      console.error('Error al reenviar verificación:', resendError.message);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
       
@@ -24,8 +92,8 @@ export default function Login() {
           <p className="text-slate-500 mb-6 text-sm">
             Accede para continuar planificando tu aventura
           </p>
-
-          <form className="space-y-4">
+          {/* El formulario de inicio de sesión */}
+          <form className="space-y-4" onSubmit={handleLogin}>
             
             <div>
               <label className="block text-sm font-medium text-slate-600 mb-1">
@@ -34,6 +102,8 @@ export default function Login() {
               <input
                 type="email"
                 placeholder="ejemplo@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
               />
             </div>
@@ -45,6 +115,8 @@ export default function Login() {
               <input
                 type="password"
                 placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
               />
             </div>
@@ -65,6 +137,19 @@ export default function Login() {
             >
               Iniciar sesión
             </button>
+            {/* Mostrar el botón de reenviar verificación solo si el correo no está verificado */}
+            {canResendVerification && (
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                className="w-full border border-slate-300 py-2 rounded-lg hover:bg-slate-100 transition text-slate-700 font-medium"
+              >
+                Reenviar correo de verificación
+              </button>
+            )}
+
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            {info && <p className="text-sm text-green-600">{info}</p>}
           </form>
 
           <div className="mt-6 text-center text-sm text-slate-500">

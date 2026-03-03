@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, sendEmailVerification, signInWithPopup } from 'firebase/auth';
 import { auth, db } from './firebaseConfig';
 import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
@@ -26,6 +26,10 @@ const Register = () => {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
             console.log("Usuario registrado:", user);
+            // Envía el email de verificación
+            await sendEmailVerification(user, {
+                url: `${window.location.origin}/Auth/Login`
+            });
 
             // Crea el documento vacío en Firestore con solo el email y uid
             await setDoc(doc(db, 'usuarios', user.uid), {
@@ -48,7 +52,10 @@ const Register = () => {
             const idToken = await user.getIdToken();
             localStorage.setItem('firebaseIdToken', idToken);
             setSuccess(true);
-            navigate('/perfil/editar');
+            // Redirigir a la página de verificación de correo con el email en el estado
+            navigate('/Auth/VerifyEmail', {
+                state: { email: user.email || email }
+            });
 
         } catch (err) {
             console.error("Error al registrarse:", err.message);
