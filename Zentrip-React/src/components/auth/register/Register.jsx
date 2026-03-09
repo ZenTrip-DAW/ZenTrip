@@ -3,29 +3,79 @@ import { auth, db } from './firebaseConfig';
 import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getFirebaseErrorByField } from '../../../utils/firebaseErrorMessages';
+import { validateEmail, validatePassword, validatePolicies } from '../../../utils/validation';
 
 const Register = () => {
 
     const navigate = useNavigate();
 
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState(null);
+    const [form, setForm] = useState({
+        email: '',
+        password: '',
+        policies: false,
+    });
+
+    const [errors, setErrors] = useState({}); 
+    const [generalError, setGeneralError] = useState(null); // Errores generales de Firebase
     const [success, setSuccess] = useState(false);
 
-    const handleRegister = async (e) => {
-        e.preventDefault();
-        setError(null); // Limpiar errores previos
-        setSuccess(false); // Limpiar éxito previo
+    // Función de validación
+    const validateField = (name, value) => {
+        switch (name) {
+            case 'email': {
+                const errs = validateEmail(value);
+                return errs.length > 0 ? errs[0] : '';
+            }
+            case 'password': {
+                const errs = validatePassword(value);
+                return errs.length > 0 ? errs[0] : '';
+            }
+            case 'policies': {
+                const errs = validatePolicies(value);
+                return errs.length > 0 ? errs[0] : '';
+            }
+            default:
+                return '';
+        }
+    };
+
+    // Maneja el cambio de los inputs
+    const handleChange = (e) => {
+        const { name, type, value, checked } = e.target;
+        const fieldValue = type === 'checkbox' ? checked : value;
+        const newForm = { ...form, [name]: fieldValue };
+        setForm(newForm);
+
+        // Validar todos los campos
+        setErrors({
+            email: validateField('email', newForm.email),
+            password: validateField('password', newForm.password),
+            policies: validateField('policies', newForm.policies),
+        });
+    };
 
     ///LOGEO CON CORREO Y CONTRASEÑA
+    const handleRegister = async (e) => {
+        e.preventDefault();
+        setGeneralError(null);
+        setSuccess(false);
 
+        // Validar todos los campos, incluyendo policies
+        const newErrors = {
+            email: validateField('email', form.email),
+            password: validateField('password', form.password),
+            policies: validateField('policies', form.policies),
+        };
+        setErrors(newErrors);
+
+        // Forzar re-render para mostrar errores aunque no se haya tocado el campo
+        if (Object.values(newErrors).some((err) => err)) return;
 
         try {
             // Crea un nuevo usuario con email y contraseña
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
             const user = userCredential.user;
-            console.log("Usuario registrado:", user);
             // Envía el email de verificación
             await sendEmailVerification(user, {
                 url: `${window.location.origin}/Auth/Login`
@@ -54,12 +104,17 @@ const Register = () => {
             setSuccess(true);
             // Redirigir a la página de verificación de correo con el email en el estado
             navigate('/Auth/VerifyEmail', {
-                state: { email: user.email || email }
+                state: { email: user.email || form.email }
             });
 
         } catch (err) {
-            console.error("Error al registrarse:", err.message);
-            setError(err.message);
+            // Clasifica el error de Firebase por campo
+            const { field, message } = getFirebaseErrorByField(err);
+            if (field === 'email' || field === 'password') {
+                setErrors((prev) => ({ ...prev, [field]: message }));
+            } else {
+                setGeneralError(message);
+            }
         }
     };
 
@@ -193,7 +248,7 @@ const Register = () => {
                             </div>
 
                             {/* Formulario email/contraseña (sin nombre) */}
-                            <form className="space-y-4" onSubmit={handleRegister}>
+                            <form className="space-y-4" onSubmit={handleRegister} noValidate>
                                 <div>
                                     <label className="text-xs text-white/70">Email</label>
                                     <input
@@ -202,8 +257,12 @@ const Register = () => {
                                         autoComplete="email"
                                         className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-sky-400/50 focus:ring-2 focus:ring-sky-400/30"
                                         placeholder="tu@email.com"
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        value={form.email}
+                                        onChange={handleChange}
                                     />
+                                    {errors.email && (
+                                        <p className="mt-1 text-xs text-red-400">{errors.email}</p>
+                                    )}
                                 </div>
 
                                 <div className="grid gap-4 sm:grid-cols-2">
@@ -215,8 +274,12 @@ const Register = () => {
                                             autoComplete="new-password"
                                             className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-orange-400/50 focus:ring-2 focus:ring-orange-400/30"
                                             placeholder="Mínimo 6 caracteres"
-                                            onChange={(e) => setPassword(e.target.value)}
+                                            value={form.password}
+                                            onChange={handleChange}
                                         />
+                                        {errors.password && (
+                                            <p className="mt-1 text-xs text-red-400">{errors.password}</p>
+                                        )}
                                     </div>
                                     {/* 
                                     
@@ -231,22 +294,31 @@ const Register = () => {
                                     </div> */}
                                 </div>
 
-                                <div className="flex items-start gap-3">
-                                    <input
-                                        type="checkbox"
-                                        className="mt-0.5 h-4 w-4 rounded border-white/20 bg-white/5 text-orange-400 focus:ring-orange-400/60"
-                                    />
-                                    <p className="text-xs text-white/60">
-                                        Acepto los{" "}
-                                        <button type="button" className="underline underline-offset-2 hover:text-white">
-                                            términos de uso
-                                        </button>{" "}
-                                        y la{" "}
-                                        <button type="button" className="underline underline-offset-2 hover:text-white">
-                                            política de privacidad
-                                        </button>
-                                        .
-                                    </p>
+                                <div className="flex flex-col gap-1">
+                                    <div className="flex items-start gap-3">
+                                        <input
+                                            type="checkbox"
+                                            id="policies"
+                                            name="policies"
+                                            checked={form.policies}
+                                            onChange={handleChange}
+                                            className="mt-0.5 h-4 w-4 rounded border-white/20 bg-white/5 text-orange-400 focus:ring-orange-400/60"
+                                        />
+                                        <p className="text-xs text-white/60">
+                                            Acepto los{' '}
+                                            <button type="button" className="underline underline-offset-2 hover:text-white">
+                                                términos de uso
+                                            </button>{' '}
+                                            y la{' '}
+                                            <button type="button" className="underline underline-offset-2 hover:text-white">
+                                                política de privacidad
+                                            </button>
+                                            .
+                                        </p>
+                                    </div>
+                                    {errors.policies && (
+                                        <p className="text-xs text-red-400 ml-7">{errors.policies}</p>
+                                    )}
                                 </div>
 
                                 <button
@@ -264,8 +336,7 @@ const Register = () => {
                                 </p>
                             </form>
                             {success && <p style={{ color: 'green' }}>¡Registro exitoso!</p>}
-                            {error && <p style={{ color: 'red' }}>Error: {error}</p>}
-                            {error && <p style={{ color: 'red' }}>Error: {error}</p>} {/*QUITAR ESTO CUANDO ESTÉ HECHO EL REDIRECT*/}
+                            {generalError && <p style={{ color: 'red' }}>Error: {generalError}</p>}
                         </div>
                     </div>
                 </div>
