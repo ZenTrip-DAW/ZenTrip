@@ -4,7 +4,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getFirebaseErrorByField } from '../../../utils/firebaseErrorMessages';
-import { validateEmail, validatePassword, validatePolicies } from '../../../utils/validation';
+import { validateEmail, validatePassword, validatePolicies, validateConfirmPassword } from '../../../utils/validation';
 
 const Register = () => {
 
@@ -13,23 +13,26 @@ const Register = () => {
     const [form, setForm] = useState({
         email: '',
         password: '',
+        confirmPassword: '',
         policies: false,
     });
 
-    const [errors, setErrors] = useState({}); 
+    const [errors, setErrors] = useState({});
     const [generalError, setGeneralError] = useState(null); // Errores generales de Firebase
     const [success, setSuccess] = useState(false);
 
     // Función de validación
-    const validateField = (name, value) => {
+    const validateField = (name, value, allValues = form) => {
         switch (name) {
             case 'email': {
                 const errs = validateEmail(value);
                 return errs.length > 0 ? errs[0] : '';
             }
             case 'password': {
-                const errs = validatePassword(value);
-                return errs.length > 0 ? errs[0] : '';
+                return validatePassword(value, allValues.confirmPassword);
+            }
+            case 'confirmPassword': {
+                return validateConfirmPassword(value, allValues.password);
             }
             case 'policies': {
                 const errs = validatePolicies(value);
@@ -47,11 +50,11 @@ const Register = () => {
         const newForm = { ...form, [name]: fieldValue };
         setForm(newForm);
 
-        // Validar todos los campos
         setErrors({
-            email: validateField('email', newForm.email),
-            password: validateField('password', newForm.password),
-            policies: validateField('policies', newForm.policies),
+            email: validateField('email', newForm.email, newForm),
+            password: validateField('password', newForm.password, newForm),
+            confirmPassword: validateField('confirmPassword', newForm.confirmPassword, newForm),
+            policies: validateField('policies', newForm.policies, newForm),
         });
     };
 
@@ -63,14 +66,20 @@ const Register = () => {
 
         // Validar todos los campos, incluyendo policies
         const newErrors = {
-            email: validateField('email', form.email),
-            password: validateField('password', form.password),
-            policies: validateField('policies', form.policies),
+            email: validateField('email', form.email, form),
+            password: validateField('password', form.password, form),
+            confirmPassword: validateField('confirmPassword', form.confirmPassword, form),
+            policies: validateField('policies', form.policies, form),
         };
         setErrors(newErrors);
 
-        // Forzar re-render para mostrar errores aunque no se haya tocado el campo
-        if (Object.values(newErrors).some((err) => err)) return;
+        // Si hay error de email, policies, confirmPassword o alguna regla de password no se cumple, no continuar
+        if (
+            newErrors.email ||
+            newErrors.policies ||
+            newErrors.confirmPassword ||
+            (Array.isArray(newErrors.password) && newErrors.password.some(rule => rule.valid === false))
+        ) return;
 
         try {
             // Crea un nuevo usuario con email y contraseña
@@ -273,25 +282,42 @@ const Register = () => {
                                             name="password"
                                             autoComplete="new-password"
                                             className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-orange-400/50 focus:ring-2 focus:ring-orange-400/30"
-                                            placeholder="Mínimo 6 caracteres"
+                                            placeholder="Mínimo 6 caracteres, mayúscula y especial"
                                             value={form.password}
                                             onChange={handleChange}
                                         />
-                                        {errors.password && (
-                                            <p className="mt-1 text-xs text-red-400">{errors.password}</p>
+                                        {/* Mostrar reglas de contraseña */}
+                                        {Array.isArray(errors.password) && (
+                                            <ul className="mt-2 space-y-0">
+                                                {errors.password.map((rule, idx) => (
+                                                    <li
+                                                        key={rule.key}
+                                                        className={`flex items-center text-xs font-medium whitespace-nowrap ${rule.valid ? 'text-sky-400' : 'text-red-400'}`}
+                                                        style={{ lineHeight: '1.7', marginBottom: 0 }}
+                                                    >
+                                                        <span className={`inline-block w-4 text-center mr-1 font-bold text-base ${rule.valid ? 'text-sky-400' : 'text-red-400'}`}
+                                                            style={{ minWidth: '1.2em' }}>
+                                                            {rule.valid ? '✓' : '✗'}
+                                                        </span>
+                                                        {rule.message}
+                                                    </li>
+                                                ))}
+                                            </ul>
                                         )}
                                     </div>
-                                    {/* 
                                     
                                     <div>
                                         <label className="text-xs text-white/70">Repetir contraseña</label>
                                         <input
                                             type="password"
                                             name="confirmPassword"
+                                            value={form.confirmPassword}
+                                            onChange={handleChange}
                                             className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-orange-400/50 focus:ring-2 focus:ring-orange-400/30"
                                             placeholder="Confirma tu contraseña"
                                         />
-                                    </div> */}
+                                        {/* El error de confirmación de contraseña se muestra en la lista de reglas de contraseña */}
+                                    </div>
                                 </div>
 
                                 <div className="flex flex-col gap-1">

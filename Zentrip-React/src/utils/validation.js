@@ -17,14 +17,41 @@ export function validateEmail(value) {
   return errors;
 }
 
-export function validatePassword(value) {
-  const errors = [];
-  if (!value) {
-    errors.push(validationMessages.requiredPassword);
-  } else if (value.length < 6) {
-    errors.push(validationMessages.shortPassword);
+export function validatePassword(password, confirmPassword) {
+  const rules = [
+    {
+      key: 'shortPassword',
+      valid: password && password.length >= 6,
+      message: validationMessages.shortPassword,
+    },
+    {
+      key: 'passwordUppercase',
+      valid: /[A-Z]/.test(password || ''),
+      message: validationMessages.passwordUppercase,
+    },
+    {
+      key: 'passwordSpecial',
+      valid: /[^A-Za-z0-9]/.test(password || ''),
+      message: validationMessages.passwordSpecial,
+    },
+  ];
+  if (!password) {
+    return [{ key: 'requiredPassword', valid: false, message: validationMessages.requiredPassword }];
   }
-  return errors;
+  if (typeof confirmPassword === 'string') {
+    rules.push({
+      key: 'confirmPasswordMismatch',
+      valid: password === confirmPassword,
+      message: validationMessages.confirmPasswordMismatch,
+    });
+  }
+  return rules;
+}
+
+export function validateConfirmPassword(confirmPassword, password) {
+  if (!confirmPassword) return '';
+  if (confirmPassword !== password) return validationMessages.confirmPasswordMismatch;
+  return '';
 }
 
 export function validatePolicies(value) {
