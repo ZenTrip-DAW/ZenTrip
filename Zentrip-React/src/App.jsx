@@ -1,16 +1,17 @@
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import './App.css'
 import Register from './components/auth/register/Register'
 import Login from './components/auth/login/Login'
 import VerifyEmail from './components/auth/verify-email/VerifyEmail'
 import EditProfile from './components/profile/EditProfile'
+import Landing from './components/landing/landing'
 
 function App() {
 
   const rutasAplicaciones = createBrowserRouter([
     {
       path: '/',
-      element: <Navigate to="/Auth/Register" replace />
+      element: <Landing />
     },
     {
       path: 'Auth',
