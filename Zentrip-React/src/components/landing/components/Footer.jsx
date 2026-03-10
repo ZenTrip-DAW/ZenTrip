@@ -1,7 +1,7 @@
 export default function Footer() {
   return (
-    <footer className="px-16 pt-16 pb-8" style={{ background: "#0A1929" }}>
-      <div className="flex gap-16 mb-12">
+    <footer className="px-6 md:px-16 pt-16 pb-8" style={{ background: "#0A1929" }}>
+      <div className="flex flex-col md:flex-row gap-10 md:gap-16 mb-12">
         <div className="max-w-xs">
           <div className="flex items-center gap-2.5 mb-4">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg" style={{ background: "rgba(255,255,255,.08)" }}>🌊</div>
@@ -15,7 +15,7 @@ export default function Footer() {
           </p>
         </div>
 
-        <div className="flex gap-16 flex-1 justify-end">
+        <div className="flex flex-wrap gap-10 md:flex-1 md:justify-end">
           {[
             { title: "Producto", links: ["Funcionalidades", "Precios", "Comunidad", "Novedades"] },
             { title: "Empresa", links: ["Sobre nosotros", "Blog", "Contacto"] },
@@ -37,7 +37,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-7 border-t" style={{ borderColor: "rgba(255,255,255,.06)" }}>
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-7 border-t" style={{ borderColor: "rgba(255,255,255,.06)" }}>
         <span className="text-sm font-medium" style={{ color: "rgba(255,255,255,.25)" }}>
           © 2026 ZenTrip. Hecho con ❤️ para viajeros.
         </span>
