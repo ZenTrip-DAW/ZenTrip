@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getFirebaseErrorByField } from '../../../utils/firebaseErrorMessages';
 import { validateEmail, validatePassword, validatePolicies, validateConfirmPassword } from '../../../utils/validation';
+import Input from '../../ui/Input';
+import Button from '../../ui/Button';
 
 const Register = () => {
 
@@ -238,16 +240,17 @@ const Register = () => {
                             </div>
 
                             {/* Botón Google */}
-                            <button
+                            <Button
+                                variant="secondary"
                                 type="button"
-                                className="mt-6 inline-flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-medium text-white transition hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+                                className="mt-6"
                                 onClick={handleGoogleSignUp}
                             >
                                 <span className="grid h-5 w-5 place-items-center rounded bg-white text-slate-900 text-[10px] font-bold">
                                     G
                                 </span>
                                 Continuar con Google
-                            </button>
+                            </Button>
 
                             {/* Separador */}
                             <div className="my-6 flex items-center gap-3">
@@ -258,38 +261,33 @@ const Register = () => {
 
                             {/* Formulario email/contraseña (sin nombre) */}
                             <form className="space-y-4" onSubmit={handleRegister} noValidate>
-                                <div>
-                                    <label className="text-xs text-white/70">Email</label>
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        autoComplete="email"
-                                        className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-sky-400/50 focus:ring-2 focus:ring-sky-400/30"
-                                        placeholder="tu@email.com"
-                                        value={form.email}
-                                        onChange={handleChange}
-                                    />
-                                    {errors.email && (
-                                        <p className="mt-1 text-xs text-red-400">{errors.email}</p>
-                                    )}
-                                </div>
+                                <Input
+                                    label="Email"
+                                    type="email"
+                                    name="email"
+                                    autoComplete="email"
+                                    placeholder="tu@email.com"
+                                    value={form.email}
+                                    onChange={handleChange}
+                                    error={errors.email}
+                                />
 
                                 <div className="grid gap-4 sm:grid-cols-2">
                                     <div>
-                                        <label className="text-xs text-white/70">Contraseña</label>
-                                        <input
+                                        <Input
+                                            label="Contraseña"
                                             type="password"
                                             name="password"
                                             autoComplete="new-password"
-                                            className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-orange-400/50 focus:ring-2 focus:ring-orange-400/30"
                                             placeholder="Mínimo 6 caracteres, mayúscula y especial"
                                             value={form.password}
                                             onChange={handleChange}
+                                            focusOrange
                                         />
                                         {/* Mostrar reglas de contraseña */}
                                         {Array.isArray(errors.password) && (
                                             <ul className="mt-2 space-y-0">
-                                                {errors.password.map((rule, idx) => (
+                                                {errors.password.map((rule) => (
                                                     <li
                                                         key={rule.key}
                                                         className={`flex items-center text-xs font-medium whitespace-nowrap ${rule.valid ? 'text-sky-400' : 'text-red-400'}`}
@@ -305,19 +303,16 @@ const Register = () => {
                                             </ul>
                                         )}
                                     </div>
-                                    
-                                    <div>
-                                        <label className="text-xs text-white/70">Repetir contraseña</label>
-                                        <input
-                                            type="password"
-                                            name="confirmPassword"
-                                            value={form.confirmPassword}
-                                            onChange={handleChange}
-                                            className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-orange-400/50 focus:ring-2 focus:ring-orange-400/30"
-                                            placeholder="Confirma tu contraseña"
-                                        />
-                                        {/* El error de confirmación de contraseña se muestra en la lista de reglas de contraseña */}
-                                    </div>
+
+                                    <Input
+                                        label="Repetir contraseña"
+                                        type="password"
+                                        name="confirmPassword"
+                                        value={form.confirmPassword}
+                                        onChange={handleChange}
+                                        placeholder="Confirma tu contraseña"
+                                        focusOrange
+                                    />
                                 </div>
 
                                 <div className="flex flex-col gap-1">
@@ -347,12 +342,9 @@ const Register = () => {
                                     )}
                                 </div>
 
-                                <button
-                                    type="submit"
-                                    className="w-full rounded-xl bg-gradient-to-r from-sky-500 to-orange-500 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-orange-500/25 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-orange-300/60"
-                                >
+                                <Button type="submit">
                                     Crear cuenta
-                                </button>
+                                </Button>
 
                                 <p className="pt-1 text-center text-xs text-white/55">
                                     ¿Ya tienes cuenta?{" "}

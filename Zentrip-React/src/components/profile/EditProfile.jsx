@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged, updateProfile } from 'firebase/auth';
 import { auth, db } from '../auth/register/firebaseConfig';
+import Input from '../ui/Input';
+import Button from '../ui/Button';
 
 const IDIOMAS = ['Español', 'English', 'Français', 'Deutsch', 'Italiano', 'Português'];
 const MONEDAS = ['EUR €', 'USD $', 'GBP £', 'JPY ¥', 'MXN $'];
@@ -191,42 +193,36 @@ const EditProfile = () => {
 
                             {/* Nombre y apellidos */}
                             <div className="grid gap-4 sm:grid-cols-2">
-                                <div>
-                                    <label className="text-xs text-white/70">Nombre</label>
-                                    <input
-                                        type="text"
-                                        name="nombre"
-                                        value={form.nombre}
-                                        onChange={handleChange}
-                                        placeholder="Tu nombre"
-                                        className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-sky-400/50 focus:ring-2 focus:ring-sky-400/30"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs text-white/70">Apellidos</label>
-                                    <input
-                                        type="text"
-                                        name="apellidos"
-                                        value={form.apellidos}
-                                        onChange={handleChange}
-                                        placeholder="Tus apellidos"
-                                        className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-sky-400/50 focus:ring-2 focus:ring-sky-400/30"
-                                    />
-                                </div>
+                                <Input
+                                    label="Nombre"
+                                    type="text"
+                                    name="nombre"
+                                    value={form.nombre}
+                                    onChange={handleChange}
+                                    placeholder="Tu nombre"
+                                />
+                                <Input
+                                    label="Apellidos"
+                                    type="text"
+                                    name="apellidos"
+                                    value={form.apellidos}
+                                    onChange={handleChange}
+                                    placeholder="Tus apellidos"
+                                />
                             </div>
 
                             {/* Username */}
                             <div>
                                 <label className="text-xs text-white/70">Nombre de usuario</label>
-                                <div className="relative mt-1">
+                                <div className="relative">
                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-white/40">@</span>
-                                    <input
+                                    <Input
                                         type="text"
                                         name="username"
                                         value={form.username}
                                         onChange={handleChange}
                                         placeholder="usuario123"
-                                        className="w-full rounded-xl border border-white/10 bg-white/5 pl-8 pr-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-sky-400/50 focus:ring-2 focus:ring-sky-400/30"
+                                        className="pl-8"
                                     />
                                 </div>
                             </div>
@@ -245,42 +241,34 @@ const EditProfile = () => {
                             </div>
 
                             {/* URL foto de perfil */}
-                            <div>
-                                <label className="text-xs text-white/70">URL foto de perfil</label>
-                                <input
-                                    type="url"
-                                    name="fotoPerfil"
-                                    value={form.fotoPerfil}
-                                    onChange={handleChange}
-                                    placeholder="https://..."
-                                    className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-orange-400/50 focus:ring-2 focus:ring-orange-400/30"
-                                />
-                            </div>
+                            <Input
+                                label="URL foto de perfil"
+                                type="url"
+                                name="fotoPerfil"
+                                value={form.fotoPerfil}
+                                onChange={handleChange}
+                                placeholder="https://..."
+                                focusOrange
+                            />
 
                             {/* Teléfono y país */}
                             <div className="grid gap-4 sm:grid-cols-2">
-                                <div>
-                                    <label className="text-xs text-white/70">Teléfono</label>
-                                    <input
-                                        type="tel"
-                                        name="telefono"
-                                        value={form.telefono}
-                                        onChange={handleChange}
-                                        placeholder="+34 600 000 000"
-                                        className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-sky-400/50 focus:ring-2 focus:ring-sky-400/30"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs text-white/70">País</label>
-                                    <input
-                                        type="text"
-                                        name="pais"
-                                        value={form.pais}
-                                        onChange={handleChange}
-                                        placeholder="España"
-                                        className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-sky-400/50 focus:ring-2 focus:ring-sky-400/30"
-                                    />
-                                </div>
+                                <Input
+                                    label="Teléfono"
+                                    type="tel"
+                                    name="telefono"
+                                    value={form.telefono}
+                                    onChange={handleChange}
+                                    placeholder="+34 600 000 000"
+                                />
+                                <Input
+                                    label="País"
+                                    type="text"
+                                    name="pais"
+                                    value={form.pais}
+                                    onChange={handleChange}
+                                    placeholder="España"
+                                />
                             </div>
 
                             {/* Separador preferencias */}
@@ -368,13 +356,9 @@ const EditProfile = () => {
                             )}
 
                             {/* Botón guardar */}
-                            <button
-                                type="submit"
-                                disabled={guardando}
-                                className="w-full rounded-xl bg-gradient-to-r from-sky-500 to-orange-500 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-orange-500/25 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-orange-300/60 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
+                            <Button type="submit" disabled={guardando}>
                                 {guardando ? 'Guardando...' : 'Guardar cambios'}
-                            </button>
+                            </Button>
                         </form>
                     </div>
                 </div>

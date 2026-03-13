@@ -2,6 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { sendEmailVerification, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { auth } from '../register/firebaseConfig';
+import Input from '../../ui/Input';
+import Button from '../../ui/Button';
 {/*Si el correo no está verificado, muestra un mensaje de error y ofrece la opción de reenviar el correo de verificación. */}
 export default function Login() {
   const navigate = useNavigate();
@@ -94,32 +96,24 @@ export default function Login() {
           </p>
           {/* El formulario de inicio de sesión */}
           <form className="space-y-4" onSubmit={handleLogin}>
-            
-            <div>
-              <label className="block text-sm font-medium text-slate-600 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                placeholder="ejemplo@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
-              />
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-600 mb-1">
-                Contraseña
-              </label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
-              />
-            </div>
+            <Input
+              label="Email"
+              variant="light"
+              type="email"
+              placeholder="ejemplo@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+
+            <Input
+              label="Contraseña"
+              variant="light"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
 
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center gap-2 text-slate-600">
@@ -131,21 +125,14 @@ export default function Login() {
               </a>
             </div>
 
-            <button
-              type="submit"
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg font-semibold transition duration-200 shadow-md hover:shadow-lg active:scale-[0.98]"
-            >
+            <Button variant="orange" type="submit">
               Iniciar sesión
-            </button>
+            </Button>
             {/* Mostrar el botón de reenviar verificación solo si el correo no está verificado */}
             {canResendVerification && (
-              <button
-                type="button"
-                onClick={handleResendVerification}
-                className="w-full border border-slate-300 py-2 rounded-lg hover:bg-slate-100 transition text-slate-700 font-medium"
-              >
+              <Button variant="ghost" type="button" onClick={handleResendVerification}>
                 Reenviar correo de verificación
-              </button>
+              </Button>
             )}
 
             {error && <p className="text-sm text-red-600">{error}</p>}
@@ -166,9 +153,9 @@ export default function Login() {
               <div className="flex-grow border-t border-slate-300"></div>
             </div>
 
-            <button className="w-full border border-slate-300 py-2 rounded-lg hover:bg-slate-100 transition">
+            <Button variant="ghost" type="button">
               Continuar con Google
-            </button>
+            </Button>
           </div>
         </div>
       </div>
