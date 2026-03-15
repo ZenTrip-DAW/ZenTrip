@@ -5,6 +5,7 @@ import Login from './components/auth/login/Login'
 import VerifyEmail from './components/auth/verify-email/VerifyEmail'
 import EditProfile from './components/profile/EditProfile'
 import Landing from './components/landing/landing'
+import Home from './components/home/Home'
 
 function App() {
 
@@ -12,6 +13,10 @@ function App() {
     {
       path: '/',
       element: <Landing />
+    },
+    {
+      path: 'home',
+      element: <Home />
     },
     {
       path: 'Auth',

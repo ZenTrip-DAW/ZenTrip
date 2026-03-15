@@ -1,6 +1,6 @@
 import { createUserWithEmailAndPassword, GoogleAuthProvider, sendEmailVerification, signInWithPopup } from 'firebase/auth';
 import { auth, db } from './firebaseConfig';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getFirebaseErrorByField } from '../../../utils/auth/firebaseErrors';
@@ -108,6 +108,7 @@ const Register = () => {
                 moneda: 'EUR €',
                 viajesSoloGrupo: 'ambos',
                 petFriendly: false,
+                perfilCompleto: false,
             });
 
             // Obtener el token de ID después del registro
@@ -139,26 +140,34 @@ const Register = () => {
             
             const result = await signInWithPopup(auth, provider);
             const user = result.user;
+            const userRef = doc(db, 'usuarios', user.uid);
+            const userSnap = await getDoc(userRef);
 
-            // Crea el documento en Firestore si es la primera vez
-            const [nombre = '', ...resto] = (user.displayName || '').split(' ');
-            await setDoc(doc(db, 'usuarios', user.uid), {
-                uid: user.uid,
-                email: user.email,
-                nombre,
-                apellidos: resto.join(' '),
-                username: '',
-                bio: '',
-                telefono: '',
-                pais: '',
-                fotoPerfil: user.photoURL || '',
-                idioma: 'Español',
-                moneda: 'EUR €',
-                viajesSoloGrupo: 'ambos',
-                petFriendly: false,
-            }, { merge: true }); // merge:true para no sobreescribir si ya existe
+            if (!userSnap.exists()) {
+                const [nombre = '', ...resto] = (user.displayName || '').split(' ');
+                await setDoc(userRef, {
+                    uid: user.uid,
+                    email: user.email,
+                    nombre,
+                    apellidos: resto.join(' '),
+                    username: '',
+                    bio: '',
+                    telefono: '',
+                    pais: '',
+                    fotoPerfil: user.photoURL || '',
+                    idioma: 'Español',
+                    moneda: 'EUR €',
+                    viajesSoloGrupo: 'ambos',
+                    petFriendly: false,
+                    perfilCompleto: false,
+                });
+            }
 
-            navigate('/perfil/editar');
+            const nextPath = userSnap.exists() && userSnap.data()?.perfilCompleto ? '/home' : '/perfil/editar';
+            const idToken = await user.getIdToken();
+            localStorage.setItem('firebaseIdToken', idToken);
+
+            navigate(nextPath);
 
         } catch (error) {
             console.error('Error al registrarse/iniciar sesión con Google:', error.message);

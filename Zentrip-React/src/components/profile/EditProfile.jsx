@@ -73,7 +73,7 @@ const EditProfile = () => {
         setExito(false);
         try {
             const ref = doc(db, 'usuarios', usuario.uid);
-            await setDoc(ref, { ...form, email: usuario.email, uid: usuario.uid }, { merge: true });
+            await setDoc(ref, { ...form, email: usuario.email, uid: usuario.uid, perfilCompleto: true }, { merge: true });
 
             // Actualiza displayName en Firebase Auth
             await updateProfile(usuario, {
