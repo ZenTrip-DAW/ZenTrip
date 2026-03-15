@@ -32,8 +32,8 @@ export default function LoginForm({
   onGoToRegister,
 }) {
   return (
-    <div className="bg-white flex flex-col justify-center px-10 py-12">
-      <div className="flex items-center gap-2 mb-6 md:hidden">
+    <div className="bg-white flex flex-col justify-center px-6 py-6 md:px-10 md:py-12 w-full md:max-w-none max-w-md mx-auto">
+      <div className="flex items-center gap-2 mb-4 md:mb-6 md:hidden">
         <img src={logoImg} alt="ZenTrip" className="w-16 h-16" />
         <span className="titulo-h3-mobile text-secundario-5 mt-2">
           Zen<span className="text-primario-3">Trip</span>
@@ -41,7 +41,7 @@ export default function LoginForm({
       </div>
 
       <h2 className="titulo-h2-desktop text-secundario-5">Bienvenido</h2>
-      <p className="cuerpo-2 text-slate-500 mb-6">
+      <p className="cuerpo-2 text-slate-500 mb-4 md:mb-6">
         Accede para continuar planificando tu aventura
       </p>
 
@@ -50,7 +50,7 @@ export default function LoginForm({
         type="button"
         onClick={onGoogleLogin}
         disabled={isGoogleLoading}
-        className="w-full flex items-center justify-center gap-3 mb-5"
+        className="w-full flex items-center justify-center gap-3 mb-4 md:mb-5"
       >
         <GoogleIcon />
         <span className="cuerpo-bold text-secundario-5">
@@ -58,7 +58,7 @@ export default function LoginForm({
         </span>
       </Button>
 
-      <div className="flex items-center gap-3 mb-5">
+      <div className="flex items-center gap-3 mb-4 md:mb-5">
         <div className="flex-1 h-px bg-slate-200" />
         <span className="cuerpo-3 text-slate-400">o con email</span>
         <div className="flex-1 h-px bg-slate-200" />
