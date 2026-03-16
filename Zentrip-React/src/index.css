@@ -4,52 +4,52 @@
 @import "tailwindcss";
 
 @theme {
-    --font-titulos: 'Montserrat', system-ui, sans-serif;
-    /* --font-titulos:'Georgia', serif; */
-    /* --font-titulos: 'Fraunces', serif; */
-    --font-cuerpo: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-titles: 'Montserrat', system-ui, sans-serif;
+    /* --font-titles:'Georgia', serif; */
+    /* --font-titles: 'Fraunces', serif; */
+    --font-body: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
-    /* Primario (naranja) */
-    --color-primario-1: #FFE0DA;
-    --color-primario-2: #FFAA94;
-    --color-primario-3: #FE6B01;
-    --color-primario-4: #C35001;
-    --color-primario-5: #8B3700;
-    --color-primario-6: #572000;
-    --color-primario-7: #270A00;
+    /* Primary (orange) */
+    --color-primary-1: #FFE0DA;
+    --color-primary-2: #FFAA94;
+    --color-primary-3: #FE6B01;
+    --color-primary-4: #C35001;
+    --color-primary-5: #8B3700;
+    --color-primary-6: #572000;
+    --color-primary-7: #270A00;
 
-    /* Secundario (azul) */
-    --color-secundario-1: #D0DFFF;
-    --color-secundario-2: #8DB9FF;
-    --color-secundario-3: #0194FE;
-    --color-secundario-4: #016FC1;
-    --color-secundario-5: #004C87;
-    --color-secundario-6: #002C51;
-    --color-secundario-7: #001126;
+    /* Secondary (blue) */
+    --color-secondary-1: #D0DFFF;
+    --color-secondary-2: #8DB9FF;
+    --color-secondary-3: #0194FE;
+    --color-secondary-4: #016FC1;
+    --color-secondary-5: #004C87;
+    --color-secondary-6: #002C51;
+    --color-secondary-7: #001126;
 
-    /* Neutro */
-    --color-neutro-1: #E8E6E6;
-    --color-neutro-2: #C3BEBD;
-    --color-neutro-3: #A19694;
-    --color-neutro-4: #7A7270;
-    --color-neutro-5: #56504E;
-    --color-neutro-6: #34302F;
-    --color-neutro-7: #151212;
+    /* Neutral */
+    --color-neutral-1: #E8E6E6;
+    --color-neutral-2: #C3BEBD;
+    --color-neutral-3: #A19694;
+    --color-neutral-4: #7A7270;
+    --color-neutral-5: #56504E;
+    --color-neutral-6: #34302F;
+    --color-neutral-7: #151212;
 
-    /* Blanco */
-    --color-blanco: #FFFFFF;
+    /* White */
+    --color-white: #FFFFFF;
 }
 
 
 @layer base {
     body {
-        font-family: var(--font-cuerpo);
+        font-family: var(--font-body);
     }
 
     h1,
     h2,
     h3 {
-        font-family: var(--font-titulos);
+        font-family: var(--font-titles);
         font-weight: 400;
     }
 }
@@ -58,340 +58,340 @@
 
 
 
-    /* Primario */
-    .bg-primario-1 {
-        background-color: var(--color-primario-1);
+    /* Primary */
+    .bg-primary-1 {
+        background-color: var(--color-primary-1);
     }
 
-    .bg-primario-2 {
-        background-color: var(--color-primario-2);
+    .bg-primary-2 {
+        background-color: var(--color-primary-2);
     }
 
-    .bg-primario-3 {
-        background-color: var(--color-primario-3);
+    .bg-primary-3 {
+        background-color: var(--color-primary-3);
     }
 
-    .bg-primario-4 {
-        background-color: var(--color-primario-4);
+    .bg-primary-4 {
+        background-color: var(--color-primary-4);
     }
 
-    .bg-primario-5 {
-        background-color: var(--color-primario-5);
+    .bg-primary-5 {
+        background-color: var(--color-primary-5);
     }
 
-    .bg-primario-6 {
-        background-color: var(--color-primario-6);
+    .bg-primary-6 {
+        background-color: var(--color-primary-6);
     }
 
-    .bg-primario-7 {
-        background-color: var(--color-primario-7);
+    .bg-primary-7 {
+        background-color: var(--color-primary-7);
     }
 
-    .text-primario-1 {
-        color: var(--color-primario-1);
+    .text-primary-1 {
+        color: var(--color-primary-1);
     }
 
-    .text-primario-2 {
-        color: var(--color-primario-2);
+    .text-primary-2 {
+        color: var(--color-primary-2);
     }
 
-    .text-primario-3 {
-        color: var(--color-primario-3);
+    .text-primary-3 {
+        color: var(--color-primary-3);
     }
 
-    .text-primario-4 {
-        color: var(--color-primario-4);
+    .text-primary-4 {
+        color: var(--color-primary-4);
     }
 
-    .text-primario-5 {
-        color: var(--color-primario-5);
+    .text-primary-5 {
+        color: var(--color-primary-5);
     }
 
-    .text-primario-6 {
-        color: var(--color-primario-6);
+    .text-primary-6 {
+        color: var(--color-primary-6);
     }
 
-    .text-primario-7 {
-        color: var(--color-primario-7);
+    .text-primary-7 {
+        color: var(--color-primary-7);
     }
 
-    .border-primario-1 {
-        border-color: var(--color-primario-1);
+    .border-primary-1 {
+        border-color: var(--color-primary-1);
     }
 
-    .border-primario-2 {
-        border-color: var(--color-primario-2);
+    .border-primary-2 {
+        border-color: var(--color-primary-2);
     }
 
-    .border-primario-3 {
-        border-color: var(--color-primario-3);
+    .border-primary-3 {
+        border-color: var(--color-primary-3);
     }
 
-    .border-primario-4 {
-        border-color: var(--color-primario-4);
+    .border-primary-4 {
+        border-color: var(--color-primary-4);
     }
 
-    .border-primario-5 {
-        border-color: var(--color-primario-5);
+    .border-primary-5 {
+        border-color: var(--color-primary-5);
     }
 
-    .border-primario-6 {
-        border-color: var(--color-primario-6);
+    .border-primary-6 {
+        border-color: var(--color-primary-6);
     }
 
-    .border-primario-7 {
-        border-color: var(--color-primario-7);
+    .border-primary-7 {
+        border-color: var(--color-primary-7);
     }
 
-    /* Secundario */
-    .bg-secundario-1 {
-        background-color: var(--color-secundario-1);
+    /* Secondary */
+    .bg-secondary-1 {
+        background-color: var(--color-secondary-1);
     }
 
-    .bg-secundario-2 {
-        background-color: var(--color-secundario-2);
+    .bg-secondary-2 {
+        background-color: var(--color-secondary-2);
     }
 
-    .bg-secundario-3 {
-        background-color: var(--color-secundario-3);
+    .bg-secondary-3 {
+        background-color: var(--color-secondary-3);
     }
 
-    .bg-secundario-4 {
-        background-color: var(--color-secundario-4);
+    .bg-secondary-4 {
+        background-color: var(--color-secondary-4);
     }
 
-    .bg-secundario-5 {
-        background-color: var(--color-secundario-5);
+    .bg-secondary-5 {
+        background-color: var(--color-secondary-5);
     }
 
-    .bg-secundario-6 {
-        background-color: var(--color-secundario-6);
+    .bg-secondary-6 {
+        background-color: var(--color-secondary-6);
     }
 
-    .bg-secundario-7 {
-        background-color: var(--color-secundario-7);
+    .bg-secondary-7 {
+        background-color: var(--color-secondary-7);
     }
 
-    .text-secundario-1 {
-        color: var(--color-secundario-1);
+    .text-secondary-1 {
+        color: var(--color-secondary-1);
     }
 
-    .text-secundario-2 {
-        color: var(--color-secundario-2);
+    .text-secondary-2 {
+        color: var(--color-secondary-2);
     }
 
-    .text-secundario-3 {
-        color: var(--color-secundario-3);
+    .text-secondary-3 {
+        color: var(--color-secondary-3);
     }
 
-    .text-secundario-4 {
-        color: var(--color-secundario-4);
+    .text-secondary-4 {
+        color: var(--color-secondary-4);
     }
 
-    .text-secundario-5 {
-        color: var(--color-secundario-5);
+    .text-secondary-5 {
+        color: var(--color-secondary-5);
     }
 
-    .text-secundario-6 {
-        color: var(--color-secundario-6);
+    .text-secondary-6 {
+        color: var(--color-secondary-6);
     }
 
-    .text-secundario-7 {
-        color: var(--color-secundario-7);
+    .text-secondary-7 {
+        color: var(--color-secondary-7);
     }
 
-    .border-secundario-1 {
-        border-color: var(--color-secundario-1);
+    .border-secondary-1 {
+        border-color: var(--color-secondary-1);
     }
 
-    .border-secundario-2 {
-        border-color: var(--color-secundario-2);
+    .border-secondary-2 {
+        border-color: var(--color-secondary-2);
     }
 
-    .border-secundario-3 {
-        border-color: var(--color-secundario-3);
+    .border-secondary-3 {
+        border-color: var(--color-secondary-3);
     }
 
-    .border-secundario-4 {
-        border-color: var(--color-secundario-4);
+    .border-secondary-4 {
+        border-color: var(--color-secondary-4);
     }
 
-    .border-secundario-5 {
-        border-color: var(--color-secundario-5);
+    .border-secondary-5 {
+        border-color: var(--color-secondary-5);
     }
 
-    .border-secundario-6 {
-        border-color: var(--color-secundario-6);
+    .border-secondary-6 {
+        border-color: var(--color-secondary-6);
     }
 
-    .border-secundario-7 {
-        border-color: var(--color-secundario-7);
+    .border-secondary-7 {
+        border-color: var(--color-secondary-7);
     }
 
-    /* Neutro */
-    .bg-neutro-1 {
-        background-color: var(--color-neutro-1);
+    /* Neutral */
+    .bg-neutral-1 {
+        background-color: var(--color-neutral-1);
     }
 
-    .bg-neutro-2 {
-        background-color: var(--color-neutro-2);
+    .bg-neutral-2 {
+        background-color: var(--color-neutral-2);
     }
 
-    .bg-neutro-3 {
-        background-color: var(--color-neutro-3);
+    .bg-neutral-3 {
+        background-color: var(--color-neutral-3);
     }
 
-    .bg-neutro-4 {
-        background-color: var(--color-neutro-4);
+    .bg-neutral-4 {
+        background-color: var(--color-neutral-4);
     }
 
-    .bg-neutro-5 {
-        background-color: var(--color-neutro-5);
+    .bg-neutral-5 {
+        background-color: var(--color-neutral-5);
     }
 
-    .bg-neutro-6 {
-        background-color: var(--color-neutro-6);
+    .bg-neutral-6 {
+        background-color: var(--color-neutral-6);
     }
 
-    .bg-neutro-7 {
-        background-color: var(--color-neutro-7);
+    .bg-neutral-7 {
+        background-color: var(--color-neutral-7);
     }
 
-    .text-neutro-1 {
-        color: var(--color-neutro-1);
+    .text-neutral-1 {
+        color: var(--color-neutral-1);
     }
 
-    .text-neutro-2 {
-        color: var(--color-neutro-2);
+    .text-neutral-2 {
+        color: var(--color-neutral-2);
     }
 
-    .text-neutro-3 {
-        color: var(--color-neutro-3);
+    .text-neutral-3 {
+        color: var(--color-neutral-3);
     }
 
-    .text-neutro-4 {
-        color: var(--color-neutro-4);
+    .text-neutral-4 {
+        color: var(--color-neutral-4);
     }
 
-    .text-neutro-5 {
-        color: var(--color-neutro-5);
+    .text-neutral-5 {
+        color: var(--color-neutral-5);
     }
 
-    .text-neutro-6 {
-        color: var(--color-neutro-6);
+    .text-neutral-6 {
+        color: var(--color-neutral-6);
     }
 
-    .text-neutro-7 {
-        color: var(--color-neutro-7);
+    .text-neutral-7 {
+        color: var(--color-neutral-7);
     }
 
-    .border-neutro-1 {
-        border-color: var(--color-neutro-1);
+    .border-neutral-1 {
+        border-color: var(--color-neutral-1);
     }
 
-    .border-neutro-2 {
-        border-color: var(--color-neutro-2);
+    .border-neutral-2 {
+        border-color: var(--color-neutral-2);
     }
 
-    .border-neutro-3 {
-        border-color: var(--color-neutro-3);
+    .border-neutral-3 {
+        border-color: var(--color-neutral-3);
     }
 
-    .border-neutro-4 {
-        border-color: var(--color-neutro-4);
+    .border-neutral-4 {
+        border-color: var(--color-neutral-4);
     }
 
-    .border-neutro-5 {
-        border-color: var(--color-neutro-5);
+    .border-neutral-5 {
+        border-color: var(--color-neutral-5);
     }
 
-    .border-neutro-6 {
-        border-color: var(--color-neutro-6);
+    .border-neutral-6 {
+        border-color: var(--color-neutral-6);
     }
 
-    .border-neutro-7 {
-        border-color: var(--color-neutro-7);
+    .border-neutral-7 {
+        border-color: var(--color-neutral-7);
     }
 
-    .bg-blanco {
-        background-color: var(--color-blanco);
+    .bg-brand-white {
+        background-color: var(--color-white);
     }
 
-    .text-blanco {
-        color: var(--color-blanco);
+    .text-brand-white {
+        color: var(--color-white);
     }
 
-    /*Tamaños de fuentes*/
+    /*Font sizes*/
 
 
-    .titulo-h1-desktop {
-        font-family: var(--font-titulos);
+    .title-h1-desktop {
+        font-family: var(--font-titles);
         font-size: 32px;
         font-weight: 700;
     }
 
-    .titulo-h2-desktop {
-        font-family: var(--font-titulos);
+    .title-h2-desktop {
+        font-family: var(--font-titles);
         font-size: 28px;
         font-weight: 700;
     }
 
-    .titulo-h3-desktop {
-        font-family: var(--font-titulos);
+    .title-h3-desktop {
+        font-family: var(--font-titles);
         font-size: 20px;
         font-weight: 700;
     }
 
-    .titulo-h1-mobile {
-        font-family: var(--font-titulos);
+    .title-h1-mobile {
+        font-family: var(--font-titles);
         font-size: 24px;
         font-weight: 900;
     }
 
-    .titulo-h2-mobile {
-        font-family: var(--font-titulos);
+    .title-h2-mobile {
+        font-family: var(--font-titles);
         font-size: 20px;
         font-weight: 800;
     }
 
-    .titulo-h3-mobile {
-        font-family: var(--font-titulos);
+    .title-h3-mobile {
+        font-family: var(--font-titles);
         font-size: 20px;
         font-weight: 700;
     }
 
-    .cuerpo-3 {
-        font-family: var(--font-cuerpo);
+    .body-3 {
+        font-family: var(--font-body);
         font-size: 12px;
         font-weight: 400;
     }
 
-    .cuerpo-2-semibold {
-        font-family: var(--font-cuerpo);
+    .body-2-semibold {
+        font-family: var(--font-body);
         font-size: 14px;
         font-weight: 600;
     }
 
-    .cuerpo-2 {
-        font-family: var(--font-cuerpo);
+    .body-2 {
+        font-family: var(--font-body);
         font-size: 14px;
         font-weight: 400;
     }
 
-    .cuerpo-bold {
-        font-family: var(--font-cuerpo);
+    .body-bold {
+        font-family: var(--font-body);
         font-size: 16px;
         font-weight: 700;
     }
 
-    .cuerpo-semibold {
-        font-family: var(--font-cuerpo);
+    .body-semibold {
+        font-family: var(--font-body);
         font-size: 16px;
         font-weight: 600;
     }
 
-    .cuerpo {
-        font-family: var(--font-cuerpo);
+    .body {
+        font-family: var(--font-body);
         font-size: 16px;
         font-weight: 400;
     }

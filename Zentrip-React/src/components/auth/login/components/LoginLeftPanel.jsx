@@ -23,10 +23,10 @@ export default function LoginLeftPanel({ heroImg, logoImg, onGoBack }) {
       <div className="relative z-10 flex items-center gap-2">
         <img src={logoImg} alt="ZenTrip" className="w-20 h-20" />
         <div className="flex flex-col mt-6">
-          <span className="titulo-h2-desktop text-white tracking-tight">
-            Zen<span className="text-primario-3">Trip</span>
+          <span className="title-h2-desktop text-white tracking-tight">
+            Zen<span className="text-primary-3">Trip</span>
           </span>
-          <span className="titulo-h3-desktop text-white -mt-2">Plan, Pack &amp; GO</span>
+          <span className="title-h3-desktop text-white -mt-2">Plan, Pack &amp; GO</span>
         </div>
       </div>
 
@@ -34,7 +34,7 @@ export default function LoginLeftPanel({ heroImg, logoImg, onGoBack }) {
         <h2 className="font-[Montserrat] text-[38px] font-bold text-white leading-tight" >
           Tu próxima<br />aventura<br />empieza aquí.
         </h2>
-        <p className="cuerpo text-white mt-15 max-w-xs leading-relaxed ">
+        <p className="body text-white mt-15 max-w-xs leading-relaxed ">
           Todo lo que necesitas para planificar, organizar y viajar sin caos.
         </p>
       </div>

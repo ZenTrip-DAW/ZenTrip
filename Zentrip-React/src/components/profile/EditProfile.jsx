@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import heroImg from '../../../public/img/background/login/happy-young-people-taking-selfie-near-red-car.jpg';
+import heroImg from '../../../public/img/background/editProfile/editProfile.jpeg';
 import logoImg from '../../../public/img/logo/logo-sin-texto-png.png';
 import { useEditProfileController } from './hooks/useEditProfileController';
 import EditProfileLeftPanel from './components/EditProfileLeftPanel';
@@ -24,7 +24,7 @@ export default function EditProfile() {
 
   if (cargando) {
     return (
-      <div className="h-dvh flex items-center justify-center bg-blanco">
+      <div className="h-dvh flex items-center justify-center bg-brand-white">
         <div className="h-10 w-10 rounded-full border-4 border-orange-200 border-t-orange-500 animate-spin" />
       </div>
     );
@@ -32,14 +32,14 @@ export default function EditProfile() {
 
   if (!usuario) {
     return (
-      <div className="h-dvh flex items-center justify-center bg-blanco">
-        <p className="cuerpo text-slate-500">Debes iniciar sesión para editar tu perfil.</p>
+      <div className="h-dvh flex items-center justify-center bg-brand-white">
+        <p className="body text-slate-500">Debes iniciar sesión para editar tu perfil.</p>
       </div>
     );
   }
 
   return (
-    <div className="h-dvh md:min-h-screen flex items-center justify-center bg-blanco px-4 overflow-y-auto">
+    <div className="h-dvh md:min-h-screen flex items-center justify-center bg-brand-white px-4 overflow-y-auto">
       <div className="w-full max-w-5xl grid md:grid-cols-2 md:rounded-2xl md:shadow-[0_0_18px_rgba(15,23,42,0.30)] md:overflow-hidden">
         <EditProfileLeftPanel
           heroImg={heroImg}

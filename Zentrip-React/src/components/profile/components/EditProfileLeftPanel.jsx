@@ -34,10 +34,10 @@ export default function EditProfileLeftPanel({ heroImg, logoImg, usuario, form }
       <div className="relative z-10 flex items-center gap-3">
         <img src={logoImg} alt="ZenTrip" className="w-16 h-16" />
         <div className="flex flex-col">
-          <span className="titulo-h2-desktop text-white tracking-tight leading-tight">
-            Zen<span className="text-primario-3">Trip</span>
+          <span className="title-h2-desktop text-white tracking-tight leading-tight">
+            Zen<span className="text-primary-3">Trip</span>
           </span>
-          <span className="titulo-h3-desktop text-white -mt-1">Plan, Pack &amp; GO</span>
+          <span className="title-h3-desktop text-white -mt-1">Plan, Pack &amp; GO</span>
         </div>
       </div>
 
@@ -45,9 +45,9 @@ export default function EditProfileLeftPanel({ heroImg, logoImg, usuario, form }
       <div className="relative z-10">
         <h2 className="font-[Montserrat] text-4xl font-bold text-white leading-tight">
           Tu perfil,<br />
-          tu <span className="text-primario-3">aventura</span>.
+          tu <span className="text-primary-3">aventura</span>.
         </h2>
-        <p className="mt-3 cuerpo text-white/70 max-w-xs leading-relaxed">
+        <p className="mt-3 bodytext-white/70 max-w-xs leading-relaxed">
           Personaliza tu experiencia y conecta con otros viajeros que comparten tu espíritu
         </p>
       </div>
@@ -55,7 +55,7 @@ export default function EditProfileLeftPanel({ heroImg, logoImg, usuario, form }
       {/* User card */}
       <div className="relative z-10 flex items-center gap-3 rounded-2xl bg-white/10 border border-white/10 px-4 py-3">
         <div className="relative shrink-0">
-          <div className="h-11 w-11 rounded-full bg-secundario-5 flex items-center justify-center border-2 border-white/20">
+          <div className="h-11 w-11 rounded-full bg-secondary-5 flex items-center justify-center border-2 border-white/20">
             {form.fotoPerfil ? (
               <img
                 src={form.fotoPerfil}
@@ -70,17 +70,17 @@ export default function EditProfileLeftPanel({ heroImg, logoImg, usuario, form }
           <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-primario-3 border-2 border-slate-900" />
         </div>
         <div className="min-w-0">
-          <p className="cuerpo-bold text-white truncate">
+          <p className="body-bold text-white truncate">
             {form.nombre || 'Tu nombre'} {form.apellidos}
           </p>
-          <p className="cuerpo-3 text-white/60 truncate">{usuario?.email}</p>
+          <p className="body-3 text-white/60 truncate">{usuario?.email}</p>
         </div>
       </div>
 
       {/* Google button */}
       <button
         type="button"
-        className="relative z-10 w-full flex items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/10 px-4 py-2.5 cuerpo text-white transition hover:bg-white/15 cursor-pointer"
+        className="relative z-10 w-full flex items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/10 px-4 py-2.5 bodytext-white transition hover:bg-white/15 cursor-pointer"
       >
         <GoogleIcon />
         Vincular con Google
@@ -92,7 +92,7 @@ export default function EditProfileLeftPanel({ heroImg, logoImg, usuario, form }
           <button
             key={key}
             type="button"
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl cuerpo font-medium transition cursor-pointer
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bodyfont-medium transition cursor-pointer
               ${key === 'datosPersonales'
                 ? 'bg-white/15 text-white'
                 : 'text-white/70 hover:bg-white/10 hover:text-white'

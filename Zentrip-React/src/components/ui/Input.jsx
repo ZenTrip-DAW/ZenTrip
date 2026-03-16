@@ -1,34 +1,34 @@
 const SIZE_STYLES = {
   sm: {
     input: 'px-3 py-1.5',
-    label: 'cuerpo-2-semibold',
-    error: 'cuerpo-3',
-    inputText: 'cuerpo-3',
+    label: 'body-2-semibold',
+    error: 'body-3',
+    inputText: 'body-3',
   },
   md: {
     input: 'px-4 py-2',
-    label: 'cuerpo-bold',
-    error: 'cuerpo-3',
-    inputText: 'cuerpo-2',
+    label: 'body-bold',
+    error: 'body-3',
+    inputText: 'body-2',
   },
   lg: {
     input: 'px-5 py-3',
-    label: 'cuerpo-bold',
-    error: 'cuerpo-2',
-    inputText: 'cuerpo',
+    label: 'body-bold',
+    error: 'body-2',
+    inputText: 'body',
   },
 };
 
-const Input = ({ 
-  label, 
-  error, 
-  variant = 'dark', 
-  size = 'md', 
+const Input = ({
+  label,
+  error,
+  variant = 'dark',
+  size = 'md',
   className = '',
   labelClass = '',
   inputTextClass = '',
   errorClass = '',
-  ...props 
+  ...props
 }) => {
   const s = SIZE_STYLES[size] ?? SIZE_STYLES.md;
 

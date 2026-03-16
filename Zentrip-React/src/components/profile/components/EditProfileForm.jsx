@@ -25,7 +25,7 @@ const PREFERENCE_SELECTS = [
 
 const SELECT_CLASS =
   'w-full border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition px-4 py-2 text-sm text-slate-700 bg-white';
-const LABEL_CLASS = 'block cuerpo-bold text-slate-600 mb-1';
+const LABEL_CLASS = 'block body-bold text-slate-600 mb-1';
 
 function SectionDivider({ label }) {
   return (
@@ -176,8 +176,8 @@ export default function EditProfileForm({
 }) {
   return (
     <div className="bg-white flex flex-col justify-center px-6 py-8 md:px-10 w-full overflow-y-auto max-h-screen">
-      <h2 className="titulo-h2-desktop text-secundario-5">Editar Perfil</h2>
-      <p className="cuerpo-2 text-slate-500 mb-4">
+      <h2 className="title-h2-desktop text-secondary-5">Editar Perfil</h2>
+      <p className="body-2 text-slate-500 mb-4">
         Actualiza tu información personal y preferencias de viaje
       </p>
 
@@ -191,12 +191,12 @@ export default function EditProfileForm({
         {activeSection === 'seguridad' && <SecuritySection />}
 
         {error && (
-          <p className="cuerpo-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-700">
+          <p className="body-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-700">
             {error}
           </p>
         )}
         {exito && (
-          <p className="cuerpo-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700">
+          <p className="body-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700">
             ¡Perfil guardado correctamente!
           </p>
         )}

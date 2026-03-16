@@ -35,13 +35,13 @@ export default function LoginForm({
     <div className="bg-white flex flex-col justify-center px-6 py-6 md:px-10 md:py-12 w-full md:max-w-none max-w-md mx-auto">
       <div className="flex items-center gap-2 mb-4 md:mb-6 md:hidden">
         <img src={logoImg} alt="ZenTrip" className="w-16 h-16" />
-        <span className="titulo-h3-mobile text-secundario-5 mt-2">
-          Zen<span className="text-primario-3">Trip</span>
+        <span className="title-h3-mobile text-secondary-5 mt-2">
+          Zen<span className="text-primary-3">Trip</span>
         </span>
       </div>
 
-      <h2 className="titulo-h2-desktop text-secundario-5">Bienvenido</h2>
-      <p className="cuerpo-2 text-slate-500 mb-4 md:mb-6">
+      <h2 className="title-h2-desktop text-secondary-5">Bienvenido</h2>
+      <p className="body-2 text-slate-500 mb-4 md:mb-6">
         Accede para continuar planificando tu aventura
       </p>
 
@@ -53,14 +53,14 @@ export default function LoginForm({
         className="w-full flex items-center justify-center gap-3 mb-4 md:mb-5"
       >
         <GoogleIcon />
-        <span className="cuerpo-bold text-secundario-5">
+        <span className="body-bold text-secondary-5">
           {isGoogleLoading ? 'Conectando con Google...' : 'Continuar con Google'}
         </span>
       </Button>
 
       <div className="flex items-center gap-3 mb-4 md:mb-5">
         <div className="flex-1 h-px bg-slate-200" />
-        <span className="cuerpo-3 text-slate-400">o con email</span>
+        <span className="body-3 text-slate-400">o con email</span>
         <div className="flex-1 h-px bg-slate-200" />
       </div>
 
@@ -69,7 +69,7 @@ export default function LoginForm({
           label="Email"
           variant="light"
           size="md"
-          labelClass="text-secundario-5"
+          labelClass="text-secondary-5"
           type="email"
           placeholder="ejemplo@email.com"
           value={email}
@@ -81,26 +81,26 @@ export default function LoginForm({
             label="Contraseña"
             variant="light"
             size="md"
-            labelClass="text-secundario-5"
+            labelClass="text-secondary-5"
             type="password"
             placeholder="Mínimo 6 caracteres"
             value={password}
             onChange={onPasswordChange}
           />
           <div className="text-right mt-4">
-            <a onClick={onForgotPassword} className="cuerpo-bold text-orange-500 hover:text-orange-400 font-medium cursor-pointer">
+            <a onClick={onForgotPassword} className="body-bold text-orange-500 hover:text-orange-400 font-medium cursor-pointer">
               ¿Olvidaste tu contraseña?
             </a>
           </div>
         </div>
 
         {error && (
-          <p className="cuerpo-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-700">
+          <p className="body-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-700">
             {error}
           </p>
         )}
         {info && (
-          <p className="cuerpo-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700">
+          <p className="body-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700">
             {info}
           </p>
         )}
@@ -126,11 +126,11 @@ export default function LoginForm({
         )}
       </form>
 
-      <p className="cuerpo-bold text-center text-neutro-3 mt-6">
+      <p className="body-bold text-center text-neutral-3 mt-6">
         ¿No tienes cuenta?{' '}
         <a
           type="button"
-          className="cuerpo-bold text-primario-3 hover:text-orange-400 transition cursor-pointer"
+          className="body-bold text-primary-3 hover:text-orange-400 transition cursor-pointer"
           onClick={onGoToRegister}
         >
           Crear cuenta
