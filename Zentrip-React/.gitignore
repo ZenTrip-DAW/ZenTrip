@@ -1,18 +1,17 @@
-# Dependencias
+# Dependencies
 node_modules/
 
-# Builds
-Zentrip-React/dist/
-Zentrip-Node/dist/
+# Build output
+dist/
 
-# Variables de entorno
+# Environment variables
 .env
+.env.local
+.env.production
 
-# Claves de Firebase (nunca subir)
-Zentrip-Node/serviceAccountKey.json
-
-# Otros
+# OS
 .DS_Store
-npm-debug.log*
+Thumbs.db
 
-Zentrip-React/src/components/auth/register/firebaseConfig.js
+# Logs
+npm-debug.log*

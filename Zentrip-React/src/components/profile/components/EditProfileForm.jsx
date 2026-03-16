@@ -1,15 +1,14 @@
+import { useRef, useState } from 'react';
+import { getNames } from 'country-list';
+import ISO6391 from 'iso-639-1';
+import { uploadImage } from '../../../services/cloudinaryService';
 import Input from '../../ui/Input';
 import Button from '../../ui/Button';
+import AlertMessage from '../../ui/AlertMessage';
 
-const IDIOMAS = ['Español', 'English', 'Français', 'Deutsch', 'Italiano', 'Português'];
+const IDIOMAS = ISO6391.getAllNativeNames().sort();
 const MONEDAS = ['EUR €', 'USD $', 'GBP £', 'JPY ¥', 'MXN $'];
-const PAISES = [
-  'España', 'México', 'Argentina', 'Colombia', 'Chile', 'Perú', 'Venezuela',
-  'Ecuador', 'Bolivia', 'Paraguay', 'Uruguay', 'Guatemala', 'Honduras',
-  'El Salvador', 'Nicaragua', 'Costa Rica', 'Panamá', 'Cuba',
-  'República Dominicana', 'Estados Unidos', 'Francia', 'Italia',
-  'Alemania', 'Portugal', 'Reino Unido', 'Otro',
-];
+const PAISES = getNames().sort();
 
 const PERSONAL_FIELDS = [
   { name: 'nombre', label: 'Nombre', type: 'text', placeholder: 'Tu nombre' },
@@ -36,7 +35,63 @@ function SectionDivider({ label }) {
   );
 }
 
-function PersonalSection({ form, fieldErrors, onChange }) {
+function AvatarUpload({ value, onUploaded }) {
+  const inputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+
+  async function handleFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadError(null);
+    setUploading(true);
+    try {
+      const url = await uploadImage(file);
+      onUploaded(url);
+    } catch {
+      setUploadError('No se pudo subir la imagen. Inténtalo de nuevo.');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div>
+      <label className="block body-bold text-slate-600 mb-1">Foto de perfil</label>
+      <div className="flex items-center gap-4">
+        <div className="w-16 h-16 rounded-full border-2 border-slate-200 overflow-hidden bg-slate-100 shrink-0">
+          {value
+            ? <img src={value} alt="Avatar" className="w-full h-full object-cover" />
+            : <div className="w-full h-full flex items-center justify-center text-slate-400 text-2xl">👤</div>
+          }
+        </div>
+        <div className="flex flex-col gap-1">
+          <button
+            type="button"
+            onClick={() => inputRef.current.click()}
+            disabled={uploading}
+            className="text-sm font-medium text-orange-500 hover:text-orange-600 disabled:opacity-50 cursor-pointer text-left"
+          >
+            {uploading ? 'Subiendo...' : 'Cambiar foto'}
+          </button>
+          {value && !uploading && (
+            <button
+              type="button"
+              onClick={() => onUploaded('')}
+              className="text-xs text-slate-400 hover:text-red-400 cursor-pointer text-left"
+            >
+              Eliminar
+            </button>
+          )}
+          {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
+        </div>
+      </div>
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+    </div>
+  );
+}
+
+function PersonalSection({ form, fieldErrors, onChange, setForm }) {
   return (
     <>
       <SectionDivider label="Información personal" />
@@ -65,16 +120,9 @@ function PersonalSection({ form, fieldErrors, onChange }) {
             {PAISES.map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
         </div>
-        <Input
-          variant="light"
-          size="md"
-          label="Foto de perfil (URL)"
-          type="url"
-          name="fotoPerfil"
-          placeholder="https://..."
+        <AvatarUpload
           value={form.fotoPerfil}
-          onChange={onChange}
-          error={fieldErrors.fotoPerfil}
+          onUploaded={(url) => setForm((p) => ({ ...p, fotoPerfil: url }))}
         />
       </div>
 
@@ -183,23 +231,15 @@ export default function EditProfileForm({
 
       <form className="space-y-4" onSubmit={onGuardar}>
         {activeSection === 'datosPersonales' && (
-          <PersonalSection form={form} fieldErrors={fieldErrors} onChange={onChange} />
+          <PersonalSection form={form} fieldErrors={fieldErrors} onChange={onChange} setForm={setForm} />
         )}
         {activeSection === 'preferencias' && (
           <PreferencesSection form={form} onChange={onChange} setForm={setForm} />
         )}
         {activeSection === 'seguridad' && <SecuritySection />}
 
-        {error && (
-          <p className="body-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-700">
-            {error}
-          </p>
-        )}
-        {exito && (
-          <p className="body-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700">
-            ¡Perfil guardado correctamente!
-          </p>
-        )}
+        <AlertMessage message={error} variant="error" />
+        <AlertMessage message={exito ? '¡Perfil guardado correctamente!' : null} variant="success" />
 
         <div className="flex gap-3 pt-2">
           <Button variant="ghost" type="button" onClick={onCancelar} className="flex-1">

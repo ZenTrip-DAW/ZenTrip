@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../../auth/register/firebaseConfig';
+import { useAuth } from '../../../context/AuthContext';
+import { ROUTES } from '../../../config/routes';
 import { getUserProfile, saveUserProfile } from '../services/editProfileFirebaseService';
 import { validateProfileForm } from '../../../utils/validation/profile/rules';
 
@@ -19,8 +19,7 @@ const INITIAL_FORM = {
 };
 
 export function useEditProfileController(navigate) {
-  const [usuario, setUsuario] = useState(null);
-  const [cargando, setCargando] = useState(true);
+  const { user, loading: authLoading } = useAuth();
   const [guardando, setGuardando] = useState(false);
   const [exito, setExito] = useState(false);
   const [error, setError] = useState(null);
@@ -29,32 +28,19 @@ export function useEditProfileController(navigate) {
   const [form, setForm] = useState(INITIAL_FORM);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        setCargando(false);
-        return;
-      }
-      setUsuario(user);
-      try {
-        const data = await getUserProfile(user.uid);
+    if (authLoading || !user) return;
+
+    getUserProfile(user.uid)
+      .then((data) => {
         if (data) {
           setForm((prev) => ({ ...prev, ...data }));
         } else {
-          const [nombre = '', ...resto] = (user.displayName || '').split(' ');
-          setForm((prev) => ({
-            ...prev,
-            nombre,
-            apellidos: resto.join(' '),
-            fotoPerfil: user.photoURL || '',
-          }));
+          const [nombre = '', ...rest] = (user.displayName || '').split(' ');
+          setForm((prev) => ({ ...prev, nombre, apellidos: rest.join(' '), fotoPerfil: user.photoURL || '' }));
         }
-      } catch (err) {
-        console.error('Error cargando perfil:', err);
-      }
-      setCargando(false);
-    });
-    return () => unsubscribe();
-  }, []);
+      })
+      .catch((err) => console.error('Error loading profile:', err));
+  }, [user, authLoading]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -64,7 +50,7 @@ export function useEditProfileController(navigate) {
 
   const handleGuardar = async (e) => {
     e.preventDefault();
-    if (!usuario) return;
+    if (!user) return;
 
     const errors = validateProfileForm(form);
     if (Object.keys(errors).length > 0) {
@@ -76,21 +62,21 @@ export function useEditProfileController(navigate) {
     setError(null);
     setExito(false);
     try {
-      await saveUserProfile(usuario, form);
+      await saveUserProfile(user, form);
       setExito(true);
       setTimeout(() => setExito(false), 3000);
     } catch (err) {
-      console.error('Error guardando perfil:', err);
+      console.error('Error saving profile:', err);
       setError('No se pudo guardar el perfil. Inténtalo de nuevo.');
     }
     setGuardando(false);
   };
 
-  const handleCancelar = () => navigate('/home');
+  const handleCancelar = () => navigate(ROUTES.HOME);
 
   return {
-    usuario,
-    cargando,
+    usuario: user,
+    cargando: authLoading,
     guardando,
     exito,
     error,

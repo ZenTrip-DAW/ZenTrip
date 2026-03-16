@@ -1,6 +1,6 @@
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
-import { db } from '../../auth/register/firebaseConfig';
+import { db } from '../../../config/firebaseConfig';
 
 export async function getUserProfile(uid) {
   const ref = doc(db, 'usuarios', uid);

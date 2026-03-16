@@ -16,6 +16,7 @@ export default function EditProfile() {
     fieldErrors,
     form,
     activeSection,
+    setActiveSection,
     handleChange,
     handleGuardar,
     handleCancelar,
@@ -46,6 +47,8 @@ export default function EditProfile() {
           logoImg={logoImg}
           usuario={usuario}
           form={form}
+          activeSection={activeSection}
+          setActiveSection={setActiveSection}
         />
         <EditProfileForm
           activeSection={activeSection}
