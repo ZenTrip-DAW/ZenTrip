@@ -97,7 +97,7 @@ export default function RegisterForm({
                             type={passwordVisibility.inputType}
                             name="password"
                             autoComplete="new-password"
-                            placeholder="Mínimo 6 caracteres, mayúscula"
+                            placeholder="Introduce tu contraseña"
                             value={form.password}
                             onChange={onFieldChange}
                             rightElement={(
