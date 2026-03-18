@@ -8,23 +8,28 @@ import VerifyEmail from './components/auth/verify-email/VerifyEmail';
 import EditProfile from './components/profile/EditProfile';
 import Landing from './components/landing/landing';
 import Home from './components/home/Home';
+import MainLayout from './layouts/MainLayout';
 
 const router = createBrowserRouter([
   { path: '/', element: <Landing /> },
-  { path: ROUTES.HOME, element: <Home /> },
   {
-    path: 'auth',
+    element: <MainLayout />,
     children: [
-      { path: 'login', element: <Login /> },
-      { path: 'register', element: <Register /> },
-      { path: 'verify-email', element: <VerifyEmail /> },
+      { path: ROUTES.HOME, element: <Home /> },
+      { path: ROUTES.PROFILE.EDIT, element: <EditProfile /> },
     ],
   },
   {
-    path: 'profile',
-    children: [
-      { path: 'edit', element: <EditProfile /> },
-    ],
+    path: ROUTES.AUTH.LOGIN,
+    element: <Login />,
+  },
+  {
+    path: ROUTES.AUTH.REGISTER,
+    element: <Register />,
+  },
+  {
+    path: ROUTES.AUTH.VERIFY_EMAIL,
+    element: <VerifyEmail />,
   },
 ]);
 
