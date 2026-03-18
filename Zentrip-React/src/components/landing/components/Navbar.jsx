@@ -35,11 +35,11 @@ export default function Navbar({ onLogin, onRegister }) {
 
         {/* Logo */}
         <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="flex items-center gap-2.5 cursor-pointer bg-transparent border-none p-0">
-          <div className="w-9 h-9 bg-blue-900 rounded-xl flex items-center justify-center text-xl">🌊</div>
-          <span className="text-xl font-extrabold">
-            <span className="text-blue-900">Zen</span>
-            <span className="text-orange-500">Trip</span>
+          className="flex items-center gap-3 cursor-pointer bg-transparent border-none p-0">
+          <img src="/img/logo/logo-sin-texto-png.png" alt="ZenTrip" className="h-10 w-auto" />
+          <span className="title-h2-desktop whitespace-nowrap">
+            <span className="text-secondary-5">Zen</span>
+            <span className="text-primary-3">Trip</span>
           </span>
         </button>
 
