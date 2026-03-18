@@ -2,25 +2,19 @@ import { PET_FEATURES } from "../constants";
 
 export default function PetSection() {
   return (
-    <section id="pet-friendly" className="px-6 md:px-16 py-16 md:py-24 bg-blue-900 flex flex-col md:flex-row items-center gap-12 md:gap-20 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-96 h-96 rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, rgba(255,107,44,.18) 0%, transparent 65%)", transform: "translate(30%, -30%)" }} />
-
+    <section id="pet-friendly" className="px-6 md:px-16 py-16 md:py-24 bg-secondary-5 flex flex-col md:flex-row items-center gap-12 md:gap-20 relative overflow-hidden">
       <div className="flex-1 relative z-10 text-center md:text-left">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-orange-400 border-opacity-30 bg-orange-500 bg-opacity-15 text-xs font-bold text-orange-400 mb-6">
-          🐾 Diferencial ZenTrip
-        </div>
-        <h2 className="text-3xl md:text-4xl font-extrabold text-white leading-tight mb-5" style={{ fontFamily: "'Georgia', serif" }}>
+        <h2 className="text-3xl md:text-4xl font-extrabold text-white leading-tight mb-5">
           Viaja con tu peludo<br />
-          sin <span className="italic text-orange-400">sorpresas</span>.
+          sin <span className="text-primary-3">sorpresas</span>.
         </h2>
-        <p className="text-base text-blue-200 leading-relaxed mb-8 max-w-md mx-auto md:mx-0">
+        <p className="text-base text-secondary-1 leading-relaxed mb-8 max-w-md mx-auto md:mx-0">
           El único planificador de viajes con módulo específico para mascotas. Filtra hoteles, consulta políticas de aerolíneas y calcula costes adicionales automáticamente.
         </p>
         <div className="flex flex-col gap-3.5 items-center md:items-start">
           {PET_FEATURES.map((t, i) => (
-            <div key={i} className="flex items-center gap-3 text-sm font-semibold text-blue-100">
-              <span className="w-2 h-2 rounded-full bg-orange-500 shrink-0" />
+            <div key={i} className="flex items-center gap-3 text-sm font-semibold text-secondary-2">
+              <span className="w-2 h-2 rounded-full bg-primary-3 shrink-0" />
               {t}
             </div>
           ))}

@@ -27,4 +27,4 @@ export const PET_FEATURES = [
   "Condiciones específicas: número de animales, restricciones",
 ];
 
-export const INTEGRATIONS = ["Amadeus", "Google Maps", "Airbnb", "Rome2Rio", "Weather API", "Splitwise", "Eventbrite"];
+export const INTEGRATIONS = ["Google Maps", "Airbnb", "Rome2Rio", "Weather API", "Splitwise", "Eventbrite"];

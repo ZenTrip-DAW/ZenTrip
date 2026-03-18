@@ -21,38 +21,31 @@ export default function Hero({ onRegister }) {
 
   return (
     <section className="min-h-screen bg-slate-50 flex flex-col md:flex-row items-center pt-24 md:pt-16 px-6 md:px-16 gap-10 md:gap-16 relative overflow-hidden">
-      {/* blobs */}
-      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-10 pointer-events-none"
-        style={{ background: "radial-gradient(circle, #FF6B2C 0%, transparent 65%)", transform: "translate(30%, -30%)" }} />
-      <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full opacity-10 pointer-events-none"
-        style={{ background: "radial-gradient(circle, #1B3F72 0%, transparent 65%)", transform: "translate(-30%, 30%)" }} />
-
       {/* Left */}
       <div className="flex-1 relative z-10 max-w-xl w-full text-center md:text-left">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-50 border border-orange-100 text-xs font-bold text-orange-500 mb-7">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-1 border border-primary-2 text-xs font-bold text-primary-3 mb-7">
           <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
           Nuevo · Gestión de equipaje colaborativo
         </div>
 
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-blue-900 leading-tight mb-6" style={{ fontFamily: "'Georgia', serif" }}>
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-secondary-5 leading-tight mb-6">
           {blue1}
-          {orange && <><br /><span className="text-orange-500">{orange}</span></>}
+          {orange && <><br /><span className="text-primary-3">{orange}</span></>}
           {blue2}
-          {!done && <span className="animate-pulse text-orange-400">|</span>}
+          {!done && <span className="animate-pulse text-primary-2">|</span>}
         </h1>
 
-        <p className="text-base md:text-lg text-slate-500 font-medium leading-relaxed mb-10 max-w-md mx-auto md:mx-0">
+        <p className="text-base md:text-lg text-neutral-4 font-medium leading-relaxed mb-10 max-w-md mx-auto md:mx-0">
           ZenTrip centraliza todo lo que necesitas para organizar un viaje perfecto: itinerario, presupuesto, equipaje y decisiones en grupo.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center gap-4 mb-10">
           <button
             onClick={onRegister}
-            className="w-full sm:w-auto px-8 py-4 rounded-2xl border-none text-base font-extrabold text-white cursor-pointer transition-all"
-            style={{ background: "linear-gradient(135deg, #FF6B2C, #FF8C00)", boxShadow: "0 8px 24px rgba(255,107,44,.35)" }}>
+            className="w-full sm:w-auto px-8 py-4 rounded-2xl border-none text-base font-extrabold text-white cursor-pointer transition-all bg-primary-3 hover:bg-primary-4 shadow-md shadow-primary-1">
             Empieza gratis →
           </button>
-          <button className="w-full sm:w-auto px-8 py-4 rounded-2xl border-2 border-slate-200 text-base font-bold text-blue-900 bg-white hover:bg-slate-50 cursor-pointer transition-colors">
+          <button className="w-full sm:w-auto px-8 py-4 rounded-2xl border-2 border-neutral-2 text-base font-bold text-secondary-5 bg-white hover:bg-neutral-1 cursor-pointer transition-colors">
             Ver cómo funciona
           </button>
         </div>
@@ -64,8 +57,8 @@ export default function Hero({ onRegister }) {
                 className="w-9 h-9 rounded-full border-2 border-white object-cover -ml-2.5 first:ml-0" />
             ))}
           </div>
-          <p className="text-sm text-slate-500 font-semibold">
-            <span className="text-blue-900 font-extrabold">+12.000 viajeros</span> ya lo usan · Gratis para siempre
+          <p className="text-sm text-neutral-4 font-semibold">
+            <span className="text-secondary-5 font-extrabold">+12.000 viajeros</span> ya lo usan · Gratis para siempre
           </p>
         </div>
       </div>

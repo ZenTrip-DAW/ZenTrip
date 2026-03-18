@@ -1,6 +1,6 @@
 export default function SectionHeading({ children }) {
   return (
-    <h2 className="text-4xl font-extrabold text-blue-900 leading-tight mb-4" style={{ fontFamily: "'Georgia', serif" }}>
+    <h2 className="text-4xl font-bold text-secondary-5 leading-tight mb-4">
       {children}
     </h2>
   );

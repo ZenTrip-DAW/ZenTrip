@@ -30,7 +30,7 @@ export default function Navbar({ onLogin, onRegister }) {
   }, []);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur border-b border-blue-50">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur border-b border-secondary-1">
       <div className="flex items-center justify-between px-6 md:px-10 lg:px-16 h-16">
 
         {/* Logo */}
@@ -50,12 +50,12 @@ export default function Navbar({ onLogin, onRegister }) {
               onClick={() => scrollTo(id)}
               className={`cursor-pointer transition-colors ${
                 active === id
-                  ? "text-blue-900 font-extrabold"
-                  : "text-slate-500 hover:text-blue-900"
+                  ? "text-secondary-5 font-extrabold"
+                  : "text-neutral-4 hover:text-secondary-5"
               }`}>
               {label}
               {active === id && (
-                <span className="block h-0.5 mt-0.5 rounded-full bg-orange-500" />
+                <span className="block h-0.5 mt-0.5 rounded-full bg-primary-3" />
               )}
             </a>
           ))}
@@ -64,11 +64,11 @@ export default function Navbar({ onLogin, onRegister }) {
         {/* Botones — desktop */}
         <div className="hidden md:flex items-center gap-2 lg:gap-3 shrink-0">
           <button onClick={onLogin}
-            className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-blue-900 bg-transparent hover:bg-blue-50 transition-colors cursor-pointer">
+            className="px-5 py-2.5 rounded-xl border border-neutral-2 text-sm font-bold text-secondary-5 bg-transparent hover:bg-secondary-1 transition-colors cursor-pointer">
             Iniciar sesión
           </button>
           <button onClick={onRegister}
-            className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 transition-all cursor-pointer shadow-md shadow-orange-100">
+            className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-primary-3 hover:bg-primary-4 transition-all cursor-pointer shadow-md shadow-primary-1">
             Empieza gratis →
           </button>
         </div>
@@ -77,31 +77,31 @@ export default function Navbar({ onLogin, onRegister }) {
         <button onClick={() => setOpen(o => !o)}
           className="md:hidden flex flex-col gap-1.5 p-2 cursor-pointer bg-transparent border-none"
           aria-label="Menú">
-          <span className={`block w-6 h-0.5 bg-blue-900 transition-all duration-300 ${open ? "rotate-45 translate-y-2" : ""}`} />
-          <span className={`block w-6 h-0.5 bg-blue-900 transition-all duration-300 ${open ? "opacity-0" : ""}`} />
-          <span className={`block w-6 h-0.5 bg-blue-900 transition-all duration-300 ${open ? "-rotate-45 -translate-y-2" : ""}`} />
+          <span className={`block w-6 h-0.5 bg-secondary-5 transition-all duration-300 ${open ? "rotate-45 translate-y-2" : ""}`} />
+          <span className={`block w-6 h-0.5 bg-secondary-5 transition-all duration-300 ${open ? "opacity-0" : ""}`} />
+          <span className={`block w-6 h-0.5 bg-secondary-5 transition-all duration-300 ${open ? "-rotate-45 -translate-y-2" : ""}`} />
         </button>
       </div>
 
       {/* Menú móvil */}
       {open && (
-        <div className="md:hidden flex flex-col px-6 pb-6 gap-4 bg-white border-t border-blue-50">
+        <div className="md:hidden flex flex-col px-6 pb-6 gap-4 bg-white border-t border-secondary-1">
           {NAV_LINKS.map(({ label, id }) => (
             <a key={id}
               onClick={() => { scrollTo(id); setOpen(false); }}
               className={`text-sm font-semibold cursor-pointer py-1 transition-colors ${
-                active === id ? "text-blue-900 font-extrabold" : "text-slate-500"
+                active === id ? "text-secondary-5 font-extrabold" : "text-neutral-4"
               }`}>
               {label}
             </a>
           ))}
           <div className="flex flex-col gap-2 pt-2">
             <button onClick={() => { setOpen(false); onLogin(); }}
-              className="w-full px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-blue-900 bg-transparent hover:bg-blue-50 cursor-pointer">
+              className="w-full px-5 py-2.5 rounded-xl border border-neutral-2 text-sm font-bold text-secondary-5 bg-transparent hover:bg-secondary-1 cursor-pointer">
               Iniciar sesión
             </button>
             <button onClick={() => { setOpen(false); onRegister(); }}
-              className="w-full px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 cursor-pointer shadow-md shadow-orange-100">
+              className="w-full px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-primary-3 hover:bg-primary-4 cursor-pointer shadow-md shadow-primary-1">
               Empieza gratis →
             </button>
           </div>
