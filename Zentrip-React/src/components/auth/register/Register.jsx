@@ -2,8 +2,9 @@ import { useNavigate } from 'react-router-dom';
 import LoginLeftPanel from '../login/components/LoginLeftPanel';
 import RegisterForm from './components/RegisterForm';
 import { useRegisterController } from './hooks/useRegisterController';
-import heroImg from '../../../../public/img/background/register/full-shot-silhouettes-people-jumping-sunset.jpg';
-import logoImg from '../../../../public/img/logo/logo-sin-texto-png.png';
+
+const heroImg = '/img/background/register/full-shot-silhouettes-people-jumping-sunset.jpg';
+const logoImg = '/img/logo/logo-sin-texto-png.png';
 import { ROUTES } from '../../../config/routes';
 
 const REGISTER_OVERLAY_COLOR = 'rgba(87, 32, 0, 0.75)';

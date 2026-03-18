@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useLoginController } from './hooks/useLoginController';
-import heroImg from '../../../../public/img/background/login/happy-young-people-taking-selfie-near-red-car.jpg';
-import logoImg from '../../../../public/img/logo/logo-sin-texto-png.png';
+
+const heroImg = '/img/background/login/happy-young-people-taking-selfie-near-red-car.jpg';
+const logoImg = '/img/logo/logo-sin-texto-png.png';
 import LoginLeftPanel from './components/LoginLeftPanel';
 import LoginForm from './components/LoginForm';
 

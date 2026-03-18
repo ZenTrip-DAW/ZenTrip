@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import heroImg from '../../../public/img/background/editProfile/editProfile.jpeg';
-import logoImg from '../../../public/img/logo/logo-sin-texto-png.png';
+
+const heroImg = '/img/background/editProfile/editProfile.jpeg';
+const logoImg = '/img/logo/logo-sin-texto-png.png';
 import { useEditProfileController } from './hooks/useEditProfileController';
 import EditProfileLeftPanel from './components/EditProfileLeftPanel';
 import EditProfileForm from './components/EditProfileForm';
