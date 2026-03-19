@@ -5,6 +5,7 @@ import { uploadImage } from '../../../services/cloudinaryService';
 import Input from '../../ui/Input';
 import Button from '../../ui/Button';
 import AlertMessage from '../../ui/AlertMessage';
+import UserAvatar from '../../ui/UserAvatar';
 
 const IDIOMAS = ISO6391.getAllNativeNames().sort();
 const MONEDAS = ['EUR €', 'USD $', 'GBP £', 'JPY ¥', 'MXN $'];
@@ -35,7 +36,7 @@ function SectionDivider({ label }) {
   );
 }
 
-function AvatarUpload({ value, onUploaded }) {
+function AvatarUpload({ value, fullName, onUploaded }) {
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
@@ -59,12 +60,14 @@ function AvatarUpload({ value, onUploaded }) {
     <div>
       <label className="block body-bold text-slate-600 mb-1">Foto de perfil</label>
       <div className="flex items-center gap-4">
-        <div className="w-16 h-16 rounded-full border-2 border-slate-200 overflow-hidden bg-slate-100 shrink-0">
-          {value
-            ? <img src={value} alt="Avatar" className="w-full h-full object-cover" />
-            : <div className="w-full h-full flex items-center justify-center text-slate-400 text-2xl">👤</div>
-          }
-        </div>
+        <UserAvatar
+          src={value}
+          alt="Avatar"
+          fullName={fullName}
+          sizeClass="w-16 h-16"
+          containerClass="border-2 border-slate-200 shrink-0"
+          initialsClass="body-semibold text-slate-500"
+        />
         <div className="flex flex-col gap-1">
           <button
             type="button"
@@ -122,6 +125,7 @@ function PersonalSection({ form, fieldErrors, onChange, setForm }) {
         </div>
         <AvatarUpload
           value={form.fotoPerfil}
+          fullName={`${form.nombre || ''} ${form.apellidos || ''}`}
           onUploaded={(url) => setForm((p) => ({ ...p, fotoPerfil: url }))}
         />
       </div>

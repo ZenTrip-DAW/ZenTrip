@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { ROUTES } from '../../../config/routes';
-import { getUserProfile, saveUserProfile } from '../services/editProfileFirebaseService';
+import { saveUserProfile } from '../../../services/profileService';
 import { validateProfileForm } from '../../../utils/validation/profile/rules';
 
 const INITIAL_FORM = {
@@ -19,7 +19,7 @@ const INITIAL_FORM = {
 };
 
 export function useEditProfileController(navigate) {
-  const { user, loading: authLoading } = useAuth();
+  const { user, authLoading, profile, profileLoading, setProfile, refreshProfile } = useAuth();
   const [guardando, setGuardando] = useState(false);
   const [exito, setExito] = useState(false);
   const [error, setError] = useState(null);
@@ -28,19 +28,20 @@ export function useEditProfileController(navigate) {
   const [form, setForm] = useState(INITIAL_FORM);
 
   useEffect(() => {
-    if (authLoading || !user) return;
+    if (authLoading || profileLoading || !user) return;
 
-    getUserProfile(user.uid)
-      .then((data) => {
-        if (data) {
-          setForm((prev) => ({ ...prev, ...data }));
-        } else {
-          const [nombre = '', ...rest] = (user.displayName || '').split(' ');
-          setForm((prev) => ({ ...prev, nombre, apellidos: rest.join(' '), fotoPerfil: user.photoURL || '' }));
-        }
-      })
-      .catch((err) => console.error('Error loading profile:', err));
-  }, [user, authLoading]);
+    if (profile) {
+      setForm((prev) => ({ ...prev, ...profile }));
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      nombre: '',
+      apellidos: '',
+      fotoPerfil: '',
+    }));
+  }, [user, authLoading, profileLoading, profile]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -63,6 +64,14 @@ export function useEditProfileController(navigate) {
     setExito(false);
     try {
       await saveUserProfile(user, form);
+      setProfile((prev) => ({
+        ...(prev || {}),
+        nombre: form.nombre,
+        apellidos: form.apellidos,
+        fotoPerfil: form.fotoPerfil,
+        displayName: `${form.nombre} ${form.apellidos}`.trim(),
+      }));
+      await refreshProfile();
       setExito(true);
       setTimeout(() => setExito(false), 3000);
     } catch (err) {

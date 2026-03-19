@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import Navbar from "../components/shared/Navbar";
+import Navbar from "../components/shared/layout/Navbar";
 
 export default function HeaderOnlyLayout() {
   return (
