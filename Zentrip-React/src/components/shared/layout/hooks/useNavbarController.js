@@ -2,10 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../../../../config/routes";
 import { useProfileAvatar } from "../../../../hooks/useProfileAvatar";
+import { useAuth } from "../../../../context/AuthContext";
 
 export function useNavbarController() {
   const navigate = useNavigate();
   const { avatarSrc, initials } = useProfileAvatar();
+  const { logout } = useAuth();
 
   const notificationCount = 5;
   const messageCount = 0;
@@ -38,8 +40,13 @@ export function useNavbarController() {
     navigate(ROUTES.HOME);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setProfileMenuOpen(false);
+    try {
+      await logout();
+    } finally {
+      navigate(ROUTES.AUTH.LOGIN, { replace: true });
+    }
   };
 
   return {

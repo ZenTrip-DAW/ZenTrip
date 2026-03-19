@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../config/firebaseConfig';
 import { getUserProfile } from '../services/profileService';
 
@@ -61,6 +61,11 @@ export function AuthProvider({ children }) {
     refreshProfile(user);
   }, [authLoading, user?.uid]);
 
+  const logout = useCallback(async () => {
+    await signOut(auth);
+    setProfile(null);
+  }, []);
+
   const value = useMemo(
     () => ({
       user,
@@ -70,8 +75,9 @@ export function AuthProvider({ children }) {
       loading: authLoading || profileLoading,
       setProfile,
       refreshProfile,
+      logout,
     }),
-    [user, profile, authLoading, profileLoading, refreshProfile]
+    [user, profile, authLoading, profileLoading, refreshProfile, logout]
   );
 
   return (
