@@ -72,7 +72,7 @@ export function useEditProfileController(navigate) {
     setGuardando(false);
   };
 
-  const handleCancelar = () => navigate(ROUTES.HOME);
+  const handleCerrar = () => navigate(ROUTES.HOME);
 
   return {
     usuario: user,
@@ -86,7 +86,7 @@ export function useEditProfileController(navigate) {
     setActiveSection,
     handleChange,
     handleGuardar,
-    handleCancelar,
+    handleCerrar,
     setForm,
   };
 }

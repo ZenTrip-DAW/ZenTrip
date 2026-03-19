@@ -219,7 +219,7 @@ export default function EditProfileForm({
   guardando,
   onChange,
   onGuardar,
-  onCancelar,
+  onCerrar,
   setForm,
 }) {
   return (
@@ -242,8 +242,8 @@ export default function EditProfileForm({
         <AlertMessage message={exito ? '¡Perfil guardado correctamente!' : null} variant="success" />
 
         <div className="flex gap-3 pt-2">
-          <Button variant="ghost" type="button" onClick={onCancelar} className="flex-1">
-            Cancelar
+          <Button variant="ghost" type="button" onClick={onCerrar} className="flex-1">
+            Cerrar
           </Button>
           <Button variant="orange" type="submit" disabled={guardando} className="flex-1">
             {guardando ? 'Guardando...' : 'Guardar cambios'}

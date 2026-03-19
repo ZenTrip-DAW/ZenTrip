@@ -23,7 +23,7 @@ export default function EditProfile() {
     setActiveSection,
     handleChange,
     handleGuardar,
-    handleCancelar,
+    handleCerrar,
     setForm,
   } = useEditProfileController(navigate);
 
@@ -67,7 +67,7 @@ export default function EditProfile() {
               guardando={guardando}
               onChange={handleChange}
               onGuardar={handleGuardar}
-              onCancelar={handleCancelar}
+              onCerrar={handleCerrar}
               setForm={setForm}
             />
           </div>
