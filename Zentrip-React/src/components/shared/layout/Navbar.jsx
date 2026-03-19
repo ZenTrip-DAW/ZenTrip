@@ -58,7 +58,7 @@ const Header = () => {
             <div className="flex items-center gap-5 md:gap-6 ml-auto">
 
                 {/* Notificaciones */}
-                <button className="relative p-1">
+                <button className="relative p-1 cursor-pointer">
                     <svg width="25" height="25" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M16.0183 24.5C15.8132 24.8536 15.5188 25.1471 15.1646 25.3511C14.8104 25.5552 14.4088 25.6625 14 25.6625C13.5912 25.6625 13.1896 25.5552 12.8354 25.3511C12.4812 25.1471 12.1868 24.8536 11.9817 24.5M21 9.33334C21 7.47683 20.2625 5.69635 18.9497 4.3836C17.637 3.07084 15.8565 2.33334 14 2.33334C12.1435 2.33334 10.363 3.07084 9.05025 4.3836C7.7375 5.69635 7 7.47683 7 9.33334C7 17.5 3.5 19.8333 3.5 19.8333H24.5C24.5 19.8333 21 17.5 21 9.33334Z" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
