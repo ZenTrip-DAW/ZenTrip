@@ -22,9 +22,9 @@ const Header = () => {
 
     return (
         <header
-            className="w-full rounded-[9999px] h-16 flex items-center justify-between pl-3 pr-2 md:pl-5 md:pr-3 lg:pl-6 lg:pr-3"
+            className="-mt-1 w-full rounded-[9999px] h-16 flex items-center justify-between pl-3 pr-2 md:pl-5 md:pr-3 lg:pl-6 lg:pr-3"
             style={{
-                backgroundColor: "rgba(255, 255, 255, 0.62)",
+                backgroundColor: "rgba(255, 255, 255, 0.30)",
                 backdropFilter: "blur(8px)",
                 WebkitBackdropFilter: "blur(8px)",
             }}
