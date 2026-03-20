@@ -26,7 +26,7 @@ export default function Home() {
     >
       <div className="absolute left-6 top-28 sm:left-10 sm:top-32 md:left-14 md:top-36 lg:left-16 lg:top-40 max-w-130 text-left">
         <h1 className="title-h1-mobile md:title-h1-desktop text-sky-400">
-          ¡Bienvenido, {registeredName}!
+          ¡Bienvenid@, {registeredName}!
         </h1>
 
         <h2 className="title-h2-mobile md:title-h2-desktop text-sky-400 mt-2">
