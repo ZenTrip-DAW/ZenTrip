@@ -31,7 +31,7 @@ export default function Register() {
             <img src={heroImg} style={{ display: 'none' }} onLoad={() => setImagenCargada(true)} />
             {!imagenCargada && <SplashScreen />}
             {imagenCargada && (
-                <div className={`h-dvh md:min-h-screen flex items-center justify-center bg-brand-white px-4 md:px-8 lg:px-16 ${hasRegisterMessage ? 'overflow-y-auto' : 'overflow-hidden'} md:overflow-y-auto`}>
+                <div className={`h-dvh md:min-h-screen flex items-center justify-center bg-slate-50 px-4 md:px-8 lg:px-16 ${hasRegisterMessage ? 'overflow-y-auto' : 'overflow-hidden'} md:overflow-y-auto`}>
                     <div className="w-full max-w-5xl grid md:grid-cols-2 md:rounded-2xl md:shadow-[0_0_18px_rgba(15,23,42,0.30)] md:overflow-hidden">
                         <LoginLeftPanel
                             heroImg={heroImg}

@@ -8,7 +8,7 @@ export default function VerifyEmail() {
     const email = location.state?.email;
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+        <div className="min-h-screen flex items-center justify-center bg-slate-50">
             <div className="w-full max-w-lg mx-4 bg-white p-10 rounded-2xl shadow-2xl">
                 <h1 className="text-2xl font-semibold text-slate-800 mb-3">Verifica tu correo</h1>
                 <p className="text-slate-600 mb-6 leading-7">

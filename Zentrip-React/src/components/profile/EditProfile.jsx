@@ -48,7 +48,7 @@ export default function EditProfile() {
       <img src={heroImg} style={{ display: 'none' }} onLoad={() => setImagenCargada(true)} />
       {!imagenCargada && <SplashScreen />}
       {imagenCargada && (
-        <div className="h-dvh md:min-h-screen flex items-center justify-center bg-brand-white px-4 overflow-y-auto">
+        <div className="md:min-h-screen flex flex-col items-center pt-6 bg-slate-50 px-4 overflow-y-auto">
           <div className="w-full max-w-5xl grid md:grid-cols-2 md:rounded-2xl md:shadow-[0_0_18px_rgba(15,23,42,0.30)] md:overflow-hidden">
             <EditProfileLeftPanel
               heroImg={heroImg}
