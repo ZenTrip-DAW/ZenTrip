@@ -4,6 +4,7 @@ import GoogleIcon from '../../../ui/GoogleIcon';
 import AlertMessage from '../../../ui/AlertMessage';
 import PasswordVisibilityToggle from '../../../ui/PasswordVisibilityToggle';
 import { usePasswordVisibility } from '../../../../hooks/usePasswordVisibility';
+import { useState } from 'react';
 
 export default function RegisterForm({
     logoImg,
@@ -19,21 +20,16 @@ export default function RegisterForm({
 }) {
     const passwordVisibility = usePasswordVisibility();
     const confirmPasswordVisibility = usePasswordVisibility();
+    const [hasPasswordBeenFocused, setHasPasswordBeenFocused] = useState(false);
 
-    const validationErrors = [
-        errors.email,
-        Array.isArray(errors.password)
-            ? errors.password
-                .filter((rule) => rule.valid === false)
-                .map((rule) => rule.message)
-            : [],
-        errors.confirmPassword,
-        errors.policies,
-    ]
-        .flat()
-        .filter(Boolean);
+    const passwordRules = Array.isArray(errors.password) ? errors.password : [];
+    const passwordFieldError = typeof errors.password === 'string' ? errors.password : null;
+    const requiredPasswordRule = passwordRules.find((rule) => rule.key === 'requiredPassword');
+    const nonRequiredPasswordRules = passwordRules.filter((rule) => rule.key !== 'requiredPassword');
+    const shouldShowRequiredPassword = (!form.password && hasPasswordBeenFocused) || Boolean(requiredPasswordRule && requiredPasswordRule.valid === false);
+    const shouldShowPasswordRules = form.password.length > 0 && nonRequiredPasswordRules.length > 0;
 
-    const errorMessage = [...new Set([generalError, ...validationErrors].filter(Boolean))].join(' ');
+    const errorMessage = generalError || null;
 
     return (
         <div className="bg-brand-white flex flex-col justify-center px-6 py-6 md:px-10 md:py-12 w-full md:max-w-none max-w-md mx-auto">
@@ -69,7 +65,7 @@ export default function RegisterForm({
                 <Input
                     label={(
                         <>
-                            Email <span className="text-feedback-error">*</span>
+                            Email <span className="text-primary-3">*</span>
                         </>
                     )}
                     variant="light"
@@ -83,12 +79,19 @@ export default function RegisterForm({
                     onChange={onFieldChange}
                 />
 
+                {errors.email && (
+                    <p className="body-3 text-primary-3 flex items-center gap-2">
+                        <span aria-hidden="true">✕</span>
+                        <span>{errors.email}</span>
+                    </p>
+                )}
+
                 <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                         <Input
                             label={(
                                 <>
-                                    Contraseña <span className="text-feedback-error">*</span>
+                                    Contraseña <span className="text-primary-3">*</span>
                                 </>
                             )}
                             variant="light"
@@ -100,6 +103,7 @@ export default function RegisterForm({
                             placeholder="Introduce tu contraseña"
                             value={form.password}
                             onChange={onFieldChange}
+                            onFocus={() => setHasPasswordBeenFocused(true)}
                             rightElement={(
                                 <PasswordVisibilityToggle
                                     isVisible={passwordVisibility.isVisible}
@@ -107,31 +111,63 @@ export default function RegisterForm({
                                 />
                             )}
                         />
+
+                        {shouldShowRequiredPassword && (
+                            <p className="body-3 text-primary-3 flex items-center gap-2 mt-2">
+                                <span aria-hidden="true">✕</span>
+                                <span>{requiredPasswordRule?.message || 'La contraseña es obligatoria.'}</span>
+                            </p>
+                        )}
+
+                        {shouldShowPasswordRules && (
+                            <ul className="mt-2 space-y-1">
+                                {nonRequiredPasswordRules.map((rule) => (
+                                    <li
+                                        key={rule.key}
+                                        className={`body-3 flex items-center gap-2 whitespace-nowrap ${
+                                            rule.valid ? 'text-secondary-3' : 'text-primary-3'
+                                        }`}
+                                    >
+                                        <span aria-hidden="true" className={`shrink-0 ${rule.valid ? 'text-secondary-3' : 'text-primary-3'}`}>{rule.valid ? '✓' : '✕'}</span>
+                                        <span>{rule.message}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+
+                        {passwordFieldError && (
+                            <p className="body-3 text-primary-3 flex items-center gap-2 mt-2">
+                                <span aria-hidden="true">✕</span>
+                                <span>{passwordFieldError}</span>
+                            </p>
+                        )}
                     </div>
 
-                    <Input
-                        label={(
-                            <>
-                                Repetir Contraseña <span className="text-feedback-error">*</span>
-                            </>
-                        )}
-                        variant="light"
-                        size="md"
-                        labelClass="text-secondary-5"
-                        type={confirmPasswordVisibility.inputType}
-                        name="confirmPassword"
-                        placeholder="Confirma tu contraseña"
-                        value={form.confirmPassword}
-                        onChange={onFieldChange}
-                        rightElement={(
-                            <PasswordVisibilityToggle
-                                isVisible={confirmPasswordVisibility.isVisible}
-                                onToggle={confirmPasswordVisibility.toggleVisibility}
-                                showLabel="Mostrar confirmación de contraseña"
-                                hideLabel="Ocultar confirmación de contraseña"
-                            />
-                        )}
-                    />
+                    <div>
+                        <Input
+                            label={(
+                                <>
+                                    Repetir Contraseña <span className="text-primary-3">*</span>
+                                </>
+                            )}
+                            variant="light"
+                            size="md"
+                            labelClass="text-secondary-5"
+                            type={confirmPasswordVisibility.inputType}
+                            name="confirmPassword"
+                            placeholder="Confirma tu contraseña"
+                            value={form.confirmPassword}
+                            onChange={onFieldChange}
+                            rightElement={(
+                                <PasswordVisibilityToggle
+                                    isVisible={confirmPasswordVisibility.isVisible}
+                                    onToggle={confirmPasswordVisibility.toggleVisibility}
+                                    showLabel="Mostrar confirmación de contraseña"
+                                    hideLabel="Ocultar confirmación de contraseña"
+                                />
+                            )}
+                        />
+                    </div>
                 </div>
 
                 <div className="flex flex-col gap-1">
@@ -145,13 +181,20 @@ export default function RegisterForm({
                             className="mt-0.5 h-4 w-4 rounded border-neutral-2 text-primary-3 focus:ring-primary-3 cursor-pointer"
                         />
                         <label htmlFor="policies" className="body-3 text-neutral-4 cursor-pointer">
-                            <span className="text-feedback-error mr-1">*</span>
+                            <span className="text-primary-3 mr-1">*</span>
                             Acepto los{' '}
                             <button type="button" className="body-3 underline underline-offset-2 text-neutral-5 hover:text-neutral-6">términos de uso</button>{' '}
                             y la{' '}
                             <button type="button" className="body-3 underline underline-offset-2 text-neutral-5 hover:text-neutral-6">política de privacidad</button>.
                         </label>
                     </div>
+
+                    {errors.policies && (
+                        <p className="body-3 text-primary-3 flex items-center gap-2">
+                            <span aria-hidden="true">✕</span>
+                            <span>{errors.policies}</span>
+                        </p>
+                    )}
                 </div>
 
                 <AlertMessage message={errorMessage} variant="error" />

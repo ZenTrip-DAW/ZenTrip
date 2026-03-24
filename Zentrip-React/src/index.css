@@ -45,6 +45,13 @@
     --color-feedback-error-strong: #B91C1C;
     --color-feedback-error-bg: #FEF2F2;
     --color-feedback-error-border: #FECACA;
+
+    /* Green Auxiliary */
+    --color-auxiliary-green-1: #F0FDF4;
+    --color-auxiliary-green-2: #E0FFE2;
+    --color-auxiliary-green-3: #BBF7D0;
+    --color-auxiliary-green-4: #58EC8C;
+    --color-auxiliary-green-5: #2E7D32;
 }
 
 
@@ -346,6 +353,47 @@
 
     .border-feedback-error {
         border-color: var(--color-feedback-error-border);
+    }
+
+    /* Green Auxiliary */
+    .text-auxiliary-green-1 {
+        color: var(--color-auxiliary-green-1);
+    }
+
+    .text-auxiliary-green-2 {
+        color: var(--color-auxiliary-green-2);
+    }
+
+    .text-auxiliary-green-3 {
+        color: var(--color-auxiliary-green-3);
+    }
+
+    .text-auxiliary-green-4 {
+        color: var(--color-auxiliary-green-4);
+    }
+
+    .text-auxiliary-green-5 {
+        color: var(--color-auxiliary-green-5);
+    }
+
+    .bg-auxiliary-green-1 {
+        background-color: var(--color-auxiliary-green-1);
+    }
+
+    .bg-auxiliary-green-2 {
+        background-color: var(--color-auxiliary-green-2);
+    }
+
+    .bg-auxiliary-green-3 {
+        background-color: var(--color-auxiliary-green-3);
+    }
+
+    .bg-auxiliary-green-4 {
+        background-color: var(--color-auxiliary-green-4);
+    }
+
+    .bg-auxiliary-green-5 {
+        background-color: var(--color-auxiliary-green-5);
     }
 
     /*Font sizes*/

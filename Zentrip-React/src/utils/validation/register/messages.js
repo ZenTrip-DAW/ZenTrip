@@ -6,6 +6,7 @@ export const registerValidationMessages = {
   passwordUppercase: 'Debe tener al menos una mayúscula.',
   passwordSpecial: 'Debe tener al menos un carácter especial.',
   requiredPolicies: 'Debes aceptar los términos y la política de privacidad.',
+  requiredConfirmPassword: 'Debes confirmar la contraseña.',
   confirmPasswordMismatch: 'Las contraseñas deben coincidir.'
 };
 

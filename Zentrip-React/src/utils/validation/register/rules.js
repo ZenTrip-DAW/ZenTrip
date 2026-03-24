@@ -17,7 +17,7 @@ export function validatePassword(password, confirmPassword) {
   const rules = [
     {
       key: 'shortPassword',
-      valid: password && password.length >= 6,
+      valid: (password || '').length >= 6,
       message: registerValidationMessages.shortPassword,
     },
     {
@@ -30,26 +30,26 @@ export function validatePassword(password, confirmPassword) {
       valid: /[^A-Za-z0-9]/.test(password || ''),
       message: registerValidationMessages.passwordSpecial,
     },
+    {
+      key: 'confirmPasswordMismatch',
+      valid: (password || '') !== '' && (confirmPassword || '') !== '' && password === confirmPassword,
+      message: registerValidationMessages.confirmPasswordMismatch,
+    },
   ];
 
   if (!password) {
-    return [{ key: 'requiredPassword', valid: false, message: registerValidationMessages.requiredPassword }];
-  }
-
-  if (typeof confirmPassword === 'string') {
-    rules.push({
-      key: 'confirmPasswordMismatch',
-      valid: password === confirmPassword,
-      message: registerValidationMessages.confirmPasswordMismatch,
-    });
+    return [
+      { key: 'requiredPassword', valid: false, message: registerValidationMessages.requiredPassword },
+      ...rules.map((rule) => ({ ...rule, valid: false })),
+    ];
   }
 
   return rules;
 }
 
 export function validateConfirmPassword(confirmPassword, password) {
+  if (password && !confirmPassword) return registerValidationMessages.requiredConfirmPassword;
   if (!confirmPassword) return '';
-  if (confirmPassword !== password) return registerValidationMessages.confirmPasswordMismatch;
   return '';
 }
 
