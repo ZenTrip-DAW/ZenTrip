@@ -7,7 +7,8 @@ import { useAuth } from "../../../../context/AuthContext";
 export function useNavbarController() {
   const navigate = useNavigate();
   const { avatarSrc, initials } = useProfileAvatar();
-  const { logout } = useAuth();
+  const { profile, logout } = useAuth();
+  const avatarColor = profile?.avatarColor || "";
 
   const notificationCount = 5;
   const messageCount = 0;
@@ -56,6 +57,7 @@ export function useNavbarController() {
   return {
     avatarSrc,
     initials,
+    avatarColor,
     notificationCount,
     messageCount,
     menuOpen,

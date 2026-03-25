@@ -9,6 +9,7 @@ const EMPTY_PROFILE = {
   nombre: '',
   apellidos: '',
   fotoPerfil: '',
+  avatarColor: '',
   displayName: '',
 };
 
@@ -20,6 +21,7 @@ function mapProfile(data, firebaseUser) {
     nombre: data?.nombre || '',
     apellidos: data?.apellidos || '',
     fotoPerfil: data?.fotoPerfil || '',
+    avatarColor: data?.avatarColor || '',
     displayName: appDisplayName,
   };
 }

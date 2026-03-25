@@ -10,6 +10,7 @@ const Header = () => {
     const {
         avatarSrc,
         initials,
+        avatarColor,
         notificationCount,
         messageCount,
         menuOpen,
@@ -129,6 +130,8 @@ const Header = () => {
                             sizeClass="w-10 h-10"
                             containerClass="shrink-0"
                             backgroundClass="bg-secondary-5"
+                            backgroundColor={avatarColor}
+                            showColorOverlay
                             initialsClass="body-3 text-white"
                         />
                     </button>

@@ -10,10 +10,11 @@ const INITIAL_FORM = {
   username: '',
   bio: '',
   telefono: '',
-  pais: 'España',
+  pais: '',
   idioma: 'Español',
   moneda: 'EUR €',
   fotoPerfil: '',
+  avatarColor: '',
   viajesSoloGrupo: 'ambos',
   petFriendly: false,
 };
@@ -40,6 +41,7 @@ export function useEditProfileController(navigate) {
       nombre: '',
       apellidos: '',
       fotoPerfil: '',
+      avatarColor: '',
     }));
   }, [user, authLoading, profileLoading, profile]);
 
