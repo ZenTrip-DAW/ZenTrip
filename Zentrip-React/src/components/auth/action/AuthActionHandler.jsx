@@ -5,6 +5,7 @@ import {
 	verifyPasswordResetCode,
 } from 'firebase/auth';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import Input from '../../ui/Input';
 import { auth } from '../../../config/firebaseConfig';
 import { ROUTES } from '../../../config/routes';
 import { validatePassword } from '../../../utils/validation/register/rules';
@@ -18,17 +19,17 @@ const INITIAL_VIEW = {
 function mapActionError(code) {
 	switch (code) {
 		case 'auth/invalid-action-code':
-			return 'El enlace no es valido o ya fue utilizado.';
+			return 'El enlace no es válido o ya fue utilizado.';
 		case 'auth/expired-action-code':
 			return 'El enlace ha expirado. Solicita uno nuevo.';
 		case 'auth/user-disabled':
-			return 'Esta cuenta esta deshabilitada.';
+			return 'Esta cuenta está deshabilitada.';
 		case 'auth/user-not-found':
-			return 'No se encontro una cuenta asociada a este enlace.';
+			return 'No se encontró una cuenta asociada a este enlace.';
 		case 'auth/weak-password':
-			return 'La nueva contrasena no cumple los requisitos de seguridad.';
+			return 'La nueva contraseña no cumple los requisitos de seguridad.';
 		default:
-			return 'No pudimos completar la accion. Intentalo de nuevo.';
+			return 'No pudimos completar la acción. Inténtalo de nuevo.';
 	}
 }
 
@@ -133,8 +134,8 @@ export default function AuthActionHandler() {
 			await confirmPasswordReset(auth, oobCode, newPassword);
 			setView({
 				status: 'reset-success',
-				title: 'Contrasena actualizada',
-				message: 'Tu contrasena se cambio correctamente. Ya puedes iniciar sesion.',
+				title: 'Contraseña actualizada',
+				message: 'Tu contraseña se cambió correctamente. Ya puedes iniciar sesión.',
 			});
 		} catch (error) {
 			setResetError(mapActionError(error?.code));
@@ -144,9 +145,9 @@ export default function AuthActionHandler() {
 	};
 
 	return (
-		<div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-			<div className="w-full max-w-lg rounded-2xl bg-white p-8 shadow-2xl">
-				<h1 className="title-h2-desktop text-secondary-5 mb-3">{view.title}</h1>
+		<div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 md:px-8">
+			<div className="w-full max-w-lg rounded-2xl bg-white p-8 shadow-[0_0_18px_rgba(15,23,42,0.30)]">
+				<h1 className="title-h2-desktop text-secondary-5 mb-2">{view.title}</h1>
 				<p className="body-2 text-neutral-4 mb-6">{view.message}</p>
 
 				{view.status === 'loading' && (
@@ -159,69 +160,67 @@ export default function AuthActionHandler() {
 							Cuenta: <span className="text-secondary-5">{email}</span>
 						</p>
 
-						<div>
-							<label htmlFor="newPassword" className="body-3 text-secondary-5 mb-1 block">
-								Nueva contraseña
-							</label>
-							<input
-								id="newPassword"
-								type="password"
-								value={newPassword}
-								onChange={(event) => setNewPassword(event.target.value)}
-								className="w-full rounded-lg border border-neutral-2 px-3 py-2 body-3 focus:outline-none focus:ring-2 focus:ring-secondary-3"
-								placeholder="Escribe tu nueva contraseña"
-							/>
-							
-							{passwordRules.length > 0 && (
-								<ul className="mt-2 space-y-1">
-									{passwordRules.map((rule) => (
-										<li
-											key={rule.key}
-											className={`body-3 flex items-center gap-2 whitespace-nowrap ${
-												rule.valid ? 'text-secondary-3' : 'text-primary-3'
-											}`}
-										>
-											<span aria-hidden="true" className={`shrink-0 ${rule.valid ? 'text-secondary-3' : 'text-primary-3'}`}>{rule.valid ? '✓' : '✕'}</span>
-											<span>{rule.message}</span>
-										</li>
-									))}
-								</ul>
-							)}
-						</div>
+					<Input
+						label="Nueva contraseña"
+						variant="light"
+						size="md"
+						labelClass="text-secondary-5"
+						type="password"
+						name="newPassword"
+						autoComplete="new-password"
+						placeholder="Escribe tu nueva contraseña"
+						value={newPassword}
+						onChange={(event) => setNewPassword(event.target.value)}
+					/>
 
-						<div>
-							<label htmlFor="confirmPassword" className="body-3 text-secondary-5 mb-1 block">
-								Confirmar contraseña
-							</label>
-							<input
-								id="confirmPassword"
-								type="password"
-								value={confirmPassword}
-								onChange={(event) => setConfirmPassword(event.target.value)}
-								className="w-full rounded-lg border border-neutral-2 px-3 py-2 body-3 focus:outline-none focus:ring-2 focus:ring-secondary-3"
-								placeholder="Repite la nueva contraseña"
-							/>
-						</div>
+					{passwordRules.length > 0 && (
+						<ul className="mt-2 space-y-1">
+							{passwordRules.map((rule) => (
+								<li
+									key={rule.key}
+									className={`body-3 flex items-center gap-2 whitespace-nowrap ${
+										rule.valid ? 'text-secondary-3' : 'text-primary-3'
+									}`}
+								>
+									<span aria-hidden="true" className={`shrink-0 ${rule.valid ? 'text-secondary-3' : 'text-primary-3'}`}>{rule.valid ? '✓' : '✕'}</span>
+									<span>{rule.message}</span>
+								</li>
+							))}
+						</ul>
+					)}
 
-						{resetError && <p className="body-3 text-primary-3">{resetError}</p>}
+					<Input
+						label="Confirmar contraseña"
+						variant="light"
+						size="md"
+						labelClass="text-secondary-5"
+						type="password"
+						name="confirmPassword"
+						autoComplete="new-password"
+						placeholder="Repite la nueva contraseña"
+						value={confirmPassword}
+						onChange={(event) => setConfirmPassword(event.target.value)}
+					/>
 
-						<button
-							type="submit"
-							disabled={isSubmitting}
-							className="w-full rounded-lg bg-primary-3 text-white py-2.5 body-bold hover:bg-primary-4 transition disabled:opacity-60"
-						>
-							{isSubmitting ? 'Guardando...' : 'Guardar nueva contraseña'}
-						</button>
-					</form>
-				)}
+					{resetError && <p className="body-3 text-primary-3 flex items-center gap-2"><span aria-hidden="true">✕</span><span>{resetError}</span></p>}
+
+					<button
+						type="submit"
+						disabled={isSubmitting}
+						className="w-full rounded-full bg-primary-3 text-white py-2.5 body-bold hover:bg-primary-4 transition disabled:opacity-60"
+					>
+						{isSubmitting ? 'Guardando...' : 'Guardar nueva contraseña'}
+					</button>
+				</form>
+			)}
 
 				{(view.status === 'verify-success' || view.status === 'reset-success' || view.status === 'error') && (
 					<button
 						type="button"
 						onClick={() => navigate(ROUTES.AUTH.LOGIN)}
-						className="w-full rounded-lg bg-secondary-5 text-white py-2.5 body-bold hover:bg-secondary-6 transition"
+						className="w-full rounded-full bg-secondary-5 text-white py-2.5 body-bold hover:bg-secondary-6 transition"
 					>
-						Ir a iniciar sesion
+						Ir a iniciar sesión
 					</button>
 				)}
 			</div>
