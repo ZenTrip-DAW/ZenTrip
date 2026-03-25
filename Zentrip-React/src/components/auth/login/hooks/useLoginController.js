@@ -113,7 +113,7 @@ export function useLoginController(navigate) {
     try {
       // Firebase envía el email de recuperación al correo indicado
       // AQUÍ defines a qué URL vuelve el usuario después del correo
-      await sendResetPasswordEmail(normalizedEmail, `${window.location.origin}${ROUTES.AUTH.LOGIN}`);
+      await sendResetPasswordEmail(normalizedEmail, `${window.location.origin}${ROUTES.AUTH.ACTION}`);
       setInfo(loginFeedbackMessages.forgotPasswordSuccess);
     } catch (forgotError) {
       const { message } = getFirebaseErrorByField(forgotError);
@@ -155,7 +155,7 @@ export function useLoginController(navigate) {
       }
 
       // AQUÍ definimos la URL de vuelta para el correo de verificación
-      await sendVerificationEmail(user, `${window.location.origin}${ROUTES.AUTH.LOGIN}`);
+      await sendVerificationEmail(user, `${window.location.origin}${ROUTES.AUTH.ACTION}`);
       setInfo(loginFeedbackMessages.resendVerificationSuccess);
       setCanResendVerification(true);
       // Tras enviar, activamos espera de 90s para evitar límite de Firebase
