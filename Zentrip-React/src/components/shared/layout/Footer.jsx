@@ -9,7 +9,7 @@ export default function Footer() {
             <p className="body-3 mt-1 text-white/90">© 2026 ZenTrip</p>
           </div>
         </div>
-        <p className="body-2 text-white">Plan, Pack and Go.</p>
+        <p className="body-2 text-white">Plan, Pack & Go.</p>
       </div>
     </footer>
   );
