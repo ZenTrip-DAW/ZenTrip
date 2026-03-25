@@ -10,27 +10,39 @@ import EditProfile from './components/profile/EditProfile';
 import Landing from './components/landing/landing';
 import Home from './components/home/Home';
 import MainLayout from './layouts/MainLayout';
+import ProtectedRoute from './components/auth/guards/ProtectedRoute';
+import GuestRoute from './components/auth/guards/GuestRoute';
 
 const router = createBrowserRouter([
   { path: '/', element: <Landing /> },
   {
-    element: <MainLayout />,
+    element: <ProtectedRoute />,
     children: [
-      { path: ROUTES.HOME, element: <Home /> },
-      { path: ROUTES.PROFILE.EDIT, element: <EditProfile /> },
+      {
+        element: <MainLayout />,
+        children: [
+          { path: ROUTES.HOME, element: <Home /> },
+          { path: ROUTES.PROFILE.EDIT, element: <EditProfile /> },
+        ],
+      },
     ],
   },
   {
-    path: ROUTES.AUTH.LOGIN,
-    element: <Login />,
-  },
-  {
-    path: ROUTES.AUTH.REGISTER,
-    element: <Register />,
-  },
-  {
-    path: ROUTES.AUTH.VERIFY_EMAIL,
-    element: <VerifyEmail />,
+    element: <GuestRoute />,
+    children: [
+      {
+        path: ROUTES.AUTH.LOGIN,
+        element: <Login />,
+      },
+      {
+        path: ROUTES.AUTH.REGISTER,
+        element: <Register />,
+      },
+      {
+        path: ROUTES.AUTH.VERIFY_EMAIL,
+        element: <VerifyEmail />,
+      },
+    ],
   },
   {
     path: ROUTES.AUTH.ACTION,

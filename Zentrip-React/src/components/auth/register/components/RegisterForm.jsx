@@ -65,7 +65,7 @@ export default function RegisterForm({
                 <Input
                     label={(
                         <>
-                            Email <span className="text-primary-3">*</span>
+                            Email <span className="text-primary-3"></span>
                         </>
                     )}
                     variant="light"
@@ -91,7 +91,7 @@ export default function RegisterForm({
                         <Input
                             label={(
                                 <>
-                                    Contraseña <span className="text-primary-3">*</span>
+                                    Contraseña <span className="text-primary-3"></span>
                                 </>
                             )}
                             variant="light"
@@ -147,7 +147,7 @@ export default function RegisterForm({
                         <Input
                             label={(
                                 <>
-                                    Repetir Contraseña <span className="text-primary-3">*</span>
+                                    Repetir Contraseña <span className="text-primary-3"></span>
                                 </>
                             )}
                             variant="light"
@@ -182,7 +182,7 @@ export default function RegisterForm({
                             style={{ accentColor: 'var(--color-secondary-5)' }}
                         />
                         <label htmlFor="policies" className="body-3 text-neutral-4 cursor-pointer">
-                            <span className="text-primary-3 mr-1">*</span>
+                            <span className="text-primary-3 mr-1"></span>
                             Acepto los{' '}
                             <button type="button" className="body-3 underline underline-offset-2 text-neutral-5 hover:text-neutral-6">términos de uso</button>{' '}
                             y la{' '}

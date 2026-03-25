@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useNavbarController } from "./hooks/useNavbarController";
 import UserAvatar from "../../ui/UserAvatar";
 
@@ -15,10 +16,31 @@ const Header = () => {
         profileMenuOpen,
         toggleProfileMenu,
         toggleMobileMenu,
+        closeProfileMenu,
         handleGoToEditProfile,
         handleGoHome,
         handleLogout,
     } = useNavbarController();
+
+    const profileMenuRef = useRef(null);
+
+    useEffect(() => {
+        if (!profileMenuOpen) return undefined;
+
+        const handleClickOutside = (event) => {
+            if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+                closeProfileMenu();
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("touchstart", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("touchstart", handleClickOutside);
+        };
+    }, [profileMenuOpen, closeProfileMenu]);
 
     return (
         <header
@@ -95,7 +117,7 @@ const Header = () => {
                 </button>
 
                 {/* Avatar */}
-                <div className="relative shrink-0">
+                <div ref={profileMenuRef} className="relative shrink-0">
                     <button
                         className="cursor-pointer"
                         onClick={toggleProfileMenu}

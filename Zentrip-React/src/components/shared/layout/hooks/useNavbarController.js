@@ -30,6 +30,10 @@ export function useNavbarController() {
     });
   };
 
+  const closeProfileMenu = () => {
+    setProfileMenuOpen(false);
+  };
+
   const handleGoToEditProfile = () => {
     setProfileMenuOpen(false);
     navigate(ROUTES.PROFILE.EDIT);
@@ -58,6 +62,7 @@ export function useNavbarController() {
     profileMenuOpen,
     toggleProfileMenu,
     toggleMobileMenu,
+    closeProfileMenu,
     handleGoToEditProfile,
     handleGoHome,
     handleLogout,
