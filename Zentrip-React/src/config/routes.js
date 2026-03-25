@@ -4,6 +4,7 @@ export const ROUTES = {
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
     VERIFY_EMAIL: '/auth/verify-email',
+    ACTION: '/auth/action',
   },
   PROFILE: {
     EDIT: '/profile/edit',

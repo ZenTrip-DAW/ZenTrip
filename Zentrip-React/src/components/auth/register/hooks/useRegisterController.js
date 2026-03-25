@@ -85,7 +85,7 @@ export function useRegisterController(navigate) {
       const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
       const { user } = userCredential;
 
-      await sendEmailVerification(user, { url: `${window.location.origin}${ROUTES.AUTH.LOGIN}` });
+      await sendEmailVerification(user, { url: `${window.location.origin}${ROUTES.AUTH.ACTION}` });
       await getOrCreateUserProfile(user);
 
       const idToken = await user.getIdToken();

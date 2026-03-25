@@ -5,6 +5,7 @@ import { ROUTES } from './config/routes';
 import Register from './components/auth/register/Register';
 import Login from './components/auth/login/Login';
 import VerifyEmail from './components/auth/verify-email/VerifyEmail';
+import AuthActionHandler from './components/auth/action/AuthActionHandler';
 import EditProfile from './components/profile/EditProfile';
 import Landing from './components/landing/landing';
 import Home from './components/home/Home';
@@ -30,6 +31,10 @@ const router = createBrowserRouter([
   {
     path: ROUTES.AUTH.VERIFY_EMAIL,
     element: <VerifyEmail />,
+  },
+  {
+    path: ROUTES.AUTH.ACTION,
+    element: <AuthActionHandler />,
   },
 ]);
 
