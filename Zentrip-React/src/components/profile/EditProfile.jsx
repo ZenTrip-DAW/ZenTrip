@@ -55,6 +55,7 @@ export default function EditProfile() {
               logoImg={logoImg}
               usuario={usuario}
               form={form}
+              setForm={setForm}
               activeSection={activeSection}
               setActiveSection={setActiveSection}
             />

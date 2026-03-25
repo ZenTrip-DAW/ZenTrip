@@ -1,4 +1,4 @@
-import { User, Clock, Lock } from 'lucide-react';
+import { User, Clock, Lock, Paintbrush } from 'lucide-react';
 import GoogleIcon from '../../ui/GoogleIcon';
 
 const NAV_ITEMS = [
@@ -7,8 +7,17 @@ const NAV_ITEMS = [
   { key: 'seguridad', label: 'Seguridad', Icon: Lock },
 ];
 
-export default function EditProfileLeftPanel({ heroImg, logoImg, usuario, form, activeSection, setActiveSection }) {
+const AVATAR_COLORS = ['#4f6f8f', '#7ea3c9', '#5f8d7a', '#d9a67a', '#c48aa6'];
+
+export default function EditProfileLeftPanel({ heroImg, logoImg, usuario, form, setForm, activeSection, setActiveSection }) {
   const initials = `${form.nombre?.[0] || ''}${form.apellidos?.[0] || ''}`.toUpperCase() || '?';
+  const avatarBackground = form.avatarColor || AVATAR_COLORS[0];
+
+  const handleAvatarColorChange = () => {
+    const currentIndex = AVATAR_COLORS.indexOf(avatarBackground);
+    const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % AVATAR_COLORS.length;
+    setForm((prev) => ({ ...prev, avatarColor: AVATAR_COLORS[nextIndex] }));
+  };
 
   return (
     <div className="relative hidden md:flex flex-col p-10 pt-8 text-white overflow-hidden min-h-130 gap-6">
@@ -41,19 +50,39 @@ export default function EditProfileLeftPanel({ heroImg, logoImg, usuario, form, 
       {/* User card */}
       <div className="relative z-10 flex items-center gap-3 rounded-2xl bg-white/10 border border-white/10 px-4 py-3">
         <div className="relative shrink-0">
-          <div className="h-11 w-11 rounded-full bg-secondary-5 flex items-center justify-center border-2 border-white/20">
+          <div
+            className="relative h-11 w-11 rounded-full bg-secondary-5 flex items-center justify-center overflow-hidden"
+            style={avatarBackground ? { backgroundColor: avatarBackground } : undefined}
+          >
             {form.fotoPerfil ? (
-              <img
-                src={form.fotoPerfil}
-                alt="avatar"
-                className="h-full w-full rounded-full object-cover"
-                onError={(e) => { e.target.style.display = 'none'; }}
-              />
+              <>
+                <img
+                  src={form.fotoPerfil}
+                  alt="avatar"
+                  className="h-full w-full rounded-full object-cover"
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+                <span
+                  className="absolute inset-0 rounded-full"
+                  style={{ backgroundColor: avatarBackground, opacity: 0.35 }}
+                />
+              </>
             ) : (
               <span className="text-sm font-bold text-white select-none">{initials}</span>
             )}
           </div>
-          <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-primario-3 border-2 border-slate-900" />
+          <button
+            type="button"
+            aria-label="Cambiar color del avatar"
+            className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-white text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer hover:bg-slate-100 transition"
+            onClick={handleAvatarColorChange}
+          >
+            <Paintbrush size={11} />
+          </button>
+          <span
+            className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-slate-900"
+            style={{ backgroundColor: avatarBackground }}
+          />
         </div>
         <div className="min-w-0">
           <p className="body-bold text-white truncate">

@@ -14,6 +14,7 @@ function buildDefaultProfile(user) {
     telefono: '',
     pais: '',
     fotoPerfil: user.photoURL || '',
+    avatarColor: '',
     idioma: 'Español',
     moneda: 'EUR €',
     viajesSoloGrupo: 'ambos',

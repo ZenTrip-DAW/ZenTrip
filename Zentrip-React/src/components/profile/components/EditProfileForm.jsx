@@ -59,7 +59,7 @@ function AvatarUpload({ value, fullName, onUploaded }) {
   return (
     <div>
       <label className="block body-bold text-slate-600 mb-1">Foto de perfil</label>
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
         <UserAvatar
           src={value}
           alt="Avatar"
@@ -68,12 +68,12 @@ function AvatarUpload({ value, fullName, onUploaded }) {
           containerClass="border-2 border-slate-200 shrink-0"
           initialsClass="body-semibold text-slate-500"
         />
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 items-center sm:items-start">
           <button
             type="button"
             onClick={() => inputRef.current.click()}
             disabled={uploading}
-            className="text-sm font-medium text-orange-500 hover:text-orange-600 disabled:opacity-50 cursor-pointer text-left"
+            className="text-sm font-medium text-orange-500 hover:text-orange-600 disabled:opacity-50 cursor-pointer text-center sm:text-left"
           >
             {uploading ? 'Subiendo...' : 'Cambiar foto'}
           </button>
@@ -81,7 +81,7 @@ function AvatarUpload({ value, fullName, onUploaded }) {
             <button
               type="button"
               onClick={() => onUploaded('')}
-              className="text-xs text-slate-400 hover:text-red-400 cursor-pointer text-left"
+              className="text-xs text-slate-400 hover:text-red-400 cursor-pointer text-center sm:text-left"
             >
               Eliminar
             </button>
@@ -99,7 +99,15 @@ function PersonalSection({ form, fieldErrors, onChange, setForm }) {
     <>
       <SectionDivider label="Información personal" />
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="mt-2">
+        <AvatarUpload
+          value={form.fotoPerfil}
+          fullName={`${form.nombre || ''} ${form.apellidos || ''}`}
+          onUploaded={(url) => setForm((p) => ({ ...p, fotoPerfil: url }))}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {PERSONAL_FIELDS.map((field) => (
           <Input
             key={field.name}
@@ -116,18 +124,12 @@ function PersonalSection({ form, fieldErrors, onChange, setForm }) {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className={LABEL_CLASS}>País</label>
-          <select name="pais" value={form.pais} onChange={onChange} className={SELECT_CLASS}>
-            {PAISES.map((p) => <option key={p} value={p}>{p}</option>)}
-          </select>
-        </div>
-        <AvatarUpload
-          value={form.fotoPerfil}
-          fullName={`${form.nombre || ''} ${form.apellidos || ''}`}
-          onUploaded={(url) => setForm((p) => ({ ...p, fotoPerfil: url }))}
-        />
+      <div>
+        <label className={LABEL_CLASS}>País</label>
+        <select name="pais" value={form.pais} onChange={onChange} className={SELECT_CLASS}>
+          <option value="" disabled>Seleccione país</option>
+          {PAISES.map((p) => <option key={p} value={p}>{p}</option>)}
+        </select>
       </div>
 
       <div>
