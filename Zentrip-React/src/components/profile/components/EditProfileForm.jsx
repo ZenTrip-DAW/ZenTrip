@@ -223,16 +223,19 @@ export default function EditProfileForm({
   error,
   exito,
   guardando,
+  isOnboarding,
   onChange,
   onGuardar,
   onCerrar,
   setForm,
 }) {
+  const isCloseEnabled = form.nombre.trim() !== '';
+
   return (
     <div className="bg-white flex flex-col justify-center px-6 py-8 md:px-10 w-full overflow-y-auto max-h-screen">
-      <h2 className="title-h2-desktop text-secondary-5">Editar Perfil</h2>
+      <h2 className="title-h2-desktop text-secondary-5">{isOnboarding ? 'Completa tu perfil' : 'Editar Perfil'}</h2>
       <p className="body-2 text-slate-500 mb-4">
-        Actualiza tu información personal y preferencias de viaje
+        {isOnboarding ? 'Cuéntanos un poco sobre ti para empezar' : 'Actualiza tu información personal y preferencias de viaje'}
       </p>
 
       <form className="space-y-4" onSubmit={onGuardar}>
@@ -248,8 +251,15 @@ export default function EditProfileForm({
         <AlertMessage message={exito ? '¡Perfil guardado correctamente!' : null} variant="success" />
 
         <div className="flex gap-3 pt-2">
-          <Button variant="ghost" type="button" onClick={onCerrar} className="flex-1">
-            Cerrar
+          <Button
+            variant="ghost"
+            type="button"
+            onClick={onCerrar}
+            disabled={isOnboarding && !isCloseEnabled}
+            className="flex-1"
+            title={isOnboarding && !isCloseEnabled ? 'Introduce tu nombre para continuar' : undefined}
+          >
+            {isOnboarding ? 'Ir al inicio' : 'Cerrar'}
           </Button>
           <Button variant="orange" type="submit" disabled={guardando} className="flex-1">
             {guardando ? 'Guardando...' : 'Guardar cambios'}

@@ -8,7 +8,7 @@ import SplashScreen from '../shared/SplashScreen';
 const heroImg = '/img/background/editProfile/editProfile.jpeg';
 const logoImg = '/img/logo/logo-sin-texto-png.png';
 
-export default function EditProfile() {
+export default function EditProfile({ isOnboarding = false }) {
   const navigate = useNavigate();
   const [imagenCargada, setImagenCargada] = useState(false);
   const {
@@ -66,6 +66,7 @@ export default function EditProfile() {
               error={error}
               exito={exito}
               guardando={guardando}
+              isOnboarding={isOnboarding}
               onChange={handleChange}
               onGuardar={handleGuardar}
               onCerrar={handleCerrar}

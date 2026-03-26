@@ -8,5 +8,6 @@ export const ROUTES = {
   },
   PROFILE: {
     EDIT: '/profile/edit',
+    SETUP: '/profile/setup',
   },
 };

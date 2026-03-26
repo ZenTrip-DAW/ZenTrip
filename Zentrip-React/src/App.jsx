@@ -25,6 +25,7 @@ const router = createBrowserRouter([
           { path: ROUTES.PROFILE.EDIT, element: <EditProfile /> },
         ],
       },
+      { path: ROUTES.PROFILE.SETUP, element: <EditProfile isOnboarding /> },
     ],
   },
   {
