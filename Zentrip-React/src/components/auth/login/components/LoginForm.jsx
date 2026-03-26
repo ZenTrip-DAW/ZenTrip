@@ -101,7 +101,7 @@ export default function LoginForm({
         <div className="flex justify-center">
           <ReCAPTCHA
             key={recaptchaKey}
-            sitekey={VITE_RECAPTCHA_SITE_KEY}
+            sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
             onChange={onRecaptchaChange}
           />
         </div>
