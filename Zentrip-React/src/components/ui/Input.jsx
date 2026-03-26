@@ -22,6 +22,7 @@ const SIZE_STYLES = {
 const Input = ({
   label,
   error,
+  required,
   variant = 'dark',
   size = 'md',
   className = '',
@@ -44,7 +45,12 @@ const Input = ({
 
   return (
     <div>
-      {label && <label className={labelClassName}>{label}</label>}
+      {label && (
+        <label className={labelClassName}>
+          {label}
+          {required && <span className="text-red-500 ml-0.5">*</span>}
+        </label>
+      )}
       <div className="relative">
         <input className={inputClass} {...props} />
         {rightElement && (

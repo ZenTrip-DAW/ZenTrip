@@ -27,12 +27,16 @@ export function useEditProfileController(navigate) {
   const [fieldErrors, setFieldErrors] = useState({});
   const [activeSection, setActiveSection] = useState('datosPersonales');
   const [form, setForm] = useState(INITIAL_FORM);
+  const [hasSavedOnce, setHasSavedOnce] = useState(false);
 
   useEffect(() => {
     if (authLoading || profileLoading || !user) return;
 
     if (profile) {
       setForm((prev) => ({ ...prev, ...profile }));
+      if (profile.nombre?.trim() && profile.apellidos?.trim() && profile.username?.trim()) {
+        setHasSavedOnce(true);
+      }
       return;
     }
 
@@ -58,6 +62,10 @@ export function useEditProfileController(navigate) {
     const errors = validateProfileForm(form);
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
+      const personalFields = ['nombre', 'apellidos', 'username', 'telefono', 'fotoPerfil'];
+      if (Object.keys(errors).some((k) => personalFields.includes(k))) {
+        setActiveSection('datosPersonales');
+      }
       return;
     }
 
@@ -70,10 +78,12 @@ export function useEditProfileController(navigate) {
         ...(prev || {}),
         nombre: form.nombre,
         apellidos: form.apellidos,
+        username: form.username,
         fotoPerfil: form.fotoPerfil,
         displayName: `${form.nombre} ${form.apellidos}`.trim(),
       }));
       await refreshProfile();
+      setHasSavedOnce(true);
       setExito(true);
       setTimeout(() => setExito(false), 3000);
     } catch (err) {
@@ -94,6 +104,7 @@ export function useEditProfileController(navigate) {
     fieldErrors,
     form,
     activeSection,
+    hasSavedOnce,
     setActiveSection,
     handleChange,
     handleGuardar,

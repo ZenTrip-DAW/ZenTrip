@@ -5,23 +5,22 @@ import { getUserProfile } from '../services/profileService';
 
 const AuthContext = createContext(null);
 
-const EMPTY_PROFILE = {
-  nombre: '',
-  apellidos: '',
-  fotoPerfil: '',
-  avatarColor: '',
-  displayName: '',
-};
-
-function mapProfile(data, firebaseUser) {
+function mapProfile(data) {
   const appDisplayName = `${data?.nombre || ''} ${data?.apellidos || ''}`.trim();
 
   return {
-    ...EMPTY_PROFILE,
     nombre: data?.nombre || '',
     apellidos: data?.apellidos || '',
+    username: data?.username || '',
+    bio: data?.bio || '',
+    telefono: data?.telefono || '',
+    pais: data?.pais || '',
+    idioma: data?.idioma || 'Español',
+    moneda: data?.moneda || 'EUR €',
     fotoPerfil: data?.fotoPerfil || '',
     avatarColor: data?.avatarColor || '',
+    viajesSoloGrupo: data?.viajesSoloGrupo || 'ambos',
+    petFriendly: data?.petFriendly || false,
     displayName: appDisplayName,
   };
 }
@@ -42,9 +41,9 @@ export function AuthProvider({ children }) {
     setProfileLoading(true);
     try {
       const data = await getUserProfile(firebaseUser.uid);
-      setProfile(mapProfile(data, firebaseUser));
+      setProfile(mapProfile(data));
     } catch {
-      setProfile(mapProfile(null, firebaseUser));
+      setProfile(mapProfile(null));
     } finally {
       setProfileLoading(false);
     }

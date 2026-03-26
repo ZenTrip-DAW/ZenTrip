@@ -12,9 +12,9 @@ const MONEDAS = ['EUR €', 'USD $', 'GBP £', 'JPY ¥', 'MXN $'];
 const PAISES = getNames().sort();
 
 const PERSONAL_FIELDS = [
-  { name: 'nombre', label: 'Nombre', type: 'text', placeholder: 'Tu nombre' },
-  { name: 'apellidos', label: 'Apellidos', type: 'text', placeholder: 'Tus apellidos' },
-  { name: 'username', label: 'Nombre de usuario', type: 'text', placeholder: 'usuario123' },
+  { name: 'nombre', label: 'Nombre', type: 'text', placeholder: 'Tu nombre', required: true },
+  { name: 'apellidos', label: 'Apellidos', type: 'text', placeholder: 'Tus apellidos', required: true },
+  { name: 'username', label: 'Nombre de usuario', type: 'text', placeholder: 'usuario123', required: true },
   { name: 'telefono', label: 'Teléfono', type: 'tel', placeholder: '+34 600 000 000' },
 ];
 
@@ -94,7 +94,15 @@ function AvatarUpload({ value, fullName, onUploaded }) {
   );
 }
 
+const REQUIRED_CHECKLIST = [
+  { name: 'nombre', label: 'Nombre' },
+  { name: 'apellidos', label: 'Apellidos' },
+  { name: 'username', label: 'Nombre de usuario' },
+];
+
 function PersonalSection({ form, fieldErrors, onChange, setForm }) {
+  const pending = REQUIRED_CHECKLIST.filter((f) => !form[f.name]?.trim());
+
   return (
     <>
       <SectionDivider label="Información personal" />
@@ -120,9 +128,21 @@ function PersonalSection({ form, fieldErrors, onChange, setForm }) {
             value={form[field.name]}
             onChange={onChange}
             error={fieldErrors[field.name]}
+            required={field.required}
           />
         ))}
       </div>
+
+      {pending.length > 0 && (
+        <ul className="space-y-1">
+          {pending.map((f) => (
+            <li key={f.name} className="body-3 flex items-center gap-2 text-primary-3">
+              <span aria-hidden="true" className="shrink-0">✕</span>
+              <span>{f.label} es obligatorio</span>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <div>
         <label className={LABEL_CLASS}>País</label>
@@ -224,15 +244,15 @@ export default function EditProfileForm({
   exito,
   guardando,
   isOnboarding,
+  hasSavedOnce,
   onChange,
   onGuardar,
   onCerrar,
   setForm,
 }) {
-  const isCloseEnabled = form.nombre.trim() !== '';
 
   return (
-    <div className="bg-white flex flex-col justify-center px-6 py-8 md:px-10 w-full overflow-y-auto max-h-screen">
+    <div className="bg-white flex flex-col justify-center px-6 py-8 md:px-10 w-full">
       <h2 className="title-h2-desktop text-secondary-5">{isOnboarding ? 'Completa tu perfil' : 'Editar Perfil'}</h2>
       <p className="body-2 text-slate-500 mb-4">
         {isOnboarding ? 'Cuéntanos un poco sobre ti para empezar' : 'Actualiza tu información personal y preferencias de viaje'}
@@ -255,9 +275,9 @@ export default function EditProfileForm({
             variant="ghost"
             type="button"
             onClick={onCerrar}
-            disabled={isOnboarding && !isCloseEnabled}
+            disabled={isOnboarding && !hasSavedOnce}
             className="flex-1"
-            title={isOnboarding && !isCloseEnabled ? 'Introduce tu nombre para continuar' : undefined}
+            title={isOnboarding && !hasSavedOnce ? 'Guarda tu perfil para continuar' : undefined}
           >
             {isOnboarding ? 'Ir al inicio' : 'Cerrar'}
           </Button>

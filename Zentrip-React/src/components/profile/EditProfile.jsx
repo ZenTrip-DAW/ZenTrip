@@ -20,6 +20,7 @@ export default function EditProfile({ isOnboarding = false }) {
     fieldErrors,
     form,
     activeSection,
+    hasSavedOnce,
     setActiveSection,
     handleChange,
     handleGuardar,
@@ -67,6 +68,7 @@ export default function EditProfile({ isOnboarding = false }) {
               exito={exito}
               guardando={guardando}
               isOnboarding={isOnboarding}
+              hasSavedOnce={hasSavedOnce}
               onChange={handleChange}
               onGuardar={handleGuardar}
               onCerrar={handleCerrar}
