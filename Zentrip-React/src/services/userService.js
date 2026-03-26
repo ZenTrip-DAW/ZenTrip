@@ -38,6 +38,6 @@ export async function getOrCreateUserProfile(user) {
 
 export async function getPostLoginPath(user) {
   const { profile, isNew } = await getOrCreateUserProfile(user);
-  if (isNew) return ROUTES.PROFILE.EDIT;
-  return profile.perfilCompleto ? ROUTES.HOME : ROUTES.PROFILE.EDIT;
+  if (isNew) return ROUTES.PROFILE.SETUP;
+  return profile.perfilCompleto ? ROUTES.HOME : ROUTES.PROFILE.SETUP;
 }
