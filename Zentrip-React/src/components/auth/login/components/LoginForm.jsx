@@ -98,13 +98,13 @@ export default function LoginForm({
           </div>
         </div>
 
-        {/* <div className="flex justify-center">
+        <div className="flex justify-center">
           <ReCAPTCHA
             key={recaptchaKey}
-            sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+            sitekey={VITE_RECAPTCHA_SITE_KEY}
             onChange={onRecaptchaChange}
           />
-        </div> */}
+        </div>
 
         <AlertMessage message={error} variant="error" />
         <AlertMessage message={info} variant="success" />
