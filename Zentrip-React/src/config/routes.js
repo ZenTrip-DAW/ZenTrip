@@ -10,4 +10,7 @@ export const ROUTES = {
     EDIT: '/profile/edit',
     SETUP: '/profile/setup',
   },
+  TRIPS: {
+    CREATE: '/trips/create',
+  },
 };

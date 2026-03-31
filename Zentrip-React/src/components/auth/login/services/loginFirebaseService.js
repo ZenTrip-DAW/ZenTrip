@@ -1,5 +1,6 @@
 import {
   GoogleAuthProvider,
+  reload,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -14,6 +15,12 @@ export { getPostLoginPath };
 export async function signInWithEmail(email, password) {
   const userCredential = await signInWithEmailAndPassword(auth, email, password);
   return userCredential.user;
+}
+
+export async function refreshAuthenticatedUser(user) {
+  if (!user) return null;
+  await reload(user);
+  return auth.currentUser || user;
 }
 
 export async function signInWithGoogle() {

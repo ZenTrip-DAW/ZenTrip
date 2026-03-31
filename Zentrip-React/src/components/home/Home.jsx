@@ -1,6 +1,9 @@
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { ROUTES } from "../../config/routes";
 
 export default function Home() {
+  const navigate = useNavigate();
   const { profile, user } = useAuth();
   const registeredName =
     profile?.nombre ||
@@ -41,6 +44,7 @@ export default function Home() {
 
         <button
           type="button"
+          onClick={() => navigate(ROUTES.TRIPS.CREATE)}
           className="mt-5 bg-primary-3 hover:bg-orange-400 text-white body-2-semibold px-5 py-2 rounded-full transition duration-200 shadow-md hover:shadow-lg active:scale-[0.98] cursor-pointer"
         >
           Crear un nuevo viaje
