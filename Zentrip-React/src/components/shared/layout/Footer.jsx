@@ -10,7 +10,6 @@ export default function Footer() {
           </div>
         </div>
         <p className="body-2 text-white">Plan, Pack & Go.</p>
-        <p>Esto se tiene que borrar</p>
       </div>
     </footer>
   );

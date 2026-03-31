@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { onAuthStateChanged, reload, signOut } from 'firebase/auth';
 import { auth } from '../config/firebaseConfig';
 import { getUserProfile } from '../services/profileService';
 
@@ -50,11 +50,37 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   useEffect(() => {
+    let isMounted = true;
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      setAuthLoading(false);
+      const syncAuthState = async () => {
+        if (!firebaseUser) {
+          if (isMounted) {
+            setUser(null);
+            setAuthLoading(false);
+          }
+          return;
+        }
+
+        try {
+          await reload(firebaseUser);
+        } catch {
+          // Si reload falla por red, mantenemos el usuario actual para no bloquear la sesión.
+        }
+
+        if (isMounted) {
+          setUser(auth.currentUser || firebaseUser);
+          setAuthLoading(false);
+        }
+      };
+
+      syncAuthState();
     });
-    return () => unsubscribe();
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {

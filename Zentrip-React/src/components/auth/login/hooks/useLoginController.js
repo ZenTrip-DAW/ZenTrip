@@ -3,6 +3,7 @@ import { ROUTES } from '../../../../config/routes';
 import { getFirebaseErrorByField } from '../../../../utils/auth/firebaseErrors';
 import { loginFeedbackMessages } from '../../../../utils/validation/login/messages';
 import {
+  refreshAuthenticatedUser,
   getPostLoginPath,
   saveUserToken,
   sendResetPasswordEmail,
@@ -86,8 +87,9 @@ export function useLoginController(navigate) {
     try {
       // Intentamos autenticación con Firebase
       const user = await signInWithEmail(normalizedEmail, normalizedPassword);
+      const refreshedUser = await refreshAuthenticatedUser(user);
 
-      if (!user.emailVerified) {
+      if (!refreshedUser.emailVerified) {
         // Si no verificó correo, mostramos aviso y habilitamos el botón de reenviar
         setError(loginFeedbackMessages.emailNotVerified);
         setCanResendVerification(true);
@@ -96,8 +98,8 @@ export function useLoginController(navigate) {
       }
 
       // Si todo salió bien, guardamos token y vamos a la ruta final
-      await saveUserToken(user);
-      navigate(await getPostLoginPath(user));
+      await saveUserToken(refreshedUser);
+      navigate(await getPostLoginPath(refreshedUser));
     } catch (loginError) {
       setCanResendVerification(false);
       const { message } = getFirebaseErrorByField(loginError);
@@ -157,8 +159,9 @@ export function useLoginController(navigate) {
     try {
       // Reautenticamos para poder reenviar verificación
       const user = await signInWithEmail(normalizedEmail, normalizedPassword);
+      const refreshedUser = await refreshAuthenticatedUser(user);
 
-      if (user.emailVerified) {
+      if (refreshedUser.emailVerified) {
         setInfo(loginFeedbackMessages.emailAlreadyVerified);
         setCanResendVerification(false);
         await signOutUser();
@@ -166,7 +169,7 @@ export function useLoginController(navigate) {
       }
 
       // AQUÍ definimos la URL de vuelta para el correo de verificación
-      await sendVerificationEmail(user, `${window.location.origin}${ROUTES.AUTH.ACTION}`);
+      await sendVerificationEmail(refreshedUser, `${window.location.origin}${ROUTES.AUTH.ACTION}`);
       setInfo(loginFeedbackMessages.resendVerificationSuccess);
       setCanResendVerification(true);
       // Tras enviar, activamos espera de 90s para evitar límite de Firebase
