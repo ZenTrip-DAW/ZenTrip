@@ -1,7 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../../config/routes';
 
+// Nombre para guardar el progreso en el navegador.
+const STORAGE_KEY = 'zentrip:create-trip-wizard';
+
+// Valores por defecto del formulario.
 const INITIAL_FORM = {
   nombre: '',
   origen: '',
@@ -11,20 +15,53 @@ const INITIAL_FORM = {
   divisa: 'EUR - EURO',
   presupuesto: '',
   conMascota: false,
+  invitados: [],
 };
 
 export function useCreateTripController() {
   const navigate = useNavigate();
-  const [form, setForm] = useState(INITIAL_FORM);
+
+  // Paso actual del formulario (0, 1, 2).
+  const [step, setStep] = useState(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return 0;
+      const saved = JSON.parse(raw);
+      return Number.isInteger(saved?.step) ? Math.min(Math.max(saved.step, 0), 2) : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  // Todos los datos que va rellenando el usuario.
+  const [form, setForm] = useState(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return INITIAL_FORM;
+      const saved = JSON.parse(raw);
+      return saved?.form ? { ...INITIAL_FORM, ...saved.form } : INITIAL_FORM;
+    } catch {
+      return INITIAL_FORM;
+    }
+  });
+
+  // Errores para mostrar debajo de los campos.
   const [fieldErrors, setFieldErrors] = useState({});
 
+  // Cada cambio se guarda para no perder datos al recargar.
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ step, form }));
+  }, [step, form]);
 
+  // Actualiza el campo que se está editando.
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    // Si el usuario corrige, se limpia su error.
     if (fieldErrors[name]) setFieldErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
+  // Reglas básicas para poder pasar al siguiente paso.
   const validate = () => {
     const errors = {};
     if (!form.nombre.trim()) errors.nombre = 'El nombre del viaje es obligatorio.';
@@ -35,23 +72,38 @@ export function useCreateTripController() {
     return errors;
   };
 
+  // Ir al siguiente paso.
   const handleSiguiente = (e) => {
-    e.preventDefault();
-    const errors = validate();
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
-      return;
+    if (e?.preventDefault) e.preventDefault();
+
+    if (step === 0) {
+      const errors = validate();
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
+        return;
+      }
     }
-    navigate(ROUTES.TRIPS.INVITACIONES);
+
+    if (step < 2) {
+      setStep((s) => s + 1);
+    }
   };
 
-  const handleCancelar = () => navigate(ROUTES.HOME);
+  // Volver al paso anterior o salir a Home.
+  const handleAtras = () => {
+    if (step > 0) {
+      setStep((s) => s - 1);
+    } else {
+      navigate(ROUTES.HOME);
+    }
+  };
 
   return {
+    step,
     form,
     fieldErrors,
     handleChange,
     handleSiguiente,
-    handleCancelar,
+    handleAtras,
   };
 }
