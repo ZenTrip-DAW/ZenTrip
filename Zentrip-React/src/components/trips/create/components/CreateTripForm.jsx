@@ -2,7 +2,6 @@ import currency from 'currency.js';
 import Select from 'react-select';
 import Input from '../../../ui/Input';
 import Button from '../../../ui/Button';
-import AlertMessage from '../../../ui/AlertMessage';
 import { DIVISAS } from '../../../../utils/divisas';
 
 export function formatCurrency(amount, divisaCode) {
@@ -41,8 +40,6 @@ const selectStyles = {
 export default function CreateTripForm({
   form,
   fieldErrors,
-  error,
-  guardando,
   onChange,
   onSiguiente,
   onCancelar,
@@ -172,15 +169,14 @@ export default function CreateTripForm({
         </div>
       </div>
 
-      <AlertMessage message={error} variant="error" />
 
       {/* Botones */}
       <div className="flex justify-end gap-3">
         <Button variant="ghost" type="button" onClick={onCancelar} className="w-auto px-6">
           Cancelar
         </Button>
-        <Button variant="orange" type="submit" disabled={guardando} className="w-auto px-8">
-          {guardando ? 'Guardando...' : 'Siguiente'}
+        <Button variant="orange" type="submit" className="w-auto px-8">
+          Siguiente
         </Button>
       </div>
     </form>

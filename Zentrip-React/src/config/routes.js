@@ -12,5 +12,7 @@ export const ROUTES = {
   },
   TRIPS: {
     CREATE: '/trips/create',
+    INVITACIONES: '/trips/invitaciones',
+    RESUMEN: '/trips/resumen',
   },
 };

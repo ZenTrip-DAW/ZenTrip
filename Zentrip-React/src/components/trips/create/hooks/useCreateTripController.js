@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../../context/AuthContext';
-import { createTrip } from '../../../../services/tripService';
 import { ROUTES } from '../../../../config/routes';
 
 const INITIAL_FORM = {
@@ -16,12 +14,10 @@ const INITIAL_FORM = {
 };
 
 export function useCreateTripController() {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState(INITIAL_FORM);
   const [fieldErrors, setFieldErrors] = useState({});
-  const [guardando, setGuardando] = useState(false);
-  const [error, setError] = useState(null);
+
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -39,28 +35,14 @@ export function useCreateTripController() {
     return errors;
   };
 
-  const handleSiguiente = async (e) => {
+  const handleSiguiente = (e) => {
     e.preventDefault();
     const errors = validate();
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       return;
     }
-
-    setGuardando(true);
-    setError(null);
-    try {
-      await createTrip(user.uid, {
-        ...form,
-        presupuesto: form.presupuesto ? Number(form.presupuesto) : null,
-      });
-      navigate(ROUTES.HOME);
-    } catch (err) {
-      console.error('Error al crear el viaje:', err);
-      setError('No se pudo crear el viaje. Inténtalo de nuevo.');
-    } finally {
-      setGuardando(false);
-    }
+    navigate(ROUTES.TRIPS.INVITACIONES);
   };
 
   const handleCancelar = () => navigate(ROUTES.HOME);
@@ -68,8 +50,6 @@ export function useCreateTripController() {
   return {
     form,
     fieldErrors,
-    guardando,
-    error,
     handleChange,
     handleSiguiente,
     handleCancelar,
