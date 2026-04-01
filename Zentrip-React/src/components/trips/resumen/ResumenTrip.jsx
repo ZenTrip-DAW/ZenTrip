@@ -1,18 +1,19 @@
-import StepBar from '../create/components/StepBar';
+import Button from '../../ui/Button';
 
-export default function ResumenTrip() {
+export default function ResumenTrip({ form, onAtras }) {
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-8">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="title-h1-mobile md:title-h1-desktop text-secondary-5 mb-6">
-          Crear <span className="text-primary-3">nuevo</span> viaje
-        </h1>
+    <div>
+      <div className="bg-white rounded-2xl shadow-sm border border-neutral-1 p-10 text-center text-neutral-3 body">
+        Resumen del viaje — próximamente
+      </div>
 
-        <StepBar activeStep={2} />
-
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-10 text-center text-slate-400 body">
-          Resumen del viaje — próximamente
-        </div>
+      <div className="flex justify-between mt-6">
+        <Button variant="ghost" type="button" onClick={onAtras} className="w-auto! px-6">
+          Atrás
+        </Button>
+        <Button variant="orange" type="button" className="w-auto! px-6">
+          Crear viaje
+        </Button>
       </div>
     </div>
   );
