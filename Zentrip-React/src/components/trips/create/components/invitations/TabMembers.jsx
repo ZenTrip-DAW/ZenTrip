@@ -13,6 +13,8 @@ export default function TabMiembros({ recientes = [], participantes = [], onAgre
   const [buscando, setBuscando] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const isEmailSearch = query.includes('@');
+  const currentUserEmail = (user?.email || '').trim().toLowerCase();
+  const currentUserName = (user?.displayName || '').trim().toLowerCase();
 
   const participantesSet = useMemo(
     () => new Set(participantes.map((item) => item.uid)),
@@ -32,7 +34,18 @@ export default function TabMiembros({ recientes = [], participantes = [], onAgre
 
     try {
       const users = await searchUsersByUsername(term);
-      const filtered = users.filter((item) => item.uid !== user?.uid);
+      const filtered = users.filter((item) => {
+        const memberEmail = (item.email || '').trim().toLowerCase();
+        const memberName = (item.nombre || '').trim().toLowerCase();
+        const memberUsername = (item.username || '').trim().toLowerCase();
+
+        return (
+          item.uid !== user?.uid
+          && memberEmail !== currentUserEmail
+          && memberName !== currentUserName
+          && memberUsername !== currentUserName
+        );
+      });
 
       setResultados(filtered);
       if (filtered.length === 0) {

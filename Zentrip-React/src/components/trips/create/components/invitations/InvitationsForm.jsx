@@ -74,7 +74,6 @@ export default function InvitacionesForm({
               enlaceInvitacion={enlaceInvitacion}
               participantes={participantes}
               onAgregarInvitadoEmail={onAgregarInvitadoEmail}
-              disabled
             />
           )}
         </div>

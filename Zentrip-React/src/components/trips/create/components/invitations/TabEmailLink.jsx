@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../../../../../context/AuthContext';
 import Button from '../../../../ui/Button';
 import AlertMessage from '../../../../ui/AlertMessage';
 import { searchUsersByEmail } from '../../../../../services/userService';
 import { getSearchErrorMessage } from '../../../../../utils/errors/searchErrors';
 
 export default function TabEnlaceEmail({ enlaceInvitacion = '', participantes = [], onAgregarInvitadoEmail, disabled = false }) {
+  const { user } = useAuth();
   const [query, setQuery] = useState('');
   const [resultados, setResultados] = useState([]);
   const [buscando, setBuscando] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [seleccionado, setSeleccionado] = useState(null);
+  const currentUserEmail = (user?.email || '').trim().toLowerCase();
+  const currentUserName = (user?.displayName || '').trim().toLowerCase();
 
   const participantesSet = useMemo(
     () => new Set(participantes.map((item) => (item.email || item.uid || '').toLowerCase())),
@@ -32,7 +36,19 @@ export default function TabEnlaceEmail({ enlaceInvitacion = '', participantes = 
 
     try {
       const users = await searchUsersByEmail(term, 5);
-      const filtered = users.filter((item) => item.email && item.email !== '');
+      const filtered = users.filter((item) => {
+        const memberEmail = (item.email || '').trim().toLowerCase();
+        const memberName = (item.nombre || '').trim().toLowerCase();
+        const memberUsername = (item.username || '').trim().toLowerCase();
+
+        return (
+          item.email
+          && item.email !== ''
+          && memberEmail !== currentUserEmail
+          && memberName !== currentUserName
+          && memberUsername !== currentUserName
+        );
+      });
 
       setResultados(filtered);
     } catch {
@@ -85,23 +101,20 @@ export default function TabEnlaceEmail({ enlaceInvitacion = '', participantes = 
     const email = (seleccionado?.email || query).trim().toLowerCase();
     if (!email) return;
 
-    const match = resultados.find((item) => (item.email || '').toLowerCase() === email) || seleccionado;
-    const isRegistered = Boolean(match?.uid);
-
-    // No permitir invitar a miembros registrados por email
-    if (isRegistered) {
-      setFieldErrors({
-        email: 'Este email ya pertenece a un miembro de ZenTrip. Usa la pestaña "Miembro" para agregarlo.',
-      });
+    if (email === currentUserEmail) {
+      setFieldErrors({ email: 'No puedes invitarte a ti mismo.' });
       return;
     }
+
+    const match = resultados.find((item) => (item.email || '').toLowerCase() === email) || seleccionado;
+    const isRegistered = Boolean(match?.uid);
 
     onAgregarInvitadoEmail?.({
       email: match?.email || email,
       nombre: match?.nombre || email,
       avatar: match?.avatar || '',
       uid: match?.uid || null,
-      tipo: 'email',
+      tipo: isRegistered ? 'miembro' : 'email',
     });
 
     setQuery('');
@@ -114,63 +127,63 @@ export default function TabEnlaceEmail({ enlaceInvitacion = '', participantes = 
     <div>
       <div className="mb-5">
         <h3 className="body-bold text-secondary-5 mb-1">Invitar por correo electrónico</h3>
-        <p className="body-2 text-neutral-3 mb-3">Invita a personas que aún no son miembros de ZenTrip</p>
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Ej. amigo@email.com"
-            value={query}
-            onChange={(e) => {
-              if (disabled) return;
-              setQuery(e.target.value);
-              setSeleccionado(null);
-            }}
-            inputMode="email"
-            disabled={disabled}
-            className="w-full border border-neutral-2 rounded-lg px-4 py-2 body-2 text-neutral-6 placeholder:text-neutral-3 focus:outline-none focus:ring-2 focus:ring-primary-3 focus:border-transparent"
-          />
-
-          {buscando && <p className="mt-1 body-3 text-neutral-4">Buscando correos...</p>}
-          {fieldErrors.email && <AlertMessage message={fieldErrors.email} variant="error" className="mt-2" />}
-
-          {resultados.length > 0 && (
-            <div className="mt-3 rounded-xl border border-neutral-1 divide-y divide-neutral-1 overflow-hidden max-h-56 overflow-y-auto bg-white">
-              {resultados.map((user) => {
-                const email = (user.email || '').toLowerCase();
-                const yaInvitado = participantesSet.has(email) || participantesSet.has(user.uid);
-
-                return (
-                  <button
-                    key={user.uid || user.email}
-                    type="button"
-                    className="w-full flex items-center justify-between gap-3 p-3 text-left hover:bg-neutral-1 transition"
-                    onClick={() => handleSeleccionar(user)}
-                  >
-                    <div className="min-w-0">
-                      <p className="body-2-semibold text-neutral-6 truncate">{user.nombre}</p>
-                      <p className="body-3 text-neutral-4 truncate">{user.email}</p>
-                    </div>
-                    <span className={`body-3 ${yaInvitado ? 'text-neutral-3' : 'text-primary-3'}`}>
-                      {yaInvitado ? 'Añadido' : 'Elegir'}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {query.trim() && resultados.length === 0 && !buscando && !fieldErrors.email && !seleccionado && (
-            <p className="mt-2 body-3 text-neutral-4">
-              Este correo no es miembro de ZenTrip. Puedes invitarlo.
-            </p>
-          )}
-
-          <div className="mt-3 flex gap-2">
-            <Button variant="orange" type="button" className="w-auto! px-5 shrink-0" onClick={handleInvitar} disabled={disabled}>
-              Invitar
-            </Button>
+        <p className="body-2 text-neutral-3 mb-3">Escribe un correo para invitar. Si ya tiene cuenta en ZenTrip, se gestionará como miembro.</p>
+        <div className="flex gap-2 items-start">
+          <div className="relative flex-1 min-w-0">
+            <input
+              type="text"
+              placeholder="Ej. amigo@email.com"
+              value={query}
+              onChange={(e) => {
+                if (disabled) return;
+                setQuery(e.target.value);
+                setSeleccionado(null);
+              }}
+              inputMode="email"
+              disabled={disabled}
+              className="w-full border border-neutral-2 rounded-lg px-4 py-2 body-2 text-neutral-6 placeholder:text-neutral-3 focus:outline-none focus:ring-2 focus:ring-primary-3 focus:border-transparent"
+            />
           </div>
+
+          <Button variant="orange" type="button" className="w-auto! px-5 shrink-0" onClick={handleInvitar} disabled={disabled}>
+            Invitar
+          </Button>
         </div>
+
+        {buscando && <p className="mt-1 body-3 text-neutral-4">Buscando correos...</p>}
+        {fieldErrors.email && <AlertMessage message={fieldErrors.email} variant="error" className="mt-2" />}
+
+        {resultados.length > 0 && (
+          <div className="mt-3 rounded-xl border border-neutral-1 divide-y divide-neutral-1 overflow-hidden max-h-56 overflow-y-auto bg-white">
+            {resultados.map((user) => {
+              const email = (user.email || '').toLowerCase();
+              const yaInvitado = participantesSet.has(email) || participantesSet.has(user.uid);
+
+              return (
+                <button
+                  key={user.uid || user.email}
+                  type="button"
+                  className="w-full flex items-center justify-between gap-3 p-3 text-left hover:bg-neutral-1 transition"
+                  onClick={() => handleSeleccionar(user)}
+                >
+                  <div className="min-w-0">
+                    <p className="body-2-semibold text-neutral-6 truncate">{user.nombre}</p>
+                    <p className="body-3 text-neutral-4 truncate">{user.email}</p>
+                  </div>
+                  <span className={`body-3 ${yaInvitado ? 'text-neutral-3' : 'text-primary-3'}`}>
+                    {yaInvitado ? 'Añadido' : 'Elegir'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {query.trim() && resultados.length === 0 && !buscando && !fieldErrors.email && !seleccionado && (
+          <p className="mt-2 body-3 text-neutral-4">
+            Si no está en ZenTrip, se invitará por correo.
+          </p>
+        )}
       </div>
 
       <div className="flex items-center gap-3 my-4">

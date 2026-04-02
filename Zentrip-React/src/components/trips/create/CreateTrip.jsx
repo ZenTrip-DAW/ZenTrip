@@ -13,6 +13,7 @@ export default function CreateTrip() {
     handleSiguiente,
     handleAtras,
     handleAgregarMiembro,
+    handleAgregarInvitadoEmail,
     handleEliminarInvitado,
     handleCrearViaje,
   } = useCreateTripController();
@@ -44,6 +45,7 @@ export default function CreateTrip() {
             onAtras={handleAtras}
             onSiguiente={handleSiguiente}
             onAgregarMiembro={handleAgregarMiembro}
+            onAgregarInvitadoEmail={handleAgregarInvitadoEmail}
             onEliminarParticipante={handleEliminarInvitado}
           />
         )}
