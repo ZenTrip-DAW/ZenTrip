@@ -26,7 +26,7 @@ export function clearSessionExpiry() {
 
 export function isSessionExpired() {
   const expiry = sessionStorage.getItem('sessionExpiry');
-  if (!expiry) return true;
+  if (!expiry) return false;
   return Date.now() > Number(expiry);
 }
 

@@ -15,6 +15,7 @@ export default function RegisterForm({
     success,
     successMessage,
     recaptchaKey,
+    recaptchaSiteKey,
     onRecaptchaChange,
     onFieldChange,
     onSubmit,
@@ -201,13 +202,19 @@ export default function RegisterForm({
                     )}
                 </div>
 
-                <div className="flex justify-center">
-                    <ReCAPTCHA
-                        key={recaptchaKey}
-                        sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-                        onChange={onRecaptchaChange}
-                    />
-                </div>
+                {recaptchaSiteKey ? (
+                    <div className="flex justify-center">
+                        <ReCAPTCHA
+                            key={recaptchaKey}
+                            sitekey={recaptchaSiteKey}
+                            onChange={onRecaptchaChange}
+                        />
+                    </div>
+                ) : (
+                    <p className="body-3 text-neutral-3 text-center">
+                        El reCAPTCHA no está configurado en este entorno. Puedes continuar sin ese paso.
+                    </p>
+                )}
 
                 <AlertMessage message={errorMessage} variant="error" />
                 <AlertMessage message={success ? successMessage : null} variant="success" />

@@ -11,18 +11,23 @@ import CreateTrip from './components/trips/create/CreateTrip';
 import Landing from './components/landing/landing';
 import Home from './components/home/Home';
 import MainLayout from './layouts/MainLayout';
-// import ProtectedRoute from './components/auth/guards/ProtectedRoute';
+import ProtectedRoute from './components/auth/guards/ProtectedRoute';
 import GuestRoute from './components/auth/guards/GuestRoute';
 
 const router = createBrowserRouter([
   { path: '/', element: <Landing /> },
   {
-    element: <MainLayout />,
+    element: <ProtectedRoute />,
     children: [
-      { path: ROUTES.HOME, element: <Home /> },
-      { path: ROUTES.PROFILE.EDIT, element: <EditProfile /> },
-      { path: ROUTES.TRIPS.CREATE, element: <CreateTrip /> },
-      { path: ROUTES.PROFILE.SETUP, element: <EditProfile isOnboarding /> },
+      {
+        element: <MainLayout />,
+        children: [
+          { path: ROUTES.HOME, element: <Home /> },
+          { path: ROUTES.PROFILE.EDIT, element: <EditProfile /> },
+          { path: ROUTES.TRIPS.CREATE, element: <CreateTrip /> },
+          { path: ROUTES.PROFILE.SETUP, element: <EditProfile isOnboarding /> },
+        ],
+      },
     ],
   },
   {

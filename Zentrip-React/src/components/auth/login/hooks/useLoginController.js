@@ -19,6 +19,8 @@ import {
 const WAIT_TO_RESEND_SECONDS = 90;
 
 export function useLoginController(navigate) {
+  const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY?.trim() || '';
+
   // Datos que el usuario escribe en el formulario
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -79,7 +81,7 @@ export function useLoginController(navigate) {
       return;
     }
 
-    if (!recaptchaToken) {
+    if (recaptchaSiteKey && !recaptchaToken) {
       setError('Por favor, completa el reCAPTCHA.');
       return;
     }
@@ -88,7 +90,9 @@ export function useLoginController(navigate) {
     setIsLoading(true);
     try {
       // Verificamos el token de reCAPTCHA en el servidor antes de continuar
-      await verifyRecaptchaToken(recaptchaToken);
+      if (recaptchaSiteKey) {
+        await verifyRecaptchaToken(recaptchaToken);
+      }
 
       // Intentamos autenticación con Firebase
       const user = await signInWithEmail(normalizedEmail, normalizedPassword);
@@ -231,6 +235,7 @@ export function useLoginController(navigate) {
     isGoogleLoading,
     recaptchaToken,
     recaptchaKey,
+    recaptchaSiteKey,
     setEmail,
     setPassword,
     setRecaptchaToken,

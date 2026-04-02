@@ -22,6 +22,7 @@ export default function Login() {
     isLoading,
     isGoogleLoading,
     recaptchaKey,
+    recaptchaSiteKey,
     setEmail,
     setPassword,
     setRecaptchaToken,
@@ -53,6 +54,7 @@ export default function Login() {
               isLoading={isLoading}
               isGoogleLoading={isGoogleLoading}
               recaptchaKey={recaptchaKey}
+              recaptchaSiteKey={recaptchaSiteKey}
               onRecaptchaChange={setRecaptchaToken}
               onEmailChange={(event) => setEmail(event.target.value)}
               onPasswordChange={(event) => setPassword(event.target.value)}

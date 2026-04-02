@@ -9,19 +9,8 @@ const authRouters = require('./src/routes/authRouters');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const allowedOrigins = [
-  process.env.CORS_ORIGIN || 'http://localhost:5173',
-  'https://zen-trip-phi.vercel.app'
-];
-
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  }
+  origin: process.env.CORS_ORIGIN
 }));
 
 app.use(express.json());

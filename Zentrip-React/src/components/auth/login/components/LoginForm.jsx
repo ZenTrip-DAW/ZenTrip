@@ -1,4 +1,4 @@
-// import ReCAPTCHA from 'react-google-recaptcha';
+import ReCAPTCHA from 'react-google-recaptcha';
 import Input from '../../../ui/Input';
 import Button from '../../../ui/Button';
 import GoogleIcon from '../../../ui/GoogleIcon';
@@ -18,6 +18,7 @@ export default function LoginForm({
   isLoading,
   isGoogleLoading,
   recaptchaKey,
+  recaptchaSiteKey,
   onRecaptchaChange,
   onEmailChange,
   onPasswordChange,
@@ -98,13 +99,19 @@ export default function LoginForm({
           </div>
         </div>
 
-        {/* <div className="flex justify-center">
-          <ReCAPTCHA
-            key={recaptchaKey}
-            sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-            onChange={onRecaptchaChange}
-          />
-        </div> */}
+        {recaptchaSiteKey ? (
+          <div className="flex justify-center">
+            <ReCAPTCHA
+              key={recaptchaKey}
+              sitekey={recaptchaSiteKey}
+              onChange={onRecaptchaChange}
+            />
+          </div>
+        ) : (
+          <p className="body-3 text-neutral-3 text-center">
+            El reCAPTCHA no está configurado en este entorno. Puedes iniciar sesión sin ese paso.
+          </p>
+        )}
 
         <AlertMessage message={error} variant="error" />
         <AlertMessage message={info} variant="success" />

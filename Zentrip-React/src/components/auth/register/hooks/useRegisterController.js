@@ -14,6 +14,8 @@ import { registerFeedbackMessages } from '../../../../utils/validation/register/
 import { saveUserToken, signInWithGoogle, verifyRecaptchaToken } from '../../login/services/loginFirebaseService';
 
 export function useRegisterController(navigate) {
+  const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY?.trim() || '';
+
   const [form, setForm] = useState({
     email: '',
     password: '',
@@ -84,13 +86,15 @@ export function useRegisterController(navigate) {
       return;
     }
 
-    if (!recaptchaToken) {
+    if (recaptchaSiteKey && !recaptchaToken) {
       setGeneralError('Por favor, completa el reCAPTCHA.');
       return;
     }
 
     try {
-      await verifyRecaptchaToken(recaptchaToken);
+      if (recaptchaSiteKey) {
+        await verifyRecaptchaToken(recaptchaToken);
+      }
 
       const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
       const { user } = userCredential;
@@ -142,6 +146,7 @@ export function useRegisterController(navigate) {
     successMessage: registerFeedbackMessages.success,
     hasRegisterMessage: Boolean(generalError || success),
     recaptchaKey,
+    recaptchaSiteKey,
     setRecaptchaToken,
     handleFieldChange,
     handleRegister,

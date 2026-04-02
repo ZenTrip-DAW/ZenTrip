@@ -85,7 +85,8 @@ export function AuthProvider({ children }) {
         }
 
         // Si la sesión ya expiró, cerramos sin mostrar nada
-        if (isSessionExpired()) {
+        const expiry = sessionStorage.getItem('sessionExpiry');
+        if (expiry && isSessionExpired()) {
           await signOut(auth);
           clearSessionExpiry();
           if (isMounted) {

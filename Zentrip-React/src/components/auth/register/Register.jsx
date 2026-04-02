@@ -22,6 +22,7 @@ export default function Register() {
         successMessage,
         hasRegisterMessage,
         recaptchaKey,
+        recaptchaSiteKey,
         setRecaptchaToken,
         handleFieldChange,
         handleRegister,
@@ -50,6 +51,7 @@ export default function Register() {
                             success={success}
                             successMessage={successMessage}
                             recaptchaKey={recaptchaKey}
+                            recaptchaSiteKey={recaptchaSiteKey}
                             onRecaptchaChange={setRecaptchaToken}
                             onFieldChange={handleFieldChange}
                             onSubmit={handleRegister}
