@@ -1,6 +1,11 @@
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  setDoc,
+} from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
 import { ROUTES } from '../config/routes';
+import { apiClient } from './apiClient';
 
 function buildDefaultProfile(user) {
   const [nombre = '', ...rest] = (user.displayName || '').split(' ');
@@ -40,4 +45,16 @@ export async function getPostLoginPath(user) {
   const { profile, isNew } = await getOrCreateUserProfile(user);
   if (isNew) return ROUTES.PROFILE.SETUP;
   return profile.perfilCompleto ? ROUTES.HOME : ROUTES.PROFILE.SETUP;
+}
+
+export async function searchUsersByUsername(username, maxResults = 8) {
+  const term = username.trim().toLowerCase();
+  if (!term) return [];
+
+  try {
+    const results = await apiClient.get(`/search-users?query=${encodeURIComponent(term)}&limit=${maxResults}`);
+    return results;
+  } catch (error) {
+    throw error;
+  }
 }

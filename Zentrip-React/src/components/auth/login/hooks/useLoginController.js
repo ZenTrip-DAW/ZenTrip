@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ROUTES } from '../../../../config/routes';
-import { getFirebaseErrorByField } from '../../../../utils/auth/firebaseErrors';
+import { getFirebaseErrorByField } from '../../../../utils/errors/firebaseErrors';
 import { loginFeedbackMessages } from '../../../../utils/validation/login/messages';
 import {
   refreshAuthenticatedUser,

@@ -98,6 +98,37 @@ export function useCreateTripController() {
     }
   };
 
+  const handleAgregarMiembro = (member) => {
+    if (!member?.uid) return;
+
+    setForm((prev) => {
+      const exists = prev.invitados.some((item) => item.uid === member.uid);
+      if (exists) return prev;
+
+      return {
+        ...prev,
+        invitados: [
+          ...prev.invitados,
+          {
+            id: member.uid,
+            uid: member.uid,
+            nombre: member.nombre,
+            username: member.username,
+            avatar: member.avatar,
+            tipo: 'miembro',
+          },
+        ],
+      };
+    });
+  };
+
+  const handleEliminarInvitado = (participantId) => {
+    setForm((prev) => ({
+      ...prev,
+      invitados: prev.invitados.filter((item) => item.id !== participantId),
+    }));
+  };
+
   return {
     step,
     form,
@@ -105,5 +136,7 @@ export function useCreateTripController() {
     handleChange,
     handleSiguiente,
     handleAtras,
+    handleAgregarMiembro,
+    handleEliminarInvitado,
   };
 }

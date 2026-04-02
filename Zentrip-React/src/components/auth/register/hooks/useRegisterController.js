@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { auth } from '../../../../config/firebaseConfig';
 import { ROUTES } from '../../../../config/routes';
 import { getOrCreateUserProfile, getPostLoginPath } from '../../../../services/userService';
-import { getFirebaseErrorByField } from '../../../../utils/auth/firebaseErrors';
+import { getFirebaseErrorByField } from '../../../../utils/errors/firebaseErrors';
 import {
   validateEmail,
   validatePassword,
