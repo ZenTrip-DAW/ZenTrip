@@ -9,11 +9,11 @@ export default function CreateTrip() {
     step,
     form,
     fieldErrors,
-    guardando,
-    error,
     handleChange,
     handleSiguiente,
     handleAtras,
+    handleAgregarMiembro,
+    handleEliminarInvitado,
   } = useCreateTripController();
 
   const maxWidth = step === 1 ? 'max-w-5xl' : 'max-w-3xl';
@@ -39,8 +39,11 @@ export default function CreateTrip() {
 
         {step === 1 && (
           <InvitationsForm
+            participantes={form.invitados}
             onAtras={handleAtras}
             onSiguiente={handleSiguiente}
+            onAgregarMiembro={handleAgregarMiembro}
+            onEliminarParticipante={handleEliminarInvitado}
           />
         )}
 

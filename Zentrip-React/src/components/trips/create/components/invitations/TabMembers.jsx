@@ -1,7 +1,57 @@
+import { useMemo, useState } from 'react';
 import UserAvatar from '../../../../ui/UserAvatar';
 import Button from '../../../../ui/Button';
+import AlertMessage from '../../../../ui/AlertMessage';
+import { useAuth } from '../../../../../context/AuthContext';
+import { searchUsersByUsername } from '../../../../../services/userService';
+import { getSearchErrorMessage } from '../../../../../utils/errors/searchErrors';
 
-export default function TabMiembros({ recientes = [] }) {
+export default function TabMiembros({ recientes = [], participantes = [], onAgregarMiembro }) {
+  const { user } = useAuth();
+  const [query, setQuery] = useState('');
+  const [resultados, setResultados] = useState([]);
+  const [buscando, setBuscando] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const participantesSet = useMemo(
+    () => new Set(participantes.map((item) => item.uid)),
+    [participantes],
+  );
+
+  const handleBuscar = async () => {
+    const term = query.trim();
+    if (!term) {
+      setResultados([]);
+      setFieldErrors({});
+      return;
+    }
+
+    setBuscando(true);
+    setFieldErrors({});
+
+    try {
+      const users = await searchUsersByUsername(term);
+      const filtered = users.filter((item) => item.uid !== user?.uid);
+
+      setResultados(filtered);
+      if (filtered.length === 0) {
+        setFieldErrors({ busqueda: getSearchErrorMessage('no-results') });
+      }
+    } catch (error) {
+      setResultados([]);
+      setFieldErrors({ busqueda: getSearchErrorMessage('search-failed') });
+    } finally {
+      setBuscando(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleBuscar();
+    }
+  };
+
   return (
     <div>
       {/* Buscador */}
@@ -9,7 +59,10 @@ export default function TabMiembros({ recientes = [] }) {
         <div className="relative flex-1 min-w-0">
           <input
             type="text"
-            placeholder="Buscar usuarios de ZenTrip..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Buscar por nombre de usuario..."
             className="w-full border border-neutral-2 rounded-lg px-4 py-2 pr-9 body-2 md:body-semibold text-neutral-6 placeholder:text-neutral-3 focus:outline-none focus:ring-2 focus:ring-primary-3 focus:border-transparent"
           />
           <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-neutral-3">
@@ -19,11 +72,50 @@ export default function TabMiembros({ recientes = [] }) {
           </div>
         </div>
         <div className="shrink-0">
-          <Button variant="orange" type="button" className="w-auto! px-5">
-            Invitar
+          <Button variant="orange" type="button" className="w-auto! px-5" onClick={handleBuscar}>
+            Buscar
           </Button>
         </div>
       </div>
+
+      {buscando && <p className="body-3 text-neutral-4 mb-4">Buscando usuarios...</p>}
+      {fieldErrors.busqueda && <AlertMessage message={fieldErrors.busqueda} variant="error" className="mb-4" />}
+
+      {resultados.length > 0 && (
+        <div className="mb-5 rounded-xl border border-neutral-1 divide-y divide-neutral-1 overflow-hidden">
+          {resultados.map((member) => {
+            const yaInvitado = participantesSet.has(member.uid);
+
+            return (
+              <div key={member.uid} className="flex items-center justify-between gap-3 p-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <UserAvatar
+                    src={member.avatar}
+                    fullName={member.nombre}
+                    sizeClass="w-10 h-10"
+                    backgroundClass="bg-secondary-1"
+                  />
+
+                  <div className="min-w-0">
+                    <p className="body-2-semibold text-neutral-6 truncate">{member.nombre}</p>
+                    <p className="body-3 text-neutral-4 truncate">@{member.username}</p>
+                  </div>
+                </div>
+
+                <Button
+                  variant="orange"
+                  type="button"
+                  className="w-auto! px-4 py-1.5 text-sm shrink-0"
+                  disabled={yaInvitado}
+                  onClick={() => onAgregarMiembro?.(member)}
+                >
+                  {yaInvitado ? 'Añadido' : 'Invitar'}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Recientes */}
       {recientes.length > 0 && (

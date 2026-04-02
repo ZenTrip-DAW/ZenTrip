@@ -11,7 +11,7 @@ function EmptyState() {
   );
 }
 
-export default function PanelParticipantes({ participantes = [] }) {
+export default function PanelParticipantes({ participantes = [], onEliminarParticipante }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-neutral-1 p-5 w-full lg:w-64 shrink-0">
       <div className="flex items-center gap-2 mb-4">
@@ -45,6 +45,7 @@ export default function PanelParticipantes({ participantes = [] }) {
                 type="button"
                 className="text-neutral-3 hover:text-neutral-5 transition shrink-0"
                 aria-label={`Eliminar a ${p.nombre}`}
+                onClick={() => onEliminarParticipante?.(p.id)}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

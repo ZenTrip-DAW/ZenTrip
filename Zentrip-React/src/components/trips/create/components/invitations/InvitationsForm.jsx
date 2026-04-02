@@ -31,6 +31,8 @@ export default function InvitacionesForm({
   enlaceInvitacion = '',
   onAtras,
   onSiguiente,
+  onAgregarMiembro,
+  onEliminarParticipante,
 }) {
   const [activeTab, setActiveTab] = useState('miembros');
 
@@ -62,7 +64,11 @@ export default function InvitacionesForm({
 
           {/* Contenido del tab activo */}
           {activeTab === 'miembros' ? (
-            <TabMembers recientes={recientes} />
+            <TabMembers
+              recientes={recientes}
+              participantes={participantes}
+              onAgregarMiembro={onAgregarMiembro}
+            />
           ) : (
             <TabEmailLink enlaceInvitacion={enlaceInvitacion} />
           )}
@@ -70,7 +76,10 @@ export default function InvitacionesForm({
 
         {/* Panel derecho — Participantes */}
         <div className="lg:ml-8 w-full lg:w-auto">
-          <ParticipantsPanel participantes={participantes} />
+          <ParticipantsPanel
+            participantes={participantes}
+            onEliminarParticipante={onEliminarParticipante}
+          />
         </div>
       </div>
 
