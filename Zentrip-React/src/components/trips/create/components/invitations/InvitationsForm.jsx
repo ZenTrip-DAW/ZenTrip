@@ -32,6 +32,7 @@ export default function InvitacionesForm({
   onAtras,
   onSiguiente,
   onAgregarMiembro,
+  onAgregarInvitadoEmail,
   onEliminarParticipante,
 }) {
   const [activeTab, setActiveTab] = useState('miembros');
@@ -62,7 +63,6 @@ export default function InvitacionesForm({
             ))}
           </div>
 
-          {/* Contenido del tab activo */}
           {activeTab === 'miembros' ? (
             <TabMembers
               recientes={recientes}
@@ -70,7 +70,12 @@ export default function InvitacionesForm({
               onAgregarMiembro={onAgregarMiembro}
             />
           ) : (
-            <TabEmailLink enlaceInvitacion={enlaceInvitacion} />
+            <TabEmailLink
+              enlaceInvitacion={enlaceInvitacion}
+              participantes={participantes}
+              onAgregarInvitadoEmail={onAgregarInvitadoEmail}
+              disabled
+            />
           )}
         </div>
 

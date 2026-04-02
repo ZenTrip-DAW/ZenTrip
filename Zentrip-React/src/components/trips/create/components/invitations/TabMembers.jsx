@@ -12,6 +12,7 @@ export default function TabMiembros({ recientes = [], participantes = [], onAgre
   const [resultados, setResultados] = useState([]);
   const [buscando, setBuscando] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
+  const isEmailSearch = query.includes('@');
 
   const participantesSet = useMemo(
     () => new Set(participantes.map((item) => item.uid)),
@@ -62,7 +63,7 @@ export default function TabMiembros({ recientes = [], participantes = [], onAgre
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Buscar por nombre de usuario..."
+            placeholder="Buscar por nombre de usuario o correo..."
             className="w-full border border-neutral-2 rounded-lg px-4 py-2 pr-9 body-2 md:body-semibold text-neutral-6 placeholder:text-neutral-3 focus:outline-none focus:ring-2 focus:ring-primary-3 focus:border-transparent"
           />
           <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-neutral-3">
@@ -98,19 +99,26 @@ export default function TabMiembros({ recientes = [], participantes = [], onAgre
 
                   <div className="min-w-0">
                     <p className="body-2-semibold text-neutral-6 truncate">{member.nombre}</p>
-                    <p className="body-3 text-neutral-4 truncate">@{member.username}</p>
+                    <p className="body-3 text-neutral-4 truncate">
+                      {isEmailSearch ? (member.email || `@${member.username}`) : `@${member.username}`}
+                    </p>
                   </div>
                 </div>
 
-                <Button
-                  variant="orange"
-                  type="button"
-                  className="w-auto! px-4 py-1.5 text-sm shrink-0"
-                  disabled={yaInvitado}
-                  onClick={() => onAgregarMiembro?.(member)}
-                >
-                  {yaInvitado ? 'Añadido' : 'Invitar'}
-                </Button>
+                {yaInvitado ? (
+                  <span className="w-auto px-4 py-1.5 text-sm shrink-0 rounded-full bg-neutral-1 text-neutral-4 border border-neutral-2 select-none">
+                    Añadido
+                  </span>
+                ) : (
+                  <Button
+                    variant="orange"
+                    type="button"
+                    className="w-auto! px-4 py-1.5 text-sm shrink-0"
+                    onClick={() => onAgregarMiembro?.(member)}
+                  >
+                    Invitar
+                  </Button>
+                )}
               </div>
             );
           })}

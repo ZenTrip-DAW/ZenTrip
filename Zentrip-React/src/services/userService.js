@@ -58,3 +58,15 @@ export async function searchUsersByUsername(username, maxResults = 8) {
     throw error;
   }
 }
+
+export async function searchUsersByEmail(email, maxResults = 5) {
+  const term = email.trim().toLowerCase();
+  if (!term) return [];
+
+  try {
+    const results = await apiClient.get(`/search-users?query=${encodeURIComponent(term)}&limit=${maxResults}&type=email`);
+    return results;
+  } catch (error) {
+    throw error;
+  }
+}

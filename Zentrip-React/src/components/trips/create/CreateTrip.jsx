@@ -14,6 +14,7 @@ export default function CreateTrip() {
     handleAtras,
     handleAgregarMiembro,
     handleEliminarInvitado,
+    handleCrearViaje,
   } = useCreateTripController();
 
   const maxWidth = step === 1 ? 'max-w-5xl' : 'max-w-3xl';
@@ -51,6 +52,7 @@ export default function CreateTrip() {
           <SummaryForm
             form={form}
             onAtras={handleAtras}
+            onCrearViaje={handleCrearViaje}
           />
         )}
       </div>

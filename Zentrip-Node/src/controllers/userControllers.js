@@ -18,8 +18,16 @@ const createUserAdmin = async (req, res) => {
   }
 };
 
+function normalizeText(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
 const searchUsers = async (req, res) => {
-  const { query, limit = 8 } = req.query;
+  const { query, limit = 8, type = 'username' } = req.query;
 
   if (!query || query.trim() === '') {
     return res.status(400).json({ error: 'Query parameter is required' });
@@ -27,7 +35,7 @@ const searchUsers = async (req, res) => {
 
   try {
     const db = admin.firestore();
-    const term = query.trim().toLowerCase();
+    const term = normalizeText(query);
 
     // Obtener todos los documentos de usuarios
     const snapshot = await db.collection('usuarios').get();
@@ -41,16 +49,25 @@ const searchUsers = async (req, res) => {
         return {
           id: doc.id,
           uid: data?.uid || doc.id,
+          email: data?.email || '',
           username: data?.username || '',
           nombre: nombreCompleto || data?.username || 'Usuario',
           avatar: data?.fotoPerfil || '',
         };
       })
-      .filter(
-        (item) =>
-          item.username &&
-          (item.username.toLowerCase().includes(term) || item.nombre.toLowerCase().includes(term))
-      )
+      .filter((item) => {
+        const email = normalizeText(item.email);
+        const username = normalizeText(item.username);
+        const nombre = normalizeText(item.nombre);
+
+        if (type === 'email') {
+          // Para búsqueda de invitaciones por email: solo email
+          return email.includes(term);
+        }
+
+        // Para búsqueda de miembros (default): username + email + nombre
+        return username.includes(term) || email.includes(term) || nombre.includes(term);
+      })
       .slice(0, parseInt(limit, 10));
 
     res.json(results);

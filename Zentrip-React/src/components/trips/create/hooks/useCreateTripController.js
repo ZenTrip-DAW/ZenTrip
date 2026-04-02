@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../../config/routes';
+import { useAuth } from '../../../../context/AuthContext';
+import { createTrip } from '../../../../services/tripService';
 
 // Nombre para guardar el progreso en el navegador.
 const STORAGE_KEY = 'zentrip:create-trip-wizard';
@@ -22,6 +24,8 @@ export function useCreateTripController() {
   const navigate = useNavigate();
 
   // Paso actual del formulario (0, 1, 2).
+  const { user } = useAuth();
+
   const [step, setStep] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -129,6 +133,14 @@ export function useCreateTripController() {
     }));
   };
 
+  const handleCrearViaje = async () => {
+    if (!user?.uid) return;
+
+    await createTrip(user.uid, form);
+    localStorage.removeItem(STORAGE_KEY);
+    navigate(ROUTES.HOME);
+  };
+
   return {
     step,
     form,
@@ -138,5 +150,6 @@ export function useCreateTripController() {
     handleAtras,
     handleAgregarMiembro,
     handleEliminarInvitado,
+    handleCrearViaje,
   };
 }
