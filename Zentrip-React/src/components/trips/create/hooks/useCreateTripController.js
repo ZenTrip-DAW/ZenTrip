@@ -126,6 +126,37 @@ export function useCreateTripController() {
     });
   };
 
+  const handleAgregarInvitadoEmail = (invitedUser) => {
+    const email = String(invitedUser?.email || '').trim().toLowerCase();
+    if (!email) return;
+
+    setForm((prev) => {
+      const exists = prev.invitados.some(
+        (item) => (item.email || '').toLowerCase() === email || (item.uid && item.uid === invitedUser?.uid),
+      );
+
+      if (exists) return prev;
+
+      const isRegisteredMember = Boolean(invitedUser?.uid);
+
+      return {
+        ...prev,
+        invitados: [
+          ...prev.invitados,
+          {
+            id: invitedUser?.uid || email,
+            uid: invitedUser?.uid || null,
+            email,
+            nombre: invitedUser?.nombre || email,
+            avatar: invitedUser?.avatar || '',
+            tipo: isRegisteredMember ? 'miembro' : 'email',
+            estadoInvitacion: isRegisteredMember ? 'pendiente' : 'pendiente_correo',
+          },
+        ],
+      };
+    });
+  };
+
   const handleEliminarInvitado = (participantId) => {
     setForm((prev) => ({
       ...prev,
@@ -149,6 +180,7 @@ export function useCreateTripController() {
     handleSiguiente,
     handleAtras,
     handleAgregarMiembro,
+    handleAgregarInvitadoEmail,
     handleEliminarInvitado,
     handleCrearViaje,
   };
