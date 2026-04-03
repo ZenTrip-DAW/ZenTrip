@@ -4,6 +4,7 @@ import Button from '../../../../ui/Button';
 import AlertMessage from '../../../../ui/AlertMessage';
 import { searchUsersByEmail } from '../../../../../services/userService';
 import { getSearchErrorMessage } from '../../../../../utils/errors/searchErrors';
+import { validateEmail } from '../../../../../utils/validation/register/rules';
 
 export default function TabEnlaceEmail({ enlaceInvitacion = '', participantes = [], onAgregarInvitadoEmail, disabled = false }) {
   const { user } = useAuth();
@@ -107,6 +108,14 @@ export default function TabEnlaceEmail({ enlaceInvitacion = '', participantes = 
     const match = resultados.find((item) => (item.email || '').toLowerCase() === email) || seleccionado;
     const isRegistered = Boolean(match?.uid);
 
+    if (!isRegistered) {
+      const emailErrors = validateEmail(email);
+      if (emailErrors.length > 0) {
+        setFieldErrors({ email: emailErrors[0] });
+        return;
+      }
+    }
+
     onAgregarInvitadoEmail?.({
       email: match?.email || email,
       nombre: match?.nombre || email,
@@ -148,6 +157,9 @@ export default function TabEnlaceEmail({ enlaceInvitacion = '', participantes = 
                 if (disabled) return;
                 setQuery(e.target.value);
                 setSeleccionado(null);
+                if (fieldErrors.email) {
+                  setFieldErrors({});
+                }
               }}
               inputMode="email"
               disabled={disabled}
@@ -191,7 +203,7 @@ export default function TabEnlaceEmail({ enlaceInvitacion = '', participantes = 
 
         {query.trim() && resultados.length === 0 && !buscando && !fieldErrors.email && !seleccionado && (
           <p className="mt-2 body-3 text-neutral-4">
-            Si no está en ZenTrip, se invitará por correo.
+            Si no está en ZenTrip, se invitará por correo si tiene un formato válido.
           </p>
         )}
       </div>
