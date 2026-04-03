@@ -36,6 +36,8 @@ async function upsertTripMember({ tripId, member }) {
   const db = admin.firestore();
   const normalizedUid = String(member?.uid || '').trim();
   const normalizedEmail = normalizeEmail(member?.email);
+  const memberRole = String(member?.role || member?.rol || 'miembro').trim();
+  const invitationStatus = String(member?.invitationStatus || member?.estadoInvitacion || 'pendiente').trim();
   if (!normalizedUid && !normalizedEmail) return;
 
   const membersRef = db.collection('viajes').doc(tripId).collection('miembros');
@@ -43,16 +45,16 @@ async function upsertTripMember({ tripId, member }) {
   const payload = {
     email: normalizedEmail,
     uid: normalizedUid || null,
-    rol: member.rol || 'miembro',
-    estadoInvitacion: member.estadoInvitacion || 'pendiente',
+    role: memberRole,
+    invitationStatus,
   };
 
-  if (member.estadoInvitacion === 'pendiente' || member.estadoInvitacion === 'pendiente_correo') {
-    payload.invitadoEn = admin.firestore.FieldValue.serverTimestamp();
+  if (invitationStatus === 'pendiente' || invitationStatus === 'pendiente_correo') {
+    payload.invitedAt = admin.firestore.FieldValue.serverTimestamp();
   }
 
-  if (member.estadoInvitacion === 'aceptada') {
-    payload.aceptadoEn = admin.firestore.FieldValue.serverTimestamp();
+  if (invitationStatus === 'aceptada') {
+    payload.acceptedAt = admin.firestore.FieldValue.serverTimestamp();
   }
 
   // Sin UID, se conserva el documento por email para invitados no registrados.
@@ -353,7 +355,7 @@ async function getOrCreateTripPublicInvitation({ tripId, creatorId, forceRegener
           publicInvitationId: doc.id,
           token: data.token,
           tripId: data.tripId,
-          tripName: data.tripName || tripData.nombre || 'Viaje',
+          tripName: data.tripName || tripData.name || tripData.nombre || 'Viaje',
         };
       }
     }
@@ -377,7 +379,7 @@ async function getOrCreateTripPublicInvitation({ tripId, creatorId, forceRegener
 
   const publicInvitationRef = await db.collection('tripPublicInvitations').add({
     tripId,
-    tripName: tripData.nombre || 'Viaje',
+    tripName: tripData.name || tripData.nombre || 'Viaje',
     token: null,
     status: 'active',
     creatorId: ownerId,
@@ -423,7 +425,7 @@ async function getOrCreateTripPublicInvitation({ tripId, creatorId, forceRegener
     publicInvitationId: publicInvitationRef.id,
     token,
     tripId,
-    tripName: tripData.nombre || 'Viaje',
+    tripName: tripData.name || tripData.nombre || 'Viaje',
   };
 }
 

@@ -4,12 +4,21 @@ import { apiClient } from './apiClient';
 
 export async function createTrip(uid, form) {
   const { miembros, ...tripData } = form;
-  const ref = collection(db, 'viajes');
-  const docRef = await addDoc(ref, {
-    ...tripData,
+  const tripPayload = {
     uid,
-    creadoEn: serverTimestamp(),
-  });
+    name: tripData.nombre || '',
+    origin: tripData.origen || '',
+    destination: tripData.destino || '',
+    startDate: tripData.fechaInicio || '',
+    endDate: tripData.fechaFin || '',
+    currency: tripData.divisa || '',
+    budget: tripData.presupuesto || '',
+    hasPet: Boolean(tripData.conMascota),
+    createdAt: serverTimestamp(),
+  };
+
+  const ref = collection(db, 'viajes');
+  const docRef = await addDoc(ref, tripPayload);
 
   // El creador debe aparecer siempre en la subcoleccion de miembros.
   const memberRef = doc(db, 'viajes', docRef.id, 'miembros', uid);
@@ -18,9 +27,9 @@ export async function createTrip(uid, form) {
     await setDoc(memberRef, {
       uid,
       email: userEmail,
-      rol: 'coordinador',
-      estadoInvitacion: 'aceptada',
-      aceptadoEn: serverTimestamp(),
+      role: 'coordinador',
+      invitationStatus: 'aceptada',
+      acceptedAt: serverTimestamp(),
     }, { merge: true });
   } catch (error) {
     // No bloqueamos la creacion del viaje por reglas de Firestore en miembros.
