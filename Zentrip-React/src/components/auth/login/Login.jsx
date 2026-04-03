@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../../config/routes';
 import { useLoginController } from './hooks/useLoginController';
 import LoginLeftPanel from './components/LoginLeftPanel';
 import LoginForm from './components/LoginForm';
@@ -16,11 +17,14 @@ export default function Login() {
     password,
     error,
     info,
+    invitationInfo,
+    invitationError,
     canResendVerification,
     isSendingAgain,
     secondsToResend,
     isLoading,
     isGoogleLoading,
+    inviteToken,
     recaptchaKey,
     recaptchaSiteKey,
     setEmail,
@@ -48,6 +52,8 @@ export default function Login() {
               password={password}
               error={error}
               info={info}
+              invitationInfo={invitationInfo}
+              invitationError={invitationError}
               canResendVerification={canResendVerification}
               isSendingAgain={isSendingAgain}
               secondsToResend={secondsToResend}
@@ -62,7 +68,7 @@ export default function Login() {
               onForgotPassword={handleForgotPassword}
               onResendVerification={handleResendVerification}
               onGoogleLogin={handleGoogleLogin}
-              onGoToRegister={() => navigate('/Auth/Register')}
+              onGoToRegister={() => navigate(inviteToken ? `${ROUTES.AUTH.REGISTER}?inviteToken=${encodeURIComponent(inviteToken)}` : ROUTES.AUTH.REGISTER)}
             />
           </div>
         </div>

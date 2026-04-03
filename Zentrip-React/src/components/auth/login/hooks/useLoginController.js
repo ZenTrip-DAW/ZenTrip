@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ROUTES } from '../../../../config/routes';
+import { apiClient } from '../../../../services/apiClient';
 import { getFirebaseErrorByField } from '../../../../utils/errors/firebaseErrors';
 import { loginFeedbackMessages } from '../../../../utils/validation/login/messages';
 import {
@@ -20,6 +21,26 @@ const WAIT_TO_RESEND_SECONDS = 90;
 
 export function useLoginController(navigate) {
   const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY?.trim() || '';
+  const inviteToken = new URLSearchParams(window.location.search).get('inviteToken')?.trim() || '';
+
+  const [invitationInfo, setInvitationInfo] = useState(null);
+  const [invitationError, setInvitationError] = useState('');
+
+  const reconcileInvitationAccess = async () => {
+    if (inviteToken) {
+      try {
+        await apiClient.post('/invitations/accept', { token: inviteToken });
+      } catch (acceptError) {
+        console.warn('No se pudo aceptar por token, se intentará reclamar por correo:', acceptError);
+      }
+    }
+
+    try {
+      await apiClient.post('/invitations/claim-my-invitations', {});
+    } catch (claimError) {
+      console.warn('No se pudieron reclamar invitaciones pendientes por correo:', claimError);
+    }
+  };
 
   // Datos que el usuario escribe en el formulario
   const [email, setEmail] = useState('');
@@ -52,6 +73,32 @@ export function useLoginController(navigate) {
 
     return () => clearTimeout(timeoutId);
   }, [secondsToResend]);
+
+  useEffect(() => {
+    if (!inviteToken) return undefined;
+
+    let active = true;
+
+    apiClient
+      .get(`/invitations/verify?token=${encodeURIComponent(inviteToken)}`)
+      .then((data) => {
+        if (!active) return;
+        setInvitationInfo(data);
+        setInvitationError('');
+        if (data?.email) {
+          setEmail(data.email);
+        }
+      })
+      .catch((error) => {
+        if (!active) return;
+        setInvitationInfo(null);
+        setInvitationError(error.message || 'No se pudo validar la invitación.');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [inviteToken]);
 
   // Login normal con email y contraseña
   const handleLogin = async (event) => {
@@ -108,6 +155,7 @@ export function useLoginController(navigate) {
 
       // Si todo salió bien, guardamos token, marcamos expiración y vamos a la ruta final
       await saveUserToken(refreshedUser);
+      await reconcileInvitationAccess();
       saveSessionExpiry();
       navigate(await getPostLoginPath(refreshedUser));
     } catch (loginError) {
@@ -211,6 +259,7 @@ export function useLoginController(navigate) {
       // Inicia popup de Google y devuelve el usuario autenticado
       const user = await signInWithGoogle();
       await saveUserToken(user);
+      await reconcileInvitationAccess();
       saveSessionExpiry();
       navigate(await getPostLoginPath(user));
     } catch (googleError) {
@@ -236,6 +285,9 @@ export function useLoginController(navigate) {
     recaptchaToken,
     recaptchaKey,
     recaptchaSiteKey,
+    inviteToken,
+    invitationInfo,
+    invitationError,
     setEmail,
     setPassword,
     setRecaptchaToken,

@@ -21,6 +21,9 @@ export default function Register() {
         success,
         successMessage,
         hasRegisterMessage,
+        inviteToken,
+        invitationInfo,
+        invitationError,
         recaptchaKey,
         recaptchaSiteKey,
         setRecaptchaToken,
@@ -50,13 +53,15 @@ export default function Register() {
                             generalError={generalError}
                             success={success}
                             successMessage={successMessage}
+                            invitationInfo={invitationInfo}
+                            invitationError={invitationError}
                             recaptchaKey={recaptchaKey}
                             recaptchaSiteKey={recaptchaSiteKey}
                             onRecaptchaChange={setRecaptchaToken}
                             onFieldChange={handleFieldChange}
                             onSubmit={handleRegister}
                             onGoogleSignUp={handleGoogleSignUp}
-                            onGoToLogin={() => navigate(ROUTES.AUTH.LOGIN)}
+                            onGoToLogin={() => navigate(inviteToken ? `${ROUTES.AUTH.LOGIN}?inviteToken=${encodeURIComponent(inviteToken)}` : ROUTES.AUTH.LOGIN)}
                         />
                     </div>
                 </div>

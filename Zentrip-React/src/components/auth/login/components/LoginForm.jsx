@@ -12,6 +12,8 @@ export default function LoginForm({
   password,
   error,
   info,
+  invitationInfo,
+  invitationError,
   canResendVerification,
   isSendingAgain,
   secondsToResend,
@@ -43,6 +45,20 @@ export default function LoginForm({
       <p className="body-2 text-slate-500 mb-4 md:mb-6">
         Accede para continuar planificando tu aventura
       </p>
+
+      {invitationInfo?.valid && (
+        <div className="mb-4 rounded-lg border border-secondary-2 bg-secondary-1/10 p-3">
+          <p className="body-3 text-secondary-5">
+            Esta invitación está asociada al viaje <strong>{invitationInfo.tripName}</strong>. Si inicias sesión con este correo, la solicitud se aceptará automáticamente y entrarás al viaje.
+          </p>
+        </div>
+      )}
+
+      {invitationError && (
+        <div className="mb-4 rounded-lg border border-primary-2 bg-primary-1/10 p-3">
+          <p className="body-3 text-primary-3">{invitationError}</p>
+        </div>
+      )}
 
       <Button
         variant="ghost"
