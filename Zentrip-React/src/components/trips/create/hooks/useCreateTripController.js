@@ -56,6 +56,7 @@ export function useCreateTripController() {
   const [isCreatingTrip, setIsCreatingTrip] = useState(false);
   const [tripCreationLocked, setTripCreationLocked] = useState(false);
   const creatingTripRef = useRef(false);
+  const pageIsUnloadingRef = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -73,6 +74,28 @@ export function useCreateTripController() {
 
     return () => {
       active = false;
+    };
+  }, []);
+
+  // Conserva el borrador solo en recarga real de página (F5/refresh).
+  useEffect(() => {
+    const markPageUnload = () => {
+      pageIsUnloadingRef.current = true;
+    };
+
+    window.addEventListener('beforeunload', markPageUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', markPageUnload);
+    };
+  }, []);
+
+  // Si se abandona la pantalla por navegación interna, se limpia el borrador.
+  useEffect(() => {
+    return () => {
+      if (!pageIsUnloadingRef.current) {
+        localStorage.removeItem(STORAGE_KEY);
+      }
     };
   }, []);
 
