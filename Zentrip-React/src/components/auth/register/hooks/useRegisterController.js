@@ -1,7 +1,8 @@
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { auth } from '../../../../config/firebaseConfig';
 import { ROUTES } from '../../../../config/routes';
+import { apiClient } from '../../../../services/apiClient';
 import { getOrCreateUserProfile, getPostLoginPath } from '../../../../services/userService';
 import { getFirebaseErrorByField } from '../../../../utils/errors/firebaseErrors';
 import {
@@ -15,6 +16,10 @@ import { saveUserToken, signInWithGoogle, verifyRecaptchaToken } from '../../log
 
 export function useRegisterController(navigate) {
   const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY?.trim() || '';
+  const inviteToken = useMemo(() => {
+    const token = new URLSearchParams(window.location.search).get('inviteToken');
+    return token ? token.trim() : '';
+  }, []);
 
   const [form, setForm] = useState({
     email: '',
@@ -29,6 +34,33 @@ export function useRegisterController(navigate) {
 
   const [recaptchaToken, setRecaptchaToken] = useState(null);
   const [recaptchaKey, setRecaptchaKey] = useState(0);
+  const [invitationInfo, setInvitationInfo] = useState(null);
+  const [invitationError, setInvitationError] = useState('');
+
+  useEffect(() => {
+    if (!inviteToken) return;
+
+    let active = true;
+    apiClient
+      .get(`/invitations/verify?token=${encodeURIComponent(inviteToken)}`)
+      .then((data) => {
+        if (!active) return;
+        setInvitationInfo(data);
+        setInvitationError('');
+        if (data?.email) {
+          setForm((prev) => ({ ...prev, email: data.email }));
+        }
+      })
+      .catch((error) => {
+        if (!active) return;
+        setInvitationInfo(null);
+        setInvitationError(error.message || 'No se pudo validar la invitación.');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [inviteToken]);
 
   const validateField = (name, value, allValues = form) => {
     switch (name) {
@@ -105,6 +137,20 @@ export function useRegisterController(navigate) {
       const idToken = await user.getIdToken();
       localStorage.setItem('firebaseIdToken', idToken);
 
+      if (inviteToken) {
+        try {
+          await apiClient.post('/invitations/accept', { token: inviteToken });
+        } catch (acceptError) {
+          console.warn('No se pudo aceptar por token, se intentará reclamar por correo:', acceptError);
+        }
+      }
+
+      try {
+        await apiClient.post('/invitations/claim-my-invitations', {});
+      } catch (claimError) {
+        console.warn('No se pudieron reclamar invitaciones pendientes por correo:', claimError);
+      }
+
       setSuccess(true);
       navigate(ROUTES.AUTH.VERIFY_EMAIL, { state: { email: user.email || form.email } });
     } catch (registerError) {
@@ -131,6 +177,21 @@ export function useRegisterController(navigate) {
       const user = await signInWithGoogle();
       await getOrCreateUserProfile(user);
       await saveUserToken(user);
+
+      if (inviteToken) {
+        try {
+          await apiClient.post('/invitations/accept', { token: inviteToken });
+        } catch (acceptError) {
+          console.warn('No se pudo aceptar por token, se intentará reclamar por correo:', acceptError);
+        }
+      }
+
+      try {
+        await apiClient.post('/invitations/claim-my-invitations', {});
+      } catch (claimError) {
+        console.warn('No se pudieron reclamar invitaciones pendientes por correo:', claimError);
+      }
+
       navigate(await getPostLoginPath(user));
     } catch (googleError) {
       const { message } = getFirebaseErrorByField(googleError);
@@ -145,6 +206,9 @@ export function useRegisterController(navigate) {
     success,
     successMessage: registerFeedbackMessages.success,
     hasRegisterMessage: Boolean(generalError || success),
+    inviteToken,
+    invitationInfo,
+    invitationError,
     recaptchaKey,
     recaptchaSiteKey,
     setRecaptchaToken,

@@ -41,7 +41,7 @@ export default function CreateTrip() {
 
         {step === 1 && (
           <InvitationsForm
-            participantes={form.invitados}
+            participantes={form.miembros}
             onAtras={handleAtras}
             onSiguiente={handleSiguiente}
             onAgregarMiembro={handleAgregarMiembro}

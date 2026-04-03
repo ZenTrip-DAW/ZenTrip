@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../../config/routes';
 import { useAuth } from '../../../../context/AuthContext';
-import { createTrip } from '../../../../services/tripService';
+import { createTrip, sendTripInvitations } from '../../../../services/tripService';
 
 // Nombre para guardar el progreso en el navegador.
 const STORAGE_KEY = 'zentrip:create-trip-wizard';
@@ -17,7 +17,7 @@ const INITIAL_FORM = {
   divisa: 'EUR - EURO',
   presupuesto: '',
   conMascota: false,
-  invitados: [],
+  miembros: [],
 };
 
 export function useCreateTripController() {
@@ -106,20 +106,22 @@ export function useCreateTripController() {
     if (!member?.uid) return;
 
     setForm((prev) => {
-      const exists = prev.invitados.some((item) => item.uid === member.uid);
+      const exists = prev.miembros.some((item) => item.uid === member.uid);
       if (exists) return prev;
 
       return {
         ...prev,
-        invitados: [
-          ...prev.invitados,
+        miembros: [
+          ...prev.miembros,
           {
             id: member.uid,
             uid: member.uid,
+            email: member.email || '',
             nombre: member.nombre,
             username: member.username,
             avatar: member.avatar,
             tipo: 'miembro',
+            estadoInvitacion: 'pendiente',
           },
         ],
       };
@@ -131,7 +133,7 @@ export function useCreateTripController() {
     if (!email) return;
 
     setForm((prev) => {
-      const exists = prev.invitados.some(
+      const exists = prev.miembros.some(
         (item) => (item.email || '').toLowerCase() === email || (item.uid && item.uid === invitedUser?.uid),
       );
 
@@ -141,8 +143,8 @@ export function useCreateTripController() {
 
       return {
         ...prev,
-        invitados: [
-          ...prev.invitados,
+        miembros: [
+          ...prev.miembros,
           {
             id: invitedUser?.uid || email,
             uid: invitedUser?.uid || null,
@@ -160,14 +162,38 @@ export function useCreateTripController() {
   const handleEliminarInvitado = (participantId) => {
     setForm((prev) => ({
       ...prev,
-      invitados: prev.invitados.filter((item) => item.id !== participantId),
+      miembros: prev.miembros.filter((item) => item.id !== participantId),
     }));
   };
 
   const handleCrearViaje = async () => {
     if (!user?.uid) return;
 
-    await createTrip(user.uid, form);
+    const tripId = await createTrip(user.uid, form);
+
+    const pendingInvites = form.miembros.filter(
+      (item) => item.email && (item.estadoInvitacion === 'pendiente' || item.estadoInvitacion === 'pendiente_correo'),
+    );
+
+    if (pendingInvites.length > 0) {
+      try {
+        const response = await sendTripInvitations({
+          tripId,
+          tripName: form.nombre,
+          creatorName: user.displayName || user.email || 'ZenTrip',
+          invites: pendingInvites,
+        });
+
+        if (response?.failed > 0) {
+          console.warn('Invitaciones con errores:', response);
+        } else {
+          console.info('Invitaciones enviadas correctamente:', response);
+        }
+      } catch (error) {
+        console.error('No se pudieron enviar todas las invitaciones por correo:', error);
+      }
+    }
+
     localStorage.removeItem(STORAGE_KEY);
     navigate(ROUTES.HOME);
   };

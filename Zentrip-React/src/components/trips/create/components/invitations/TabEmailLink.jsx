@@ -12,8 +12,8 @@ export default function TabEnlaceEmail({ enlaceInvitacion = '', participantes = 
   const [buscando, setBuscando] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [seleccionado, setSeleccionado] = useState(null);
+  const currentUserUid = user?.uid || '';
   const currentUserEmail = (user?.email || '').trim().toLowerCase();
-  const currentUserName = (user?.displayName || '').trim().toLowerCase();
 
   const participantesSet = useMemo(
     () => new Set(participantes.map((item) => (item.email || item.uid || '').toLowerCase())),
@@ -38,15 +38,12 @@ export default function TabEnlaceEmail({ enlaceInvitacion = '', participantes = 
       const users = await searchUsersByEmail(term, 5);
       const filtered = users.filter((item) => {
         const memberEmail = (item.email || '').trim().toLowerCase();
-        const memberName = (item.nombre || '').trim().toLowerCase();
-        const memberUsername = (item.username || '').trim().toLowerCase();
 
         return (
           item.email
           && item.email !== ''
+          && (item.uid || '') !== currentUserUid
           && memberEmail !== currentUserEmail
-          && memberName !== currentUserName
-          && memberUsername !== currentUserName
         );
       });
 

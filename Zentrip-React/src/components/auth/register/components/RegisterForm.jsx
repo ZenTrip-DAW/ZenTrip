@@ -14,6 +14,8 @@ export default function RegisterForm({
     generalError,
     success,
     successMessage,
+    invitationInfo,
+    invitationError,
     recaptchaKey,
     recaptchaSiteKey,
     onRecaptchaChange,
@@ -48,6 +50,20 @@ export default function RegisterForm({
             <p className="body-2 text-neutral-4 mb-4 md:mb-6">
                 Empieza a planificar tu próximo viaje en minutos.
             </p>
+
+            {invitationInfo?.valid && (
+                <div className="mb-4 rounded-lg border border-secondary-2 bg-secondary-1/10 p-3">
+                    <p className="body-3 text-secondary-5">
+                        Invitación detectada para <strong>{invitationInfo.tripName}</strong>. Si te registras con <strong>{invitationInfo.email}</strong>, la invitación se aceptará automáticamente.
+                    </p>
+                </div>
+            )}
+
+            {invitationError && (
+                <div className="mb-4 rounded-lg border border-primary-2 bg-primary-1/10 p-3">
+                    <p className="body-3 text-primary-3">{invitationError}</p>
+                </div>
+            )}
 
             <Button
                 variant="ghost"
