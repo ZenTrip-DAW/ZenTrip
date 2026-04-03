@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../../config/routes';
 import { useAuth } from '../../../../context/AuthContext';
@@ -53,6 +53,9 @@ export function useCreateTripController() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [previewJoinToken, setPreviewJoinToken] = useState('');
   const [enlaceInvitacion, setEnlaceInvitacion] = useState('');
+  const [isCreatingTrip, setIsCreatingTrip] = useState(false);
+  const [tripCreationLocked, setTripCreationLocked] = useState(false);
+  const creatingTripRef = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -188,57 +191,76 @@ export function useCreateTripController() {
   };
 
   const handleCrearViaje = async () => {
-    if (!user?.uid) return;
+    if (!user?.uid || creatingTripRef.current || tripCreationLocked) return;
 
-    const tripId = await createTrip(user.uid, form);
+    creatingTripRef.current = true;
+    setIsCreatingTrip(true);
 
-    let sharedLink = '';
+    let tripCreated = false;
+
     try {
-      const linkResponse = await getTripPublicInviteLink(tripId, previewJoinToken);
-      sharedLink = linkResponse?.shareLink || '';
+      const tripId = await createTrip(user.uid, form);
+      tripCreated = true;
+      setTripCreationLocked(true);
 
-      if (sharedLink) {
-        setEnlaceInvitacion(sharedLink);
-      }
-
-      if (sharedLink && navigator?.clipboard?.writeText) {
-        await navigator.clipboard.writeText(sharedLink);
-      }
-    } catch (error) {
-      console.warn('No se pudo generar o copiar el enlace compartible del viaje:', error);
-    }
-
-    const pendingInvites = form.miembros.filter(
-      (item) => item.email && (item.estadoInvitacion === 'pendiente' || item.estadoInvitacion === 'pendiente_correo'),
-    );
-
-    if (pendingInvites.length > 0) {
+      let sharedLink = '';
       try {
-        const response = await sendTripInvitations({
-          tripId,
-          tripName: form.nombre,
-          creatorName: user.displayName || user.email || 'ZenTrip',
-          invites: pendingInvites,
-        });
+        const linkResponse = await getTripPublicInviteLink(tripId, previewJoinToken);
+        sharedLink = linkResponse?.shareLink || '';
 
-        if (response?.failed > 0) {
-          console.warn('Invitaciones con errores:', response);
-        } else {
-          console.info('Invitaciones enviadas correctamente:', response);
+        if (sharedLink) {
+          setEnlaceInvitacion(sharedLink);
+        }
+
+        if (sharedLink && navigator?.clipboard?.writeText) {
+          await navigator.clipboard.writeText(sharedLink);
         }
       } catch (error) {
-        console.error('No se pudieron enviar todas las invitaciones por correo:', error);
+        console.warn('No se pudo generar o copiar el enlace compartible del viaje:', error);
       }
-    }
 
-    localStorage.removeItem(STORAGE_KEY);
-    navigate(ROUTES.HOME);
+      const pendingInvites = form.miembros.filter(
+        (item) => item.email && (item.estadoInvitacion === 'pendiente' || item.estadoInvitacion === 'pendiente_correo'),
+      );
+
+      if (pendingInvites.length > 0) {
+        try {
+          const response = await sendTripInvitations({
+            tripId,
+            tripName: form.nombre,
+            creatorName: user.displayName || user.email || 'ZenTrip',
+            invites: pendingInvites,
+          });
+
+          if (response?.failed > 0) {
+            console.warn('Invitaciones con errores:', response);
+          } else {
+            console.info('Invitaciones enviadas correctamente:', response);
+          }
+        } catch (error) {
+          console.error('No se pudieron enviar todas las invitaciones por correo:', error);
+        }
+      }
+
+      localStorage.removeItem(STORAGE_KEY);
+      navigate(ROUTES.HOME);
+    } catch (error) {
+      console.error('No se pudo crear el viaje:', error);
+      if (!tripCreated) {
+        setTripCreationLocked(false);
+      }
+    } finally {
+      creatingTripRef.current = false;
+      setIsCreatingTrip(false);
+    }
   };
 
   return {
     step,
     form,
     fieldErrors,
+    isCreatingTrip,
+    tripCreationLocked,
     enlaceInvitacion,
     handleChange,
     handleSiguiente,

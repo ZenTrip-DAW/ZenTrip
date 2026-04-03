@@ -9,6 +9,8 @@ export default function CreateTrip() {
     step,
     form,
     fieldErrors,
+    isCreatingTrip,
+    tripCreationLocked,
     enlaceInvitacion,
     handleChange,
     handleSiguiente,
@@ -57,6 +59,8 @@ export default function CreateTrip() {
             form={form}
             onAtras={handleAtras}
             onCrearViaje={handleCrearViaje}
+            isCreatingTrip={isCreatingTrip}
+            tripCreationLocked={tripCreationLocked}
           />
         )}
       </div>
