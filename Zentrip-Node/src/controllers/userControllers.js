@@ -26,6 +26,27 @@ function normalizeText(value) {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
+function buildUserResponse(uid, data) {
+  const nombreCompleto = `${data?.nombre || ''} ${data?.apellidos || ''}`.trim();
+  return {
+    id: uid,
+    uid: data?.uid || uid,
+    email: data?.email || '',
+    username: data?.username || '',
+    nombre: nombreCompleto || '',
+    avatar: data?.fotoPerfil || '',
+  };
+}
+
+function matchesEmailQuery(email, term) {
+  if (term.includes('@')) {
+    const [localTerm, domainTerm = ''] = term.split('@');
+    const [localEmail, domainEmail = ''] = email.split('@');
+    return localEmail.includes(localTerm) && domainEmail.includes(domainTerm);
+  }
+  return email.includes(term);
+}
+
 const searchUsers = async (req, res) => {
   const { query, limit = 8, type = 'username' } = req.query;
 
@@ -42,42 +63,15 @@ const searchUsers = async (req, res) => {
     
     // Filtrar en el cliente (como el Frontend hacía)
     const results = snapshot.docs
-      .map((doc) => {
-        const data = doc.data();
-        const nombreCompleto = `${data?.nombre || ''} ${data?.apellidos || ''}`.trim();
-
-        return {
-          id: doc.id,
-          uid: data?.uid || doc.id,
-          email: data?.email || '',
-          username: data?.username || '',
-          nombre: nombreCompleto || '',
-          avatar: data?.fotoPerfil || '',
-        };
-      })
+      .map((doc) => buildUserResponse(doc.id, doc.data()))
       .filter((item) => {
         const email = normalizeText(item.email);
         const username = normalizeText(item.username);
         const nombre = normalizeText(item.nombre);
 
-        if (type === 'email') {
-          // Si el término tiene @, buscar local part y domain por separado
-          if (term.includes('@')) {
-            const [localTerm, domainTerm = ''] = term.split('@');
-            const [localEmail, domainEmail = ''] = email.split('@');
-            return localEmail.includes(localTerm) && domainEmail.includes(domainTerm);
-          }
-          return email.includes(term);
-        }
+        if (type === 'email') return matchesEmailQuery(email, term);
 
-        // Para búsqueda de miembros (default): username + email + nombre
-        let emailMatch = email.includes(term);
-        if (!emailMatch && term.includes('@')) {
-          const [localTerm, domainTerm = ''] = term.split('@');
-          const [localEmail, domainEmail = ''] = email.split('@');
-          emailMatch = localEmail.includes(localTerm) && domainEmail.includes(domainTerm);
-        }
-        return username.includes(term) || emailMatch || nombre.includes(term);
+        return username.includes(term) || matchesEmailQuery(email, term) || nombre.includes(term);
       })
       .slice(0, parseInt(limit, 10));
 
@@ -97,15 +91,7 @@ const getUserByUid = async (req, res) => {
     const snap = await db.collection('usuarios').doc(uid).get();
     if (!snap.exists) return res.status(404).json({ error: 'User not found' });
 
-    const data = snap.data();
-    const nombreCompleto = `${data?.nombre || ''} ${data?.apellidos || ''}`.trim();
-    res.json({
-      uid: data?.uid || uid,
-      email: data?.email || '',
-      username: data?.username || '',
-      nombre: nombreCompleto || '',
-      avatar: data?.fotoPerfil || '',
-    });
+    res.json(buildUserResponse(uid, snap.data()));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -5,6 +5,7 @@ import AlertMessage from '../../../../ui/AlertMessage';
 import { useAuth } from '../../../../../context/AuthContext';
 import { searchUsersByUsername } from '../../../../../services/userService';
 import { getSearchErrorMessage } from '../../../../../utils/errors/searchErrors';
+import { getRecentNameParts } from '../../../../../utils/members';
 
 export default function TabMiembros({ recientes = [], participantes = [], onAgregarMiembro }) {
   const { user } = useAuth();
@@ -79,36 +80,6 @@ export default function TabMiembros({ recientes = [], participantes = [], onAgre
       e.preventDefault();
       handleBuscar();
     }
-  };
-
-  const getRecentNameParts = (recentUser) => {
-    const rawFirstName = String(recentUser?.nombre || '').trim();
-    const rawLastName = String(recentUser?.apellidos || '').trim();
-
-    if (rawFirstName || rawLastName) {
-      if (rawFirstName && !rawLastName && rawFirstName.includes(' ')) {
-        const parts = rawFirstName.split(/\s+/).filter(Boolean);
-        return {
-          firstName: parts[0] || '',
-          lastName: parts.slice(1).join(' '),
-          fullName: rawFirstName,
-        };
-      }
-
-      return {
-        firstName: rawFirstName || rawLastName,
-        lastName: rawFirstName ? rawLastName : '',
-        fullName: `${rawFirstName} ${rawLastName}`.trim(),
-      };
-    }
-
-    const username = String(recentUser?.username || '').trim();
-
-    return {
-      firstName: username,
-      lastName: '',
-      fullName: username,
-    };
   };
 
   return (
