@@ -59,6 +59,15 @@ export async function searchUsersByUsername(username, maxResults = 8) {
   }
 }
 
+export async function getUserByUid(uid) {
+  if (!uid) return null;
+  try {
+    return await apiClient.get(`/users/${encodeURIComponent(uid)}`);
+  } catch {
+    return null;
+  }
+}
+
 export async function searchUsersByEmail(email, maxResults = 5) {
   const term = email.trim().toLowerCase();
   if (!term) return [];

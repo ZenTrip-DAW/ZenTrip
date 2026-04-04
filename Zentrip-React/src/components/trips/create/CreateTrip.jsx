@@ -8,6 +8,7 @@ export default function CreateTrip() {
   const {
     step,
     form,
+    recientes,
     fieldErrors,
     isCreatingTrip,
     tripCreationLocked,
@@ -44,6 +45,7 @@ export default function CreateTrip() {
 
         {step === 1 && (
           <InvitationsForm
+            recientes={recientes}
             participantes={form.miembros}
             enlaceInvitacion={enlaceInvitacion}
             onAtras={handleAtras}

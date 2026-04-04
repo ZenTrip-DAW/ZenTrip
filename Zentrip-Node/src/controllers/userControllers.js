@@ -51,7 +51,7 @@ const searchUsers = async (req, res) => {
           uid: data?.uid || doc.id,
           email: data?.email || '',
           username: data?.username || '',
-          nombre: nombreCompleto || data?.username || 'Usuario',
+          nombre: nombreCompleto || '',
           avatar: data?.fotoPerfil || '',
         };
       })
@@ -61,12 +61,23 @@ const searchUsers = async (req, res) => {
         const nombre = normalizeText(item.nombre);
 
         if (type === 'email') {
-          // Para búsqueda de invitaciones por email: solo email
+          // Si el término tiene @, buscar local part y domain por separado
+          if (term.includes('@')) {
+            const [localTerm, domainTerm = ''] = term.split('@');
+            const [localEmail, domainEmail = ''] = email.split('@');
+            return localEmail.includes(localTerm) && domainEmail.includes(domainTerm);
+          }
           return email.includes(term);
         }
 
         // Para búsqueda de miembros (default): username + email + nombre
-        return username.includes(term) || email.includes(term) || nombre.includes(term);
+        let emailMatch = email.includes(term);
+        if (!emailMatch && term.includes('@')) {
+          const [localTerm, domainTerm = ''] = term.split('@');
+          const [localEmail, domainEmail = ''] = email.split('@');
+          emailMatch = localEmail.includes(localTerm) && domainEmail.includes(domainTerm);
+        }
+        return username.includes(term) || emailMatch || nombre.includes(term);
       })
       .slice(0, parseInt(limit, 10));
 
@@ -77,4 +88,27 @@ const searchUsers = async (req, res) => {
   }
 };
 
-module.exports = { getProtectedData, createUserAdmin, searchUsers };
+const getUserByUid = async (req, res) => {
+  const { uid } = req.params;
+  if (!uid) return res.status(400).json({ error: 'uid is required' });
+
+  try {
+    const db = admin.firestore();
+    const snap = await db.collection('usuarios').doc(uid).get();
+    if (!snap.exists) return res.status(404).json({ error: 'User not found' });
+
+    const data = snap.data();
+    const nombreCompleto = `${data?.nombre || ''} ${data?.apellidos || ''}`.trim();
+    res.json({
+      uid: data?.uid || uid,
+      email: data?.email || '',
+      username: data?.username || '',
+      nombre: nombreCompleto || '',
+      avatar: data?.fotoPerfil || '',
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { getProtectedData, createUserAdmin, searchUsers, getUserByUid };

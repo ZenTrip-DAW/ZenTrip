@@ -36,6 +36,25 @@ export async function createTrip(uid, form) {
     console.warn('No se pudo guardar el creador en miembros (revisar reglas de Firestore):', error);
   }
 
+  // Guardar los miembros invitados con sus datos para poder recuperarlos como recientes.
+  for (const member of (miembros || [])) {
+    if (!member?.uid) continue;
+    const invitedRef = doc(db, 'viajes', docRef.id, 'miembros', member.uid);
+    try {
+      await setDoc(invitedRef, {
+        uid: member.uid,
+        email: member.email || '',
+        nombre: member.nombre || '',
+        username: member.username || '',
+        avatar: member.avatar || '',
+        role: 'miembro',
+        invitationStatus: member.estadoInvitacion || 'pendiente',
+      }, { merge: true });
+    } catch {
+      // No bloqueamos la creacion del viaje si falla algún miembro.
+    }
+  }
+
   return docRef.id;
 }
 

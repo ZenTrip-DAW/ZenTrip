@@ -31,12 +31,12 @@ export default function PanelParticipantes({ participantes = [], onEliminarParti
             <li key={p.id} className="flex items-center gap-2">
               <UserAvatar
                 src={p.avatar}
-                fullName={p.nombre}
+                fullName={p.nombre || p.email}
                 sizeClass="w-9 h-9"
                 backgroundClass="bg-secondary-1"
               />
               <div className="flex-1 min-w-0">
-                <p className="body-2-semibold text-neutral-6 truncate">{p.nombre}</p>
+                <p className="body-2-semibold text-neutral-6 truncate">{p.nombre || p.email}</p>
                 <p className={`body-3 truncate ${p.tipo === 'email' ? 'text-primary-3' : 'text-neutral-3'}`}>
                   {p.tipo === 'email' ? 'Invitado por email' : 'Miembro ZenTrip'}
                 </p>

@@ -21,6 +21,20 @@ export default function TabMiembros({ recientes = [], participantes = [], onAgre
     [participantes],
   );
 
+  const recientesUnicos = useMemo(() => {
+    const seen = new Set();
+    return recientes.filter((item) => {
+      const uid = String(item?.uid || '').trim();
+      if (!uid || seen.has(uid)) return false;
+      const nombre = String(item?.nombre || '').trim();
+      const apellidos = String(item?.apellidos || '').trim();
+      const username = String(item?.username || '').trim();
+      if (!nombre && !apellidos && !username) return false;
+      seen.add(uid);
+      return true;
+    });
+  }, [recientes]);
+
   const handleBuscar = async () => {
     const term = query.trim();
     if (!term) {
@@ -36,10 +50,15 @@ export default function TabMiembros({ recientes = [], participantes = [], onAgre
       const users = await searchUsersByUsername(term);
       const filtered = users.filter((item) => {
         const memberEmail = (item.email || '').trim().toLowerCase();
+        const nombre = String(item?.nombre || '').trim();
+        const apellidos = String(item?.apellidos || '').trim();
+        const username = String(item?.username || '').trim();
+        const perfilCompleto = nombre || apellidos || username;
 
         return (
           item.uid !== currentUserUid
           && memberEmail !== currentUserEmail
+          && (isEmailSearch || perfilCompleto)
         );
       });
 
@@ -62,6 +81,36 @@ export default function TabMiembros({ recientes = [], participantes = [], onAgre
     }
   };
 
+  const getRecentNameParts = (recentUser) => {
+    const rawFirstName = String(recentUser?.nombre || '').trim();
+    const rawLastName = String(recentUser?.apellidos || '').trim();
+
+    if (rawFirstName || rawLastName) {
+      if (rawFirstName && !rawLastName && rawFirstName.includes(' ')) {
+        const parts = rawFirstName.split(/\s+/).filter(Boolean);
+        return {
+          firstName: parts[0] || '',
+          lastName: parts.slice(1).join(' '),
+          fullName: rawFirstName,
+        };
+      }
+
+      return {
+        firstName: rawFirstName || rawLastName,
+        lastName: rawFirstName ? rawLastName : '',
+        fullName: `${rawFirstName} ${rawLastName}`.trim(),
+      };
+    }
+
+    const username = String(recentUser?.username || '').trim();
+
+    return {
+      firstName: username,
+      lastName: '',
+      fullName: username,
+    };
+  };
+
   return (
     <div>
       {/* Buscador */}
@@ -70,7 +119,7 @@ export default function TabMiembros({ recientes = [], participantes = [], onAgre
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { setQuery(e.target.value); setResultados([]); setFieldErrors({}); }}
             onKeyDown={handleKeyDown}
             placeholder="Buscar por nombre de usuario o correo..."
             className="w-full border border-neutral-2 rounded-lg px-4 py-2 pr-9 body-2 md:body-semibold text-neutral-6 placeholder:text-neutral-3 focus:outline-none focus:ring-2 focus:ring-primary-3 focus:border-transparent"
@@ -101,7 +150,7 @@ export default function TabMiembros({ recientes = [], participantes = [], onAgre
                 <div className="flex items-center gap-3 min-w-0">
                   <UserAvatar
                     src={member.avatar}
-                    fullName={member.nombre}
+                    fullName={member.nombre || member.email}
                     sizeClass="w-10 h-10"
                     backgroundClass="bg-secondary-1"
                   />
@@ -135,28 +184,44 @@ export default function TabMiembros({ recientes = [], participantes = [], onAgre
       )}
 
       {/* Recientes */}
-      {recientes.length > 0 && (
+      {recientesUnicos.length > 0 && (
         <>
-          <p className="body-bold text-neutral-5 mb-3">Recientes</p>
-          <div className="flex flex-wrap gap-x-4 gap-y-3">
-            {recientes.map((user) => (
-              <button
-                key={user.id}
-                type="button"
-                className="flex flex-col items-center gap-1 hover:opacity-80 transition"
-              >
-                <UserAvatar
-                  src={user.avatar}
-                  fullName={user.nombre}
-                  sizeClass="w-12 h-12"
-                  backgroundClass="bg-secondary-1"
-                  initialsClass="body-3 text-secondary-5 font-bold"
-                />
-                <span className="body-3 text-neutral-5 text-center w-16 leading-tight">
-                  {user.nombre}
-                </span>
-              </button>
-            ))}
+          <p className="body-bold text-neutral-5 mb-4">Recientes</p>
+          <div className="flex flex-wrap gap-x-8 gap-y-6">
+            {recientesUnicos.map((user) => {
+              const yaInvitado = participantesSet.has(user.uid);
+              const { firstName, lastName, fullName } = getRecentNameParts(user);
+
+              return (
+                <button
+                  key={user.id || user.uid || user.email}
+                  type="button"
+                  onClick={() => {
+                    if (!yaInvitado) {
+                      onAgregarMiembro?.(user);
+                    }
+                  }}
+                  className={`flex w-20 flex-col items-center gap-2 transition ${
+                    yaInvitado ? 'opacity-65 cursor-default' : 'hover:opacity-85'
+                  }`}
+                >
+                  <UserAvatar
+                    src={user.avatar}
+                    fullName={fullName}
+                    sizeClass="w-12 h-12"
+                    backgroundClass="bg-secondary-1"
+                    initialsClass="body-3 text-secondary-5 font-bold"
+                  />
+                  <div className="w-full text-center leading-tight mt-0.5" title={fullName}>
+                    <p className="body-3 text-neutral-5 truncate">{firstName}</p>
+                    <p className="body-3 text-neutral-5 truncate min-h-4">{lastName || '\u00A0'}</p>
+                  </div>
+                  <span className={`body-3 ${yaInvitado ? 'text-neutral-4' : 'text-primary-3'}`}>
+                    {yaInvitado ? 'Añadido' : 'Invitar'}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </>
       )}
