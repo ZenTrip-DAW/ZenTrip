@@ -11,12 +11,8 @@ const CATEGORIES = [
 export default function CategoryBar() {
   return (
     <div
-      className="w-full rounded-2xl px-10 py-5"
-      style={{
-        backgroundColor: "rgba(180, 180, 180, 0.30)",
-        backdropFilter: "blur(8px)",
-        WebkitBackdropFilter: "blur(8px)",
-      }}
+      className="w-full rounded-2xl px-10 py-5 border border-white/50"
+      style={{ backgroundColor: "rgba(200, 200, 200, 0.63)" }}
     >
       <div className="flex items-stretch gap-6 w-full">
         {CATEGORIES.map((cat) => (
@@ -25,9 +21,9 @@ export default function CategoryBar() {
             type="button"
             className="flex-1 cursor-pointer group"
           >
-            <div className="w-full h-28 rounded-xl bg-white/60 border   group-hover:bg-primary-1 transition-all duration-200 flex flex-col items-center justify-center gap-2 px-2 py-3">
+            <div className="w-full h-24 rounded-2xl bg-white/45 border border-white/40 group-hover:scale-110 transition-transform duration-200 flex flex-col items-center justify-center gap-0.5 px-2 pb-2 pt-3">
               <img src={cat.img} alt={cat.label} className="w-16 h-16 object-contain shrink-0" />
-              <span className="body-2-semibold text-secondary-6  transition-colors duration-200 text-center leading-tight">
+              <span className="body-2-semibold text-secondary-6 text-center leading-tight">
                 {cat.label}
               </span>
             </div>
