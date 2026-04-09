@@ -1,7 +1,6 @@
 import { Outlet } from "react-router-dom";
 import Navbar from "../components/shared/layout/Navbar";
 import Footer from "../components/shared/layout/Footer";
-
 export default function MainLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { ROUTES } from "../../config/routes";
+import CategoryBar from "./CategoryBar";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -54,12 +55,14 @@ export default function Home() {
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
+        position: "relative",
         height: "100vh",
         width: "calc(100% + 2rem)",
         margin: 0,
         padding: 0,
         marginLeft: "-1rem",
         marginTop: "-6.5rem",
+        marginBottom: "-1.5rem",
       }}
     >
       <div className="absolute left-6 top-28 sm:left-10 sm:top-32 md:left-14 md:top-36 lg:left-16 lg:top-40 max-w-130 text-left">
@@ -84,6 +87,10 @@ export default function Home() {
         >
           Crear un nuevo viaje
         </button>
+      </div>
+
+      <div className="absolute bottom-0 left-0 right-0">
+        <CategoryBar />
       </div>
     </div>
     </>
