@@ -3,6 +3,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { ROUTES } from '../../../config/routes';
 import { saveUserProfile } from '../../../services/profileService';
 import { validateProfileForm } from '../../../utils/validation/profile/rules';
+import { isUsernameUnique, isPhoneUnique } from '../../../services/userService';
 
 const INITIAL_FORM = {
   nombre: '',
@@ -73,6 +74,22 @@ export function useEditProfileController(navigate) {
     setError(null);
     setExito(false);
     try {
+      const [usernameOk, phoneOk] = await Promise.all([
+        isUsernameUnique(form.username, user.uid),
+        form.telefono ? isPhoneUnique(form.telefono, user.uid) : Promise.resolve(true),
+      ]);
+
+      const uniqueErrors = {};
+      if (!usernameOk) uniqueErrors.username = 'Este nombre de usuario ya está en uso.';
+      if (!phoneOk) uniqueErrors.telefono = 'Este teléfono ya está registrado.';
+
+      if (Object.keys(uniqueErrors).length > 0) {
+        setFieldErrors(uniqueErrors);
+        setActiveSection('datosPersonales');
+        setGuardando(false);
+        return;
+      }
+
       await saveUserProfile(user, form);
       setProfile((prev) => ({
         ...(prev || {}),

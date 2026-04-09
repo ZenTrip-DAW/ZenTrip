@@ -11,6 +11,8 @@ import CreateTrip from './components/trips/create/CreateTrip';
 import Landing from './components/landing/landing';
 import Home from './components/home/Home';
 import MainLayout from './layouts/MainLayout';
+import PrivacyPolicy from './components/legal/PrivacyPolicy';
+import TermsOfUse from './components/legal/TermsOfUse';
 import ProtectedRoute from './components/auth/guards/ProtectedRoute';
 import GuestRoute from './components/auth/guards/GuestRoute';
 
@@ -26,6 +28,8 @@ const router = createBrowserRouter([
           { path: ROUTES.PROFILE.EDIT, element: <EditProfile /> },
           { path: ROUTES.TRIPS.CREATE, element: <CreateTrip /> },
           { path: ROUTES.PROFILE.SETUP, element: <EditProfile isOnboarding /> },
+          { path: ROUTES.LEGAL.PRIVACY, element: <PrivacyPolicy /> },
+          { path: ROUTES.LEGAL.TERMS, element: <TermsOfUse /> },
         ],
       },
     ],

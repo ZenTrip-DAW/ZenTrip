@@ -13,4 +13,8 @@ export const ROUTES = {
   TRIPS: {
     CREATE: '/trips/create',
   },
+  LEGAL: {
+    PRIVACY: '/legal/privacidad',
+    TERMS: '/legal/terminos',
+  },
 };

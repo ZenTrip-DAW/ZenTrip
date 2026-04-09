@@ -2,6 +2,10 @@ import {
   doc,
   getDoc,
   setDoc,
+  collection,
+  query,
+  where,
+  getDocs,
 } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
 import { ROUTES } from '../config/routes';
@@ -66,6 +70,24 @@ export async function getUserByUid(uid) {
   } catch {
     return null;
   }
+}
+
+export async function isUsernameUnique(username, currentUid) {
+  const q = query(
+    collection(db, 'usuarios'),
+    where('username', '==', username.trim())
+  );
+  const snap = await getDocs(q);
+  return snap.empty || snap.docs.every((d) => d.id === currentUid);
+}
+
+export async function isPhoneUnique(telefono, currentUid) {
+  const q = query(
+    collection(db, 'usuarios'),
+    where('telefono', '==', telefono.trim())
+  );
+  const snap = await getDocs(q);
+  return snap.empty || snap.docs.every((d) => d.id === currentUid);
 }
 
 export async function searchUsersByEmail(email, maxResults = 5) {
