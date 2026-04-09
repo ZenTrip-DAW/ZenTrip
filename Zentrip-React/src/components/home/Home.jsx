@@ -3,12 +3,16 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { ROUTES } from "../../config/routes";
 import CategoryBar from "./CategoryBar";
+import SplashScreen from "../shared/SplashScreen";
+
+const heroImg = '/img/background/home/hero/background_hero.jpg';
 
 export default function Home() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { profile, user } = useAuth();
   const [showInviteError, setShowInviteError] = useState(searchParams.get('inviteError') === 'emailMismatch');
+  const [imagenCargada, setImagenCargada] = useState(false);
 
   useEffect(() => {
     if (!showInviteError) return;
@@ -25,6 +29,9 @@ export default function Home() {
 
   return (
     <>
+      <img src={heroImg} style={{ display: 'none' }} onLoad={() => setImagenCargada(true)} alt="" />
+      {!imagenCargada && <SplashScreen />}
+      {imagenCargada && <>
       {showInviteError && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-7 flex flex-col items-center gap-5 text-center">
@@ -93,6 +100,7 @@ export default function Home() {
         <CategoryBar />
       </div>
     </div>
+    </>}
     </>
   );
 }
