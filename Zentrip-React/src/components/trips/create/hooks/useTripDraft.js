@@ -10,7 +10,7 @@ const INITIAL_FORM = {
   destino: '',
   fechaInicio: '',
   fechaFin: '',
-  divisa: 'EUR - EURO',
+  divisa: '',
   presupuesto: '',
   conMascota: false,
   miembros: [],

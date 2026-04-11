@@ -22,7 +22,7 @@ export default function CreateTrip() {
     handleCrearViaje,
   } = useCreateTripController();
 
-  const maxWidth = step === 1 ? 'max-w-5xl' : 'max-w-3xl';
+  const maxWidth = 'max-w-4xl';
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8">
