@@ -49,7 +49,8 @@ export default function DetallesForm({
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
         <h2 className="title-h3-desktop text-secondary-5 mb-5">Información básica</h2>
 
-        <div className="mb-4">
+        {/* Nombre | Destino / Origen */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <Input
             variant="light"
             label="Nombre del viaje"
@@ -60,9 +61,7 @@ export default function DetallesForm({
             error={fieldErrors.nombre}
             required
           />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div />
           <Input
             variant="light"
             label="Origen"
@@ -83,8 +82,9 @@ export default function DetallesForm({
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-          <div>
+        {/* Fecha inicio + Fecha fin | Divisa */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-2 gap-4">
             <Input
               variant="light"
               label="Fecha inicio"
@@ -94,8 +94,6 @@ export default function DetallesForm({
               onChange={onChange}
               error={fieldErrors.fechaInicio}
             />
-          </div>
-          <div>
             <Input
               variant="light"
               label="Fecha fin"
@@ -128,6 +126,7 @@ export default function DetallesForm({
           </div>
         </div>
 
+        {/* Presupuesto | Mascota */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
           <Input
             variant="light"
@@ -164,11 +163,11 @@ export default function DetallesForm({
         </div>
       </div>
 
-      <div className="flex justify-end gap-3">
-        <Button variant="ghost" type="button" onClick={onCancelar} className="w-auto px-6">
+      <div className="flex justify-between mt-6">
+        <Button variant="ghost" type="button" onClick={onCancelar} className="w-auto! px-6">
           Cancelar
         </Button>
-        <Button variant="orange" type="submit" className="w-auto px-8">
+        <Button variant="orange" type="submit" className="w-auto! px-6">
           Siguiente
         </Button>
       </div>
