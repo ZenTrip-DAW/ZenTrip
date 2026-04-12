@@ -12,6 +12,7 @@ export const ROUTES = {
   },
   TRIPS: {
     CREATE: '/trips/create',
+    LIST: '/trips',
   },
   LEGAL: {
     PRIVACY: '/legal/privacidad',

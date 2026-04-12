@@ -20,6 +20,7 @@ const Header = () => {
         closeProfileMenu,
         handleGoToEditProfile,
         handleGoHome,
+        handleGoToMyTrips,
         handleLogout,
     } = useNavbarController();
 
@@ -67,13 +68,24 @@ const Header = () => {
             {/* Nav desktop */}
             <nav className="hidden md:flex flex-1 items-center justify-center gap-8 px-4">
                 {NAV_ITEMS.map((item) => (
-                    <a
-                        key={item}
-                        href="#"
-                        className="body-2-semibold text-neutral-7 hover:text-primary-3 transition-colors duration-200"
-                    >
-                        {item}
-                    </a>
+                    item === 'Mis viajes' ? (
+                        <button
+                            key={item}
+                            type="button"
+                            onClick={handleGoToMyTrips}
+                            className="body-2-semibold text-neutral-7 hover:text-primary-3 transition-colors duration-200 bg-transparent border-none p-0 cursor-pointer"
+                        >
+                            {item}
+                        </button>
+                    ) : (
+                        <a
+                            key={item}
+                            href="#"
+                            className="body-2-semibold text-neutral-7 hover:text-primary-3 transition-colors duration-200"
+                        >
+                            {item}
+                        </a>
+                    )
                 ))}
             </nav>
 
@@ -177,13 +189,24 @@ const Header = () => {
                     style={{ backgroundColor: "rgba(255, 255, 255, 0.92)" }}
                 >
                     {NAV_ITEMS.map((item) => (
-                        <a
-                            key={item}
-                            href="#"
-                            className="body-2-semibold text-neutral-7 hover:text-primary-3 transition-colors duration-200"
-                        >
-                            {item}
-                        </a>
+                        item === 'Mis viajes' ? (
+                            <button
+                                key={item}
+                                type="button"
+                                onClick={handleGoToMyTrips}
+                                className="body-2-semibold text-neutral-7 hover:text-primary-3 transition-colors duration-200 bg-transparent border-none p-0 cursor-pointer"
+                            >
+                                {item}
+                            </button>
+                        ) : (
+                            <a
+                                key={item}
+                                href="#"
+                                className="body-2-semibold text-neutral-7 hover:text-primary-3 transition-colors duration-200"
+                            >
+                                {item}
+                            </a>
+                        )
                     ))}
                 </div>
             )}

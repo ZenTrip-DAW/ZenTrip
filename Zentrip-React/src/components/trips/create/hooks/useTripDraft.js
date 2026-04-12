@@ -97,6 +97,11 @@ export function useTripDraft() {
     if (index >= 0 && index <= step) setStep(index);
   };
 
+  const handleCancelarViaje = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    navigate(ROUTES.HOME);
+  };
+
   return {
     step,
     form,
@@ -106,5 +111,7 @@ export function useTripDraft() {
     handleSiguiente,
     handleAtras,
     handleGoToStep,
+    handleCancelarViaje,
+    navigate,
   };
 }

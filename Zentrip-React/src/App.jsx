@@ -8,6 +8,7 @@ import VerifyEmail from './components/auth/verify-email/VerifyEmail';
 import AuthActionHandler from './components/auth/action/AuthActionHandler';
 import EditProfile from './components/profile/EditProfile';
 import CreateTrip from './components/trips/create/CreateTrip';
+import MisViajes from './components/trips/list/MisViajes';
 import Landing from './components/landing/landing';
 import Home from './components/home/Home';
 import MainLayout from './layouts/MainLayout';
@@ -27,6 +28,7 @@ const router = createBrowserRouter([
           { path: ROUTES.HOME, element: <Home /> },
           { path: ROUTES.PROFILE.EDIT, element: <EditProfile /> },
           { path: ROUTES.TRIPS.CREATE, element: <CreateTrip /> },
+          { path: ROUTES.TRIPS.LIST, element: <MisViajes /> },
           { path: ROUTES.PROFILE.SETUP, element: <EditProfile isOnboarding /> },
           { path: ROUTES.LEGAL.PRIVACY, element: <PrivacyPolicy /> },
           { path: ROUTES.LEGAL.TERMS, element: <TermsOfUse /> },

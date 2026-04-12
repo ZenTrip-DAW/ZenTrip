@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../../../context/AuthContext';
-import { createTrip, getTripPublicInviteLink, getTripPublicInvitePreview, sendTripInvitations } from '../../../../services/tripService';
+import { createTrip, getTripPublicInviteLink, getTripPublicInvitePreview, saveTripDraft, sendTripInvitations } from '../../../../services/tripService';
+import { ROUTES } from '../../../../config/routes';
 import { STORAGE_KEY, useTripDraft } from './useTripDraft';
 import { useRecentMembers } from './useRecentMembers';
 
 export function useCreateTripController() {
   const { user } = useAuth();
-  const { step, form, setForm, fieldErrors, handleChange, handleSiguiente, handleAtras, handleGoToStep } = useTripDraft();
+  const { step, form, setForm, fieldErrors, handleChange, handleSiguiente, handleAtras, handleGoToStep, handleCancelarViaje, navigate } = useTripDraft();
   const { recientes, addToRecentMembers } = useRecentMembers(user);
 
   const [previewJoinToken, setPreviewJoinToken] = useState('');
@@ -143,6 +144,17 @@ export function useCreateTripController() {
     }
   };
 
+  const handleGuardarBorrador = async () => {
+    if (!user?.uid) return;
+    try {
+      await saveTripDraft(user.uid, form);
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (err) {
+      console.error('[handleGuardarBorrador] Error guardando borrador:', err);
+    }
+    navigate(ROUTES.TRIPS.LIST);
+  };
+
   return {
     step,
     form,
@@ -155,6 +167,8 @@ export function useCreateTripController() {
     handleSiguiente,
     handleAtras,
     handleGoToStep,
+    handleCancelarViaje,
+    handleGuardarBorrador,
     handleAgregarMiembro,
     handleAgregarInvitadoEmail,
     handleEliminarInvitado,

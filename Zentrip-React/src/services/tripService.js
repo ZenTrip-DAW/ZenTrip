@@ -1,4 +1,4 @@
-import { addDoc, collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDocs, query, serverTimestamp, setDoc, where } from 'firebase/firestore';
 import { db, auth } from '../config/firebaseConfig';
 import { apiClient } from './apiClient';
 
@@ -56,6 +56,43 @@ export async function createTrip(uid, form) {
   }
 
   return docRef.id;
+}
+
+export async function saveTripDraft(uid, form) {
+  const { miembros, ...tripData } = form;
+  const payload = {
+    uid,
+    isDraft: true,
+    name: tripData.nombre || '',
+    origin: tripData.origen || '',
+    destination: tripData.destino || '',
+    startDate: tripData.fechaInicio || '',
+    endDate: tripData.fechaFin || '',
+    currency: tripData.divisa || '',
+    budget: tripData.presupuesto || '',
+    hasPet: Boolean(tripData.conMascota),
+    miembros: miembros || [],
+    formSnapshot: form,
+    createdAt: serverTimestamp(),
+  };
+  const docRef = await addDoc(collection(db, 'viajes'), payload);
+  return docRef.id;
+}
+
+export async function deleteTrip(tripId) {
+  await deleteDoc(doc(db, 'viajes', tripId));
+}
+
+export async function getUserTrips(uid) {
+  const q = query(collection(db, 'viajes'), where('uid', '==', uid));
+  const snapshot = await getDocs(q);
+  const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+  // Ordenar por fecha de creación descendente en el cliente para evitar índice compuesto en Firestore
+  return docs.sort((a, b) => {
+    const aTs = a.createdAt?.seconds ?? 0;
+    const bTs = b.createdAt?.seconds ?? 0;
+    return bTs - aTs;
+  });
 }
 
 export async function sendTripInvitations(payload) {

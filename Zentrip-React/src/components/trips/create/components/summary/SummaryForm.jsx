@@ -9,6 +9,10 @@ function calcNights(fechaInicio, fechaFin) {
   return nights > 0 ? nights : null;
 }
 
+function EmptyLine({ colorClass = 'bg-secondary-5' }) {
+  return <span className={`block w-20 h-[2px] rounded-full ${colorClass}`} />;
+}
+
 function SectionRow({ label, children }) {
   return (
     <div className="mb-4">
@@ -82,6 +86,8 @@ export default function ResumenForm({
   form,
   onAtras,
   onCrearViaje,
+  onCancelar,
+  onGuardarBorrador,
   isCreatingTrip = false,
   tripCreationLocked = false,
 }) {
@@ -103,33 +109,29 @@ export default function ResumenForm({
 
           {/* Ruta */}
           <SectionRow label="Ruta">
-            <p className="body text-secondary-3">
-              {form.origen && form.destino
-                ? `${form.origen} → ${form.destino}`
-                : form.origen || form.destino || '—'}
-            </p>
+            {(form.origen || form.destino)
+              ? <p className="body text-secondary-5">{form.origen && form.destino ? `${form.origen} → ${form.destino}` : form.origen || form.destino}</p>
+              : <EmptyLine />}
           </SectionRow>
 
           {/* Fechas */}
           <SectionRow label="Fechas">
-            <p className="body text-secondary-3">
-              {form.fechaInicio && form.fechaFin
-                ? `${form.fechaInicio} → ${form.fechaFin}${nights ? ` (${nights} ${nights === 1 ? 'noche' : 'noches'})` : ''}`
-                : form.fechaInicio || form.fechaFin || '—'}
-            </p>
+            {(form.fechaInicio || form.fechaFin)
+              ? <p className="body text-secondary-5">{form.fechaInicio && form.fechaFin ? `${form.fechaInicio} → ${form.fechaFin}${nights ? ` (${nights} ${nights === 1 ? 'noche' : 'noches'})` : ''}` : form.fechaInicio || form.fechaFin}</p>
+              : <EmptyLine />}
           </SectionRow>
 
           {/* Presupuesto */}
           <SectionRow label="Presupuesto">
-            <p className="body text-primary-3">
-              {hasPresupuesto ? `${form.presupuesto} ${form.divisa}` : '—'}
-            </p>
+            {hasPresupuesto
+              ? <p className="body text-primary-3">{form.presupuesto} {form.divisa}</p>
+              : <div className="flex items-center gap-2"><EmptyLine colorClass="bg-primary-3" />{form.divisa && <span className="body text-primary-3">{form.divisa}</span>}</div>}
           </SectionRow>
 
           {/* Mascota */}
           <div className="mb-5">
             <p className="body-3 text-neutral-3 mb-1">Viaje con mascotas</p>
-            <p className="body text-neutral-6">{form.conMascota ? 'Sí' : 'No'}</p>
+            <p className="body text-secondary-5">{form.conMascota ? 'Sí' : 'No'}</p>
           </div>
 
           {/* Caja informativa */}
@@ -149,18 +151,28 @@ export default function ResumenForm({
 
       {/* Botones de navegación */}
       <div className="flex justify-between mt-6">
-        <Button variant="ghost" type="button" onClick={onAtras} className="w-auto! px-6">
-          Atrás
-        </Button>
-        <Button
-          variant="orange"
-          type="button"
-          className="w-auto! px-6"
-          onClick={onCrearViaje}
-          disabled={disableCreate}
-        >
-          {isCreatingTrip ? 'Creando...' : tripCreationLocked ? 'Viaje creado' : 'Crear viaje'}
-        </Button>
+        <div className="flex gap-3">
+          <Button variant="ghost" type="button" onClick={onAtras} className="w-auto! px-6">
+            Atrás
+          </Button>
+          <Button variant="danger" type="button" onClick={onCancelar} className="w-auto! px-6">
+            Cancelar
+          </Button>
+        </div>
+        <div className="flex gap-3">
+          <Button variant="ghost" type="button" onClick={onGuardarBorrador} className="w-auto! px-6">
+            Continuar más tarde
+          </Button>
+          <Button
+            variant="orange"
+            type="button"
+            className="w-auto! px-6"
+            onClick={onCrearViaje}
+            disabled={disableCreate}
+          >
+            {isCreatingTrip ? 'Creando...' : tripCreationLocked ? 'Viaje creado' : 'Crear viaje'}
+          </Button>
+        </div>
       </div>
     </div>
   );

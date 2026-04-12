@@ -351,6 +351,10 @@
         background-color: var(--color-feedback-error-bg);
     }
 
+    .bg-feedback-error-solid {
+        background-color: var(--color-feedback-error);
+    }
+
     .border-feedback-error {
         border-color: var(--color-feedback-error-border);
     }

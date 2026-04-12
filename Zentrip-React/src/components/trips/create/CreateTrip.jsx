@@ -17,6 +17,8 @@ export default function CreateTrip() {
     handleSiguiente,
     handleAtras,
     handleGoToStep,
+    handleCancelarViaje,
+    handleGuardarBorrador,
     handleAgregarMiembro,
     handleAgregarInvitadoEmail,
     handleEliminarInvitado,
@@ -62,6 +64,8 @@ export default function CreateTrip() {
             form={form}
             onAtras={handleAtras}
             onCrearViaje={handleCrearViaje}
+            onCancelar={handleCancelarViaje}
+            onGuardarBorrador={handleGuardarBorrador}
             isCreatingTrip={isCreatingTrip}
             tripCreationLocked={tripCreationLocked}
           />
