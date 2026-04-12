@@ -3,7 +3,7 @@ export default function CTABanner({ onRegister, onLogin }) {
     <section className="px-6 md:px-16 py-16 md:py-24 text-center relative overflow-hidden"
       style={{ background: "linear-gradient(135deg, #002C51 0%, #004C87 100%)" }}>
       <div className="relative z-10">
-        <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4 leading-tight">
+        <h2 className="text-xl sm:text-3xl md:text-5xl font-extrabold text-white mb-4 leading-tight">
           ¿Listo para tu próxima<br />
           <span className="text-primary-3">aventura</span>?
         </h2>

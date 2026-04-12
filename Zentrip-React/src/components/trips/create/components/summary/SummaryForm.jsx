@@ -25,7 +25,7 @@ function SectionRow({ label, children }) {
 
 function ParticipantesPanel({ participantes }) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-neutral-1 p-5 w-full lg:w-64 shrink-0">
+    <div className="bg-white rounded-2xl shadow-sm border border-neutral-1 p-5 w-full md:w-64 shrink-0">
       <div className="flex items-center gap-2 mb-4">
         <h2 className="title-h3-desktop text-neutral-4">Participantes</h2>
         {participantes.length > 0 && (
@@ -97,7 +97,7 @@ export default function ResumenForm({
 
   return (
     <div>
-      <div className="flex flex-col lg:flex-row gap-5 lg:items-stretch">
+      <div className="flex flex-col md:flex-row gap-5 md:items-stretch">
         {/* Card izquierda — Resumen */}
         <div className="bg-white rounded-2xl shadow-sm border border-neutral-1 p-6 flex-1 min-w-0 w-full">
           <h2 className="title-h3-desktop text-secondary-5 mb-5">Resumen</h2>
@@ -144,13 +144,13 @@ export default function ResumenForm({
         </div>
 
         {/* Panel derecho — Participantes (solo lectura) */}
-        <div className="lg:ml-8 w-full lg:w-auto">
+        <div className="md:ml-4 w-full md:w-auto">
           <ParticipantesPanel participantes={form.miembros ?? []} />
         </div>
       </div>
 
       {/* Botones de navegación */}
-      <div className="flex justify-between mt-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between gap-3 mt-6">
         <div className="flex gap-3">
           <Button variant="ghost" type="button" onClick={onAtras} className="w-auto! px-6">
             Atrás
@@ -160,7 +160,7 @@ export default function ResumenForm({
           </Button>
         </div>
         <div className="flex gap-3">
-          <Button variant="ghost" type="button" onClick={onGuardarBorrador} className="w-auto! px-6">
+          <Button variant="ghost" type="button" onClick={onGuardarBorrador} className="w-auto! px-4 sm:px-6">
             Continuar más tarde
           </Button>
           <Button

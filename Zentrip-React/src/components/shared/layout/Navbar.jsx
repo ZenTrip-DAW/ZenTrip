@@ -194,7 +194,7 @@ const Header = () => {
                                 key={item}
                                 type="button"
                                 onClick={handleGoToMyTrips}
-                                className="body-2-semibold text-neutral-7 hover:text-primary-3 transition-colors duration-200 bg-transparent border-none p-0 cursor-pointer"
+                                className="body-2-semibold text-neutral-7 hover:text-primary-3 transition-colors duration-200 bg-transparent border-none p-0 cursor-pointer text-left"
                             >
                                 {item}
                             </button>

@@ -63,7 +63,7 @@ export default function Home() {
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
         position: "relative",
-        height: "100vh",
+        height: "100dvh",
         width: "calc(100% + 2rem)",
         margin: 0,
         padding: 0,
@@ -72,7 +72,7 @@ export default function Home() {
         marginBottom: "-1.5rem",
       }}
     >
-      <div className="absolute left-6 top-28 sm:left-10 sm:top-32 md:left-14 md:top-36 lg:left-16 lg:top-40 max-w-130 text-left">
+      <div className="absolute left-5 right-5 top-24 sm:left-10 sm:top-32 sm:right-auto md:left-14 md:top-36 lg:left-16 lg:top-40 max-w-full sm:max-w-md md:max-w-lg lg:max-w-xl text-left">
         <h1 className="title-h1-mobile md:title-h1-desktop text-sky-400">
           ¡Bienvenid@, {registeredName}!
         </h1>
@@ -81,10 +81,8 @@ export default function Home() {
           Plan, Pack &amp; Go
         </h2>
 
-        <p className="body-bold text-white mt-4 max-w-105">
-          Planifica tu próximo gran viaje o explora nuevos
-          <br />
-          destinos para tu próxima aventura
+        <p className="body-bold text-white mt-4">
+          Planifica tu próximo gran viaje o explora nuevos destinos para tu próxima aventura
         </p>
 
         <button

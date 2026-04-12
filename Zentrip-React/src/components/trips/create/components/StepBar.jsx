@@ -25,7 +25,7 @@ export default function StepBar({ activeStep = 0, onStepClick }) {
             style={arrowStyle}
             disabled={!isClickable}
             onClick={() => isClickable && onStepClick?.(i)}
-            className={`px-5 py-2 body-2-semibold select-none transition-opacity ${
+            className={`px-3 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold select-none transition-opacity ${
               isActive
                 ? 'bg-secondary-5 text-white'
                 : 'bg-secondary-1 text-secondary-5'

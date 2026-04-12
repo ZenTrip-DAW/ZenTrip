@@ -25,8 +25,7 @@ export default function PetSection() {
         <div className="rounded-3xl overflow-hidden" style={{ boxShadow: "0 24px 64px rgba(0,0,0,.3)" }}>
           <img
             src="https://images.unsplash.com/photo-1601758124510-52d02ddb7cbd?w=800&q=80&fit=crop"
-            className="w-full block object-cover"
-            style={{ height: 340 }}
+            className="w-full block object-cover h-48 sm:h-64 md:h-85"
             alt="Viaje con mascota"
           />
         </div>

@@ -39,7 +39,7 @@ export default function InvitacionesForm({
 
   return (
     <div>
-      <div className="flex flex-col lg:flex-row gap-5 lg:items-stretch">
+      <div className="flex flex-col md:flex-row gap-5 md:items-stretch">
         {/* Card izquierda — Invitaciones */}
         <div className="bg-white rounded-2xl shadow-sm border border-neutral-1 p-6 flex-1 min-w-0 w-full">
           <h2 className="title-h3-desktop text-secondary-5 mb-5">Invitaciones</h2>
@@ -79,7 +79,7 @@ export default function InvitacionesForm({
         </div>
 
         {/* Panel derecho — Participantes */}
-        <div className="lg:ml-8 w-full lg:w-auto">
+        <div className="md:ml-4 w-full md:w-auto">
           <ParticipantsPanel
             participantes={participantes}
             onEliminarParticipante={onEliminarParticipante}
