@@ -93,6 +93,10 @@ export function useTripDraft() {
     else navigate(ROUTES.HOME);
   };
 
+  const handleGoToStep = (index) => {
+    if (index >= 0 && index <= step) setStep(index);
+  };
+
   return {
     step,
     form,
@@ -101,5 +105,6 @@ export function useTripDraft() {
     handleChange,
     handleSiguiente,
     handleAtras,
+    handleGoToStep,
   };
 }

@@ -6,7 +6,7 @@ import { useRecentMembers } from './useRecentMembers';
 
 export function useCreateTripController() {
   const { user } = useAuth();
-  const { step, form, setForm, fieldErrors, handleChange, handleSiguiente, handleAtras } = useTripDraft();
+  const { step, form, setForm, fieldErrors, handleChange, handleSiguiente, handleAtras, handleGoToStep } = useTripDraft();
   const { recientes, addToRecentMembers } = useRecentMembers(user);
 
   const [previewJoinToken, setPreviewJoinToken] = useState('');
@@ -154,6 +154,7 @@ export function useCreateTripController() {
     handleChange,
     handleSiguiente,
     handleAtras,
+    handleGoToStep,
     handleAgregarMiembro,
     handleAgregarInvitadoEmail,
     handleEliminarInvitado,

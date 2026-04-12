@@ -16,6 +16,7 @@ export default function CreateTrip() {
     handleChange,
     handleSiguiente,
     handleAtras,
+    handleGoToStep,
     handleAgregarMiembro,
     handleAgregarInvitadoEmail,
     handleEliminarInvitado,
@@ -31,7 +32,7 @@ export default function CreateTrip() {
           Crear <span className="text-primary-3">nuevo</span> viaje
         </h1>
 
-        <StepBar activeStep={step} />
+        <StepBar activeStep={step} onStepClick={handleGoToStep} />
 
         {step === 0 && (
           <DetailsForm
