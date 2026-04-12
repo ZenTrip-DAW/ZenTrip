@@ -9,6 +9,10 @@ function calcNights(fechaInicio, fechaFin) {
   return nights > 0 ? nights : null;
 }
 
+function EmptyLine({ colorClass = 'bg-secondary-5' }) {
+  return <span className={`block w-20 h-[2px] rounded-full ${colorClass}`} />;
+}
+
 function SectionRow({ label, children }) {
   return (
     <div className="mb-4">
@@ -105,29 +109,23 @@ export default function ResumenForm({
 
           {/* Ruta */}
           <SectionRow label="Ruta">
-            <p className="body text-secondary-5">
-              {form.origen && form.destino
-                ? `${form.origen} → ${form.destino}`
-                : form.origen || form.destino || '—'}
-            </p>
+            {(form.origen || form.destino)
+              ? <p className="body text-secondary-5">{form.origen && form.destino ? `${form.origen} → ${form.destino}` : form.origen || form.destino}</p>
+              : <EmptyLine />}
           </SectionRow>
 
           {/* Fechas */}
           <SectionRow label="Fechas">
-            <p className="body text-secondary-5">
-              {form.fechaInicio && form.fechaFin
-                ? `${form.fechaInicio} → ${form.fechaFin}${nights ? ` (${nights} ${nights === 1 ? 'noche' : 'noches'})` : ''}`
-                : form.fechaInicio || form.fechaFin || '—'}
-            </p>
+            {(form.fechaInicio || form.fechaFin)
+              ? <p className="body text-secondary-5">{form.fechaInicio && form.fechaFin ? `${form.fechaInicio} → ${form.fechaFin}${nights ? ` (${nights} ${nights === 1 ? 'noche' : 'noches'})` : ''}` : form.fechaInicio || form.fechaFin}</p>
+              : <EmptyLine />}
           </SectionRow>
 
           {/* Presupuesto */}
           <SectionRow label="Presupuesto">
-            <p className="body text-primary-3">
-              {hasPresupuesto
-                ? `${form.presupuesto} ${form.divisa}`
-                : `— ${form.divisa || ''}`.trim()}
-            </p>
+            {hasPresupuesto
+              ? <p className="body text-primary-3">{form.presupuesto} {form.divisa}</p>
+              : <div className="flex items-center gap-2"><EmptyLine colorClass="bg-primary-3" />{form.divisa && <span className="body text-primary-3">{form.divisa}</span>}</div>}
           </SectionRow>
 
           {/* Mascota */}
