@@ -57,7 +57,10 @@ async function request(path, options = {}) {
 
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || `Error ${res.status}`);
+    const err = new Error(data.error || `Error ${res.status}`);
+    if (data.expired) err.expired = true;
+    if (data.rotated) err.rotated = true;
+    throw err;
   }
 
   return res.json();

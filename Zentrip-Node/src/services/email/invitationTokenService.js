@@ -1,8 +1,8 @@
 const jwt = require('jsonwebtoken');
 const admin = require('../../config/firebase');
 
-const EMAIL_INVITATION_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 dias
-const PUBLIC_INVITATION_TTL_SECONDS = 365 * 24 * 60 * 60; // 1 ano
+const EMAIL_INVITATION_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 días
+const PUBLIC_INVITATION_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 días
 
 function getJwtSecret() {
   return process.env.JWT_INVITE_SECRET || process.env.JWT_SECRET || 'dev-invite-secret-change-me';
@@ -20,6 +20,22 @@ function verifyInvitationJwt(token) {
     return jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] });
   } catch {
     return null;
+  }
+}
+
+// Distingue token expirado de token inválido/malformado.
+// Retorna { decoded, expired: false } si es válido,
+// { decoded (payload), expired: true } si solo expiró,
+// { decoded: null, expired: false } si es basura.
+function decodeJwtWithExpiry(token) {
+  try {
+    const decoded = jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] });
+    return { decoded, expired: false };
+  } catch (err) {
+    if (err?.name === 'TokenExpiredError') {
+      return { decoded: jwt.decode(token), expired: true };
+    }
+    return { decoded: null, expired: false };
   }
 }
 
@@ -57,14 +73,12 @@ async function upsertTripMember({ tripId, member }) {
     payload.acceptedAt = admin.firestore.FieldValue.serverTimestamp();
   }
 
-  // Sin UID, se conserva el documento por email para invitados no registrados.
   if (!normalizedUid) {
     const emailMemberRef = membersRef.doc(normalizedEmail);
     await emailMemberRef.set(payload, { merge: true });
     return;
   }
 
-  // Con UID, el documento canónico siempre es por UID.
   const uidMemberRef = membersRef.doc(normalizedUid);
   const emailMemberRef = normalizedEmail ? membersRef.doc(normalizedEmail) : null;
 
@@ -82,7 +96,6 @@ async function upsertTripMember({ tripId, member }) {
   const batch = db.batch();
   batch.set(uidMemberRef, mergedPayload, { merge: true });
 
-  // Limpia el documento legacy por email para evitar duplicados lógicos.
   if (emailSnap?.exists && emailMemberRef && emailMemberRef.path !== uidMemberRef.path) {
     batch.delete(emailMemberRef);
   }
@@ -99,12 +112,10 @@ async function applyAcceptanceToTrip({ tripId, invitedEmail, userId }) {
     throw new Error('No se encontró el viaje asociado a la invitación');
   }
 
-  const normalizedEmail = normalizeEmail(invitedEmail);
-
   await upsertTripMember({
     tripId,
     member: {
-      email: normalizedEmail,
+      email: normalizeEmail(invitedEmail),
       uid: userId,
       rol: 'miembro',
       estadoInvitacion: 'aceptada',
@@ -116,17 +127,15 @@ function resolveExpiryDate(data, decodedToken = null) {
   if (data?.expiresAt?.toDate) {
     return data.expiresAt.toDate();
   }
-
   if (decodedToken?.exp) {
     return new Date(decodedToken.exp * 1000);
   }
-
   return null;
 }
 
 async function resolveEmailInvitationByToken(token) {
   const db = admin.firestore();
-  const decoded = verifyInvitationJwt(token);
+  const { decoded, expired } = decodeJwtWithExpiry(token);
 
   if (!(decoded?.kind === 'email' && decoded?.invitationId)) {
     return null;
@@ -148,45 +157,55 @@ async function resolveEmailInvitationByToken(token) {
     invitationId: doc.id,
     data,
     docRef,
-    decoded,
+    decoded: expired ? null : decoded,
+    jwtExpired: expired,
   };
 }
 
-async function resolvePublicInvitationByToken(token) {
-  const db = admin.firestore();
-  const decoded = verifyInvitationJwt(token);
-
-  if (decoded?.kind !== 'public') {
-    return null;
-  }
-
-  const snapshot = await db
-    .collection('tripPublicInvitations')
-    .where('token', '==', token)
-    .where('status', '==', 'active')
-    .limit(1)
-    .get();
-
-  if (snapshot.empty) {
-    return null;
-  }
-
-  const doc = snapshot.docs[0];
-
-  return {
-    publicInvitationId: doc.id,
-    data: doc.data(),
-    decoded,
-    docRef: doc.ref,
-  };
-}
-
+// Upsert: si ya existe una invitación para tripId+email, actualiza el token
+// en lugar de crear un documento nuevo (evita duplicados al reenviar).
 async function createInvitation({ tripId, tripName, email, creatorId, creatorName }) {
   const db = admin.firestore();
   const normalizedEmail = normalizeEmail(email);
   const now = new Date();
-  const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(now.getTime() + EMAIL_INVITATION_TTL_SECONDS * 1000);
 
+  const existing = await db
+    .collection('invitations')
+    .where('tripId', '==', tripId)
+    .where('email', '==', normalizedEmail)
+    .limit(1)
+    .get();
+
+  if (!existing.empty) {
+    const doc = existing.docs[0];
+    const data = doc.data();
+
+    // Ya aceptó → no reenviar
+    if (data.status === 'accepted') {
+      return { invitationId: doc.id, token: data.token, alreadyAccepted: true };
+    }
+
+    // Pendiente (expirada o vigente) → refrescar token sobre el mismo doc
+    const newToken = signInvitationJwt(
+      { kind: 'email', invitationId: doc.id, tripId, email: normalizedEmail },
+      EMAIL_INVITATION_TTL_SECONDS,
+    );
+
+    await doc.ref.update({
+      token: newToken,
+      status: 'pending',
+      tripName,
+      creatorId,
+      creatorName,
+      expiresAt: admin.firestore.Timestamp.fromDate(expiresAt),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return { invitationId: doc.id, token: newToken };
+  }
+
+  // Primera invitación → crear nuevo documento
   const invitationRef = await db.collection('invitations').add({
     tripId,
     tripName,
@@ -200,47 +219,38 @@ async function createInvitation({ tripId, tripName, email, creatorId, creatorNam
   });
 
   const token = signInvitationJwt(
-    {
-      kind: 'email',
-      invitationId: invitationRef.id,
-      tripId,
-      email: normalizedEmail,
-    },
+    { kind: 'email', invitationId: invitationRef.id, tripId, email: normalizedEmail },
     EMAIL_INVITATION_TTL_SECONDS,
   );
 
   await invitationRef.update({ token });
-
   return { invitationId: invitationRef.id, token };
 }
 
+// Devuelve null si es inválido/malformado,
+// { expired: true } si caducó,
+// o los datos de la invitación si es válida.
 async function verifyToken(token) {
   const resolved = await resolveEmailInvitationByToken(token);
-  if (!resolved) {
-    return null;
-  }
+  if (!resolved) return null;
 
-  const { invitationId, data, decoded } = resolved;
+  const { invitationId, data, decoded, jwtExpired } = resolved;
 
-  if (data.status !== 'pending') {
-    return null;
-  }
+  if (data.status !== 'pending') return null;
+
+  if (jwtExpired) return { expired: true };
 
   const expiry = resolveExpiryDate(data, decoded);
-  if (expiry && new Date() > expiry) {
-    return null;
-  }
+  if (expiry && new Date() > expiry) return { expired: true };
 
   return { invitationId, ...data };
 }
 
 async function acceptInvitation(token, userId, userEmail) {
   const resolved = await resolveEmailInvitationByToken(token);
-  if (!resolved) {
-    throw new Error('Invitación no válida');
-  }
+  if (!resolved) throw new Error('Invitación no válida');
 
-  const { invitationId, data, decoded, docRef } = resolved;
+  const { invitationId, data, decoded, jwtExpired, docRef } = resolved;
 
   const normalizedInvitationEmail = normalizeEmail(data.email);
   const normalizedUserEmail = normalizeEmail(userEmail);
@@ -249,21 +259,17 @@ async function acceptInvitation(token, userId, userEmail) {
   }
 
   if (data.status === 'accepted') {
-    return {
-      tripId: data.tripId,
-      invitationId,
-      alreadyAccepted: true,
-    };
+    return { tripId: data.tripId, invitationId, alreadyAccepted: true };
   }
 
   if (data.status !== 'pending') {
     throw new Error('Invitación ya fue procesada y no puede aceptarse');
   }
 
+  if (jwtExpired) throw new Error('Invitación expirada');
+
   const expiry = resolveExpiryDate(data, decoded);
-  if (expiry && new Date() > expiry) {
-    throw new Error('Invitación expirada');
-  }
+  if (expiry && new Date() > expiry) throw new Error('Invitación expirada');
 
   await docRef.update({
     status: 'accepted',
@@ -301,9 +307,7 @@ async function claimPendingInvitationsForUser(userId, userEmail) {
   for (const doc of snapshot.docs) {
     const data = doc.data();
     const expiry = data?.expiresAt?.toDate ? data.expiresAt.toDate() : null;
-    if (expiry && now > expiry) {
-      continue;
-    }
+    if (expiry && now > expiry) continue;
 
     await doc.ref.update({
       status: 'accepted',
@@ -346,11 +350,16 @@ async function getOrCreateTripPublicInvitation({ tripId, creatorId, forceRegener
     .get();
 
   const now = new Date();
+
   if (!activeSnapshot.empty && !forceRegenerate) {
+    const expiredBatch = db.batch();
+    let hasExpiredDocs = false;
+
     for (const doc of activeSnapshot.docs) {
       const data = doc.data();
       const expiry = data?.expiresAt?.toDate ? data.expiresAt.toDate() : null;
       if (!expiry || now <= expiry) {
+        // Vigente → devolver sin crear uno nuevo
         return {
           publicInvitationId: doc.id,
           token: data.token,
@@ -358,24 +367,31 @@ async function getOrCreateTripPublicInvitation({ tripId, creatorId, forceRegener
           tripName: data.tripName || tripData.name || tripData.nombre || 'Viaje',
         };
       }
+      // Expirado → marcar y seguir buscando
+      expiredBatch.update(doc.ref, {
+        status: 'expired',
+        expiredAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      hasExpiredDocs = true;
     }
+
+    if (hasExpiredDocs) await expiredBatch.commit();
+    // Todos estaban expirados → caer al bloque de creación
   }
 
+  // forceRegenerate: marcar los activos como rotados (link viejo invalidado)
   if (!activeSnapshot.empty && forceRegenerate) {
-    const nowTimestamp = admin.firestore.FieldValue.serverTimestamp();
     const batch = db.batch();
-
     activeSnapshot.docs.forEach((doc) => {
       batch.update(doc.ref, {
         status: 'rotated',
-        rotatedAt: nowTimestamp,
+        rotatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
     });
-
     await batch.commit();
   }
 
-  const expiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(now.getTime() + PUBLIC_INVITATION_TTL_SECONDS * 1000);
 
   const publicInvitationRef = await db.collection('tripPublicInvitations').add({
     tripId,
@@ -402,21 +418,13 @@ async function getOrCreateTripPublicInvitation({ tripId, creatorId, forceRegener
 
       if (!tokenSnapshot.empty) {
         const usedTokenTripId = tokenSnapshot.docs[0].data()?.tripId;
-        if (usedTokenTripId !== tripId) {
-          token = '';
-        }
+        if (usedTokenTripId !== tripId) token = '';
       }
     }
   }
 
   if (!token) {
-    token = signInvitationJwt(
-      {
-        kind: 'public',
-        tripId,
-      },
-      PUBLIC_INVITATION_TTL_SECONDS,
-    );
+    token = signInvitationJwt({ kind: 'public', tripId }, PUBLIC_INVITATION_TTL_SECONDS);
   }
 
   await publicInvitationRef.update({ token });
@@ -429,38 +437,78 @@ async function getOrCreateTripPublicInvitation({ tripId, creatorId, forceRegener
   };
 }
 
+// Verifica un token público. Devuelve:
+// null               → token malformado o no encontrado
+// { expired: true }  → token caducado (se marca el doc en Firestore)
+// { rotated: true }  → el coordinador generó un nuevo enlace (link invalidado)
+// { ...data }        → válido, con datos del viaje
 async function verifyTripPublicToken(token) {
-  const resolved = await resolvePublicInvitationByToken(token);
-  if (!resolved) {
-    return null;
+  const { decoded, expired: jwtExpired } = decodeJwtWithExpiry(token);
+
+  if (!decoded || decoded.kind !== 'public') return null;
+
+  const db = admin.firestore();
+  const snapshot = await db
+    .collection('tripPublicInvitations')
+    .where('token', '==', token)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    return jwtExpired ? { expired: true } : null;
   }
 
-  const { publicInvitationId, data, decoded } = resolved;
+  const doc = snapshot.docs[0];
+  const data = doc.data();
 
-  if (data.status !== 'active') {
-    return null;
+  if (data.status === 'rotated') return { rotated: true };
+  if (data.status === 'expired') return { expired: true };
+
+  const expiry = resolveExpiryDate(data, jwtExpired ? null : decoded);
+  const isExpired = jwtExpired || (expiry && new Date() > expiry);
+
+  if (isExpired) {
+    if (data.status === 'active') {
+      await doc.ref.update({
+        status: 'expired',
+        expiredAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+    return { expired: true };
   }
 
-  const expiry = resolveExpiryDate(data, decoded);
-  if (expiry && new Date() > expiry) {
-    return null;
-  }
+  if (data.status !== 'active') return null;
 
-  return {
-    publicInvitationId,
-    ...data,
-  };
+  return { publicInvitationId: doc.id, ...data };
 }
 
 async function acceptTripPublicInvitation(token, userId, userEmail) {
   const invitation = await verifyTripPublicToken(token);
-  if (!invitation) {
-    throw new Error('Enlace de invitación no válido o expirado');
-  }
+
+  if (!invitation) throw new Error('Enlace de invitación no válido');
+  if (invitation.expired) throw new Error('El enlace de invitación ha caducado');
+  if (invitation.rotated) throw new Error('Este enlace ya no es válido. El organizador ha generado uno nuevo.');
 
   const normalizedUserEmail = normalizeEmail(userEmail);
   if (!userId || !normalizedUserEmail) {
     throw new Error('No se pudo identificar al usuario autenticado');
+  }
+
+  // Comprobar si el usuario ya es miembro activo del viaje
+  const db = admin.firestore();
+  const memberSnap = await db
+    .collection('viajes')
+    .doc(invitation.tripId)
+    .collection('miembros')
+    .doc(userId)
+    .get();
+
+  if (memberSnap.exists && memberSnap.data()?.invitationStatus === 'aceptada') {
+    return {
+      tripId: invitation.tripId,
+      publicInvitationId: invitation.publicInvitationId,
+      alreadyMember: true,
+    };
   }
 
   await applyAcceptanceToTrip({

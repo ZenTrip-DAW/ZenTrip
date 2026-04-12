@@ -123,10 +123,26 @@ export function useLoginController(navigate) {
       .catch((error) => {
         if (!active) return;
         setInvitationInfo(null);
+
+        if (error.expired) {
+          setInvitationError(
+            inviteToken
+              ? 'Tu invitación ha caducado. Pide al organizador que te reenvíe el correo.'
+              : 'El enlace ha caducado. Pide al organizador que comparta el nuevo enlace.',
+          );
+          return;
+        }
+
+        if (error.rotated) {
+          setInvitationError('Este enlace ya no es válido. El organizador ha generado uno nuevo, pídele que lo comparta.');
+          return;
+        }
+
         if (decodedJoin?.scope === 'preview') {
           setInvitationError('Este enlace es válido, pero el viaje todavía no existe (aún no se ha creado). Pide al creador que finalice y guarde el viaje.');
           return;
         }
+
         setInvitationError(error.message || 'No se pudo validar la invitación.');
       });
 

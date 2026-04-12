@@ -48,13 +48,19 @@ const sendTripInvitations = async (req, res) => {
       const normalizedEmail = String(invite.email).trim().toLowerCase();
       const registeredUser = await getRegisteredUserByEmail(normalizedEmail);
 
-      const { token } = await createInvitation({
+      const { token, alreadyAccepted } = await createInvitation({
         tripId,
         tripName,
         email: normalizedEmail,
         creatorId,
         creatorName,
       });
+
+      // Ya es miembro → no reenviar correo
+      if (alreadyAccepted) {
+        results.push({ email: invite.email, status: 'already_member' });
+        continue;
+      }
 
       const recipientIsRegistered = Boolean(registeredUser?.uid);
       const authLink = recipientIsRegistered ? loginLink : registerLink;
@@ -117,7 +123,14 @@ const verifyInvitationToken = async (req, res) => {
     const invitation = await verifyToken(token);
 
     if (!invitation) {
-      return res.status(404).json({ error: 'Invitación no válida o expirada' });
+      return res.status(404).json({ error: 'Invitación no válida' });
+    }
+
+    if (invitation.expired) {
+      return res.status(410).json({
+        error: 'La invitación ha caducado. Pide al organizador que te reenvíe el correo.',
+        expired: true,
+      });
     }
 
     return res.json({
@@ -211,8 +224,23 @@ const verifyTripPublicTokenHandler = async (req, res) => {
 
   try {
     const invitation = await verifyTripPublicToken(token);
+
     if (!invitation) {
-      return res.status(404).json({ error: 'Enlace de invitación no válido o expirado' });
+      return res.status(404).json({ error: 'Enlace de invitación no válido' });
+    }
+
+    if (invitation.expired) {
+      return res.status(410).json({
+        error: 'El enlace ha caducado. Pide al organizador que comparta el nuevo enlace.',
+        expired: true,
+      });
+    }
+
+    if (invitation.rotated) {
+      return res.status(410).json({
+        error: 'Este enlace ya no es válido. El organizador ha generado uno nuevo.',
+        rotated: true,
+      });
     }
 
     return res.json({
@@ -239,6 +267,15 @@ const acceptTripPublicInvitationHandler = async (req, res) => {
 
   try {
     const result = await acceptTripPublicInvitation(token, userId, userEmail);
+
+    if (result.alreadyMember) {
+      return res.json({
+        message: 'Ya eres miembro de este viaje.',
+        tripId: result.tripId,
+        alreadyMember: true,
+      });
+    }
+
     return res.json({
       message: 'Te uniste al viaje con el enlace compartible',
       tripId: result.tripId,
