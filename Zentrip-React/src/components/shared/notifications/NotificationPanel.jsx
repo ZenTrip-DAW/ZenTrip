@@ -1,10 +1,19 @@
 import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../../../context/NotificationContext';
+import { ROUTES } from '../../../config/routes';
 import NotificationItem from './NotificationItem';
 
+const flightImg = new URL('../../home/img/image 34.png', import.meta.url).href;
+
 export default function NotificationPanel({ onClose }) {
-  const { notifications } = useNotifications();
+  const { notifications, acceptedNotifications, clearAcceptedNotifications, markAsSeen } = useNotifications();
+  const navigate = useNavigate();
   const panelRef = useRef(null);
+
+  useEffect(() => {
+    markAsSeen();
+  }, [markAsSeen]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -20,6 +29,8 @@ export default function NotificationPanel({ onClose }) {
     };
   }, [onClose]);
 
+  const hasAny = notifications.length > 0 || acceptedNotifications.length > 0;
+
   return (
     <div
       ref={panelRef}
@@ -29,22 +40,63 @@ export default function NotificationPanel({ onClose }) {
       {/* Cabecera */}
       <div className="px-4 py-3 border-b border-neutral-1 flex items-center justify-between">
         <span className="body-2-semibold text-secondary-5">Notificaciones</span>
-        {notifications.length > 0 && (
-          <span className="body-3 text-neutral-3">{notifications.length} pendiente{notifications.length > 1 ? 's' : ''}</span>
-        )}
+        <div className="flex items-center gap-3">
+          {notifications.length > 0 && (
+            <span className="body-3 text-neutral-3">{notifications.length} pendiente{notifications.length > 1 ? 's' : ''}</span>
+          )}
+          {acceptedNotifications.length > 0 && (
+            <button
+              type="button"
+              onClick={clearAcceptedNotifications}
+              className="body-3 text-neutral-3 hover:text-primary-3 transition-colors cursor-pointer"
+            >
+              Vaciar
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Lista */}
       <div className="max-h-96 overflow-y-auto p-3 flex flex-col gap-2">
-        {notifications.length === 0 ? (
+        {!hasAny ? (
           <div className="py-8 text-center">
             <p className="body-2-semibold text-secondary-5">Todo tranquilo por aquí</p>
             <p className="body-3 text-neutral-3 mt-1">No tienes invitaciones pendientes</p>
           </div>
         ) : (
-          notifications.map((notification) => (
-            <NotificationItem key={notification.id} notification={notification} />
-          ))
+          <>
+            {/* Notificaciones de invitaciones aceptadas */}
+            {acceptedNotifications.map((n, i) => (
+              <div
+                key={i}
+                className="px-4 py-3 rounded-xl bg-linear-to-br from-secondary-1/30 to-primary-1/20 border border-secondary-2/40"
+              >
+                <div className="flex items-start gap-3">
+                  <img src={flightImg} alt="" className="w-8 h-8 object-contain shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="body-3 font-semibold text-secondary-5 mb-0.5">¡Ya estás a bordo! ✈️</p>
+                    <p className="body-3 text-neutral-5 leading-snug">
+                      Ahora formas parte de{' '}
+                      <span className="font-semibold text-secondary-5">"{n.tripName}"</span>.
+                      El aventurero que hay en ti está listo. Entra y ayuda a dar forma a la escapada perfecta.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => { navigate(ROUTES.TRIPS.LIST); onClose(); }}
+                      className="mt-2 body-3 font-semibold text-primary-3 hover:text-primary-4 transition-colors cursor-pointer"
+                    >
+                      Ver mis viajes →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Invitaciones pendientes */}
+            {notifications.map((notification) => (
+              <NotificationItem key={notification.id} notification={notification} />
+            ))}
+          </>
         )}
       </div>
     </div>

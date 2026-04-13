@@ -554,19 +554,23 @@ async function rejectInvitation(invitationId, userId, userEmail) {
     rejectedByEmail: normalizedUserEmail,
   });
 
-  // Marcar al miembro como rechazado en la subcolección del viaje
-  const memberRef = db
-    .collection('trips')
-    .doc(data.tripId)
-    .collection('members')
-    .doc(normalizedInvitationEmail);
+  // Marcar al miembro como rechazado en la subcolección del viaje.
+  // El documento puede estar guardado por UID (usuario registrado) o por email (usuario sin cuenta).
+  const membersRef = db.collection('trips').doc(data.tripId).collection('members');
+  const uidRef = userId ? membersRef.doc(userId) : null;
+  const emailRef = membersRef.doc(normalizedInvitationEmail);
 
-  const memberSnap = await memberRef.get();
-  if (memberSnap.exists) {
-    const mData = memberSnap.data();
-    if (mData?.invitationStatus === 'pending' || mData?.invitationStatus === 'pending_email') {
-      await memberRef.update({ invitationStatus: 'rejected' });
-    }
+  const [uidSnap, emailSnap] = await Promise.all([
+    uidRef ? uidRef.get() : Promise.resolve(null),
+    emailRef.get(),
+  ]);
+
+  const pendingStatuses = ['pending', 'pending_email'];
+
+  if (uidSnap?.exists && pendingStatuses.includes(uidSnap.data()?.invitationStatus)) {
+    await uidRef.update({ invitationStatus: 'rejected' });
+  } else if (emailSnap.exists && pendingStatuses.includes(emailSnap.data()?.invitationStatus)) {
+    await emailRef.update({ invitationStatus: 'rejected' });
   }
 
   return { tripId: data.tripId, invitationId };

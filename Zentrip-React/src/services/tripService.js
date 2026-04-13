@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc, getDocs, query, serverTimestamp, setDoc, where } from 'firebase/firestore';
+import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, where } from 'firebase/firestore';
 import { db, auth } from '../config/firebaseConfig';
 import { apiClient } from './apiClient';
 
@@ -79,9 +79,41 @@ export async function deleteTrip(tripId) {
 }
 
 export async function getUserTrips(uid) {
-  const snapshot = await getDocs(query(collection(db, 'trips'), where('uid', '==', uid)));
-  const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-  return docs.sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
+  // Viajes creados por el usuario
+  const creatorSnapshot = await getDocs(
+    query(collection(db, 'trips'), where('uid', '==', uid))
+  );
+  const creatorTripIds = new Set(creatorSnapshot.docs.map((d) => d.id));
+  const creatorTrips = creatorSnapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+  // Viajes donde el usuario es miembro (aceptado)
+  let memberTrips = [];
+  try {
+    const memberSnapshot = await getDocs(
+      query(
+        collectionGroup(db, 'members'),
+        where('uid', '==', uid),
+        where('invitationStatus', '==', 'accepted')
+      )
+    );
+
+    const memberTripDocs = await Promise.all(
+      memberSnapshot.docs
+        .map((d) => d.ref.parent.parent)
+        .filter((ref) => !creatorTripIds.has(ref.id))
+        .map((ref) => getDoc(ref))
+    );
+
+    memberTrips = memberTripDocs
+      .filter((d) => d.exists())
+      .map((d) => ({ id: d.id, ...d.data() }));
+  } catch {
+    // La query de collectionGroup puede fallar si las reglas o el índice aún no están configurados
+  }
+
+  return [...creatorTrips, ...memberTrips].sort(
+    (a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)
+  );
 }
 
 export async function sendTripInvitations(payload) {
