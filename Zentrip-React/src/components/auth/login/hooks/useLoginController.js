@@ -62,10 +62,12 @@ export function useLoginController(navigate) {
       }
     }
 
-    try {
-      await apiClient.post('/invitations/claim-my-invitations', {});
-    } catch (claimError) {
-      console.warn('No se pudieron reclamar invitaciones pendientes por correo:', claimError);
+    if (inviteToken || joinToken) {
+      try {
+        await apiClient.post('/invitations/claim-my-invitations', {});
+      } catch (claimError) {
+        console.warn('No se pudieron reclamar invitaciones pendientes por correo:', claimError);
+      }
     }
 
     return {};
