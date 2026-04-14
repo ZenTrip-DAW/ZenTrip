@@ -230,6 +230,9 @@ export function useLoginController(navigate) {
       // Si todo salió bien, guardamos token, marcamos expiración y vamos a la ruta final
       await saveUserToken(refreshedUser);
       const { emailMismatch } = await reconcileInvitationAccess();
+      if (inviteToken && !emailMismatch && invitationInfo?.tripName) {
+        window.dispatchEvent(new CustomEvent('zt-invitation-accepted-email', { detail: { tripName: invitationInfo.tripName } }));
+      }
       saveSessionExpiry();
       const destination = emailMismatch ? ROUTES.HOME : await getPostLoginPath(refreshedUser);
       navigate(emailMismatch ? `${ROUTES.HOME}?inviteError=emailMismatch` : destination);
@@ -335,6 +338,9 @@ export function useLoginController(navigate) {
       const user = await signInWithGoogle();
       await saveUserToken(user);
       const { emailMismatch } = await reconcileInvitationAccess();
+      if (inviteToken && !emailMismatch && invitationInfo?.tripName) {
+        window.dispatchEvent(new CustomEvent('zt-invitation-accepted-email', { detail: { tripName: invitationInfo.tripName } }));
+      }
       saveSessionExpiry();
       navigate(emailMismatch ? `${ROUTES.HOME}?inviteError=emailMismatch` : await getPostLoginPath(user));
     } catch (googleError) {

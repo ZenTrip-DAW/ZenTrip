@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../../services/apiClient';
 import { ROUTES } from '../../../config/routes';
+import { useNotifications } from '../../../context/NotificationContext';
 
 const flightImg = new URL('../../home/img/image 34.png', import.meta.url).href;
 
 export default function NotificationItem({ notification }) {
   const navigate = useNavigate();
+  const { addAcceptedNotification } = useNotifications();
   const [loading, setLoading] = useState(null); // 'accept' | 'reject' | null
   const [flash, setFlash] = useState(null); // 'already_member' | null
 
@@ -18,6 +20,9 @@ export default function NotificationItem({ notification }) {
       const result = await apiClient.post('/invitations/accept', { token });
       if (result.alreadyAccepted) {
         setFlash('already_member');
+      } else {
+        addAcceptedNotification({ tripName });
+        window.dispatchEvent(new CustomEvent('invitation-accepted'));
       }
       // Si se aceptó bien, el onSnapshot lo elimina de la lista automáticamente
     } catch (err) {

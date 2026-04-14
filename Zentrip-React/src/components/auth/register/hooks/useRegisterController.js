@@ -239,6 +239,10 @@ export function useRegisterController(navigate) {
         console.warn('No se pudieron reclamar invitaciones pendientes por correo:', claimError);
       }
 
+      if (inviteToken && invitationInfo?.tripName) {
+        window.dispatchEvent(new CustomEvent('zt-invitation-accepted-email', { detail: { tripName: invitationInfo.tripName } }));
+      }
+
       navigate(await getPostLoginPath(user));
     } catch (googleError) {
       const { message } = getFirebaseErrorByField(googleError);

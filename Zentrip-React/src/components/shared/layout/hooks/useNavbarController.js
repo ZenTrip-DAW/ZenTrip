@@ -9,7 +9,7 @@ export function useNavbarController() {
   const navigate = useNavigate();
   const { avatarSrc, initials } = useProfileAvatar();
   const { profile, logout } = useAuth();
-  const { notificationCount } = useNotifications();
+  const { unseenCount: notificationCount } = useNotifications();
   const avatarColor = profile?.avatarColor || "";
 
   const messageCount = 0;

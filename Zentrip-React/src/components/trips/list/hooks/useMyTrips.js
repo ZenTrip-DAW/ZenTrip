@@ -20,11 +20,17 @@ export function useMyTrips() {
 
   useEffect(() => {
     if (!user?.uid) return;
-    setLoading(true);
-    getUserTrips(user.uid)
-      .then((data) => setTrips(data))
-      .catch((err) => console.error('[useMyTrips] Error al cargar viajes:', err))
-      .finally(() => setLoading(false));
+    const fetchTrips = () => {
+      setLoading(true);
+      getUserTrips(user.uid)
+        .then((data) => setTrips(data))
+        .catch((err) => console.error('[useMyTrips] Error al cargar viajes:', err))
+        .finally(() => setLoading(false));
+    };
+
+    fetchTrips();
+    window.addEventListener('invitation-accepted', fetchTrips);
+    return () => window.removeEventListener('invitation-accepted', fetchTrips);
   }, [user?.uid]);
 
   const borradores = trips.filter((t) => t.isDraft);
