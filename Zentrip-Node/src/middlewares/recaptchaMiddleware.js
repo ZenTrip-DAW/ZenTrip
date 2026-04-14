@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { AppError } = require('../errors');
 
 const RECAPTCHA_VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify';
 
@@ -6,7 +7,7 @@ const verifyRecaptcha = async (req, res, next) => {
   const { recaptchaToken } = req.body;
 
   if (!recaptchaToken) {
-    return res.status(400).json({ error: 'Token de reCAPTCHA no proporcionado.' });
+    return next(new AppError('Token de reCAPTCHA no proporcionado.', 400, 'VALIDATION_ERROR'));
   }
 
   try {
@@ -18,13 +19,13 @@ const verifyRecaptcha = async (req, res, next) => {
     });
 
     if (!data.success) {
-      return res.status(400).json({ error: 'reCAPTCHA inválido. Inténtalo de nuevo.' });
+      return next(new AppError('reCAPTCHA inválido. Inténtalo de nuevo.', 400, 'RECAPTCHA_INVALID'));
     }
 
-    next();
+    return next();
   } catch (error) {
     console.error('Error al verificar reCAPTCHA:', error.message);
-    res.status(500).json({ error: 'Error al verificar reCAPTCHA.' });
+    return next(new AppError('Error al verificar reCAPTCHA.', 500, 'RECAPTCHA_VERIFY_ERROR'));
   }
 };
 

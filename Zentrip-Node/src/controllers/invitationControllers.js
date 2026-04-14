@@ -6,6 +6,7 @@ const { upsertTripMember } = require('../services/email/invitationTokenService')
 const { getOrCreateTripPublicInvitation, signInvitationJwt } = require('../services/email/invitationTokenService');
 const { verifyTripPublicToken, acceptTripPublicInvitation, rejectInvitation } = require('../services/email/invitationTokenService');
 const admin = require('../config/firebase');
+const { AppError } = require('../errors');
 
 function getFrontendBaseUrl() {
   return process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'http://localhost:5173';
@@ -23,12 +24,12 @@ async function getRegisteredUserByEmail(email) {
   }
 }
 
-const sendTripInvitations = async (req, res) => {
+const sendTripInvitations = async (req, res, next) => {
   const { tripId, tripName, creatorName, invites = [] } = req.body;
   const creatorId = req.user?.uid;
 
   if (!tripId || !tripName) {
-    return res.status(400).json({ error: 'tripId y tripName son obligatorios' });
+    return next(new AppError('tripId y tripName son obligatorios', 400, 'VALIDATION_ERROR'));
   }
 
   const emailInvites = invites.filter((invite) => invite?.email);
@@ -112,25 +113,27 @@ const sendTripInvitations = async (req, res) => {
   });
 };
 
-const verifyInvitationToken = async (req, res) => {
+const verifyInvitationToken = async (req, res, next) => {
   const { token } = req.query;
 
   if (!token) {
-    return res.status(400).json({ error: 'Token es obligatorio' });
+    return next(new AppError('Token es obligatorio', 400, 'VALIDATION_ERROR'));
   }
 
   try {
     const invitation = await verifyToken(token);
 
     if (!invitation) {
-      return res.status(404).json({ error: 'Invitación no válida' });
+      return next(new AppError('Invitación no válida', 404, 'INVITATION_NOT_FOUND'));
     }
 
     if (invitation.expired) {
-      return res.status(410).json({
-        error: 'La invitación ha caducado. Pide al organizador que te reenvíe el correo.',
-        expired: true,
-      });
+      return next(new AppError(
+        'La invitación ha caducado. Pide al organizador que te reenvíe el correo.',
+        410,
+        'INVITATION_EXPIRED',
+        { expired: true }
+      ));
     }
 
     return res.json({
@@ -144,16 +147,16 @@ const verifyInvitationToken = async (req, res) => {
     });
   } catch (error) {
     console.error('Error al verificar token:', error.message);
-    return res.status(500).json({ error: error.message });
+    return next(error);
   }
 };
 
-const createOrGetTripPublicLinkHandler = async (req, res) => {
+const createOrGetTripPublicLinkHandler = async (req, res, next) => {
   const { tripId, preferredToken } = req.body;
   const creatorId = req.user?.uid;
 
   if (!tripId || !creatorId) {
-    return res.status(400).json({ error: 'tripId y autenticación son obligatorios' });
+    return next(new AppError('tripId y autenticación son obligatorios', 400, 'VALIDATION_ERROR'));
   }
 
   try {
@@ -170,11 +173,11 @@ const createOrGetTripPublicLinkHandler = async (req, res) => {
     });
   } catch (error) {
     console.error('Error al crear/obtener enlace público:', error.message);
-    return res.status(400).json({ error: error.message });
+    return next(new AppError(error.message, 400, 'BAD_REQUEST'));
   }
 };
 
-const getTripPublicLinkPreviewHandler = async (_req, res) => {
+const getTripPublicLinkPreviewHandler = async (_req, res, next) => {
   try {
     const frontendUrl = getFrontendBaseUrl();
     const token = signInvitationJwt({ kind: 'public', scope: 'preview' }, 365 * 24 * 60 * 60);
@@ -186,15 +189,15 @@ const getTripPublicLinkPreviewHandler = async (_req, res) => {
     });
   } catch (error) {
     console.error('Error al generar preview de enlace público:', error.message);
-    return res.status(500).json({ error: 'No se pudo generar el enlace de invitación' });
+    return next(new AppError('No se pudo generar el enlace de invitación', 500, 'INTERNAL_ERROR'));
   }
 };
-const regenerateTripPublicLinkHandler = async (req, res) => {
+const regenerateTripPublicLinkHandler = async (req, res, next) => {
   const { tripId } = req.body;
   const creatorId = req.user?.uid;
 
   if (!tripId || !creatorId) {
-    return res.status(400).json({ error: 'tripId y autenticación son obligatorios' });
+    return next(new AppError('tripId y autenticación son obligatorios', 400, 'VALIDATION_ERROR'));
   }
 
   try {
@@ -211,36 +214,40 @@ const regenerateTripPublicLinkHandler = async (req, res) => {
     });
   } catch (error) {
     console.error('Error al regenerar enlace público:', error.message);
-    return res.status(400).json({ error: error.message });
+    return next(new AppError(error.message, 400, 'BAD_REQUEST'));
   }
 };
 
-const verifyTripPublicTokenHandler = async (req, res) => {
+const verifyTripPublicTokenHandler = async (req, res, next) => {
   const { token } = req.query;
 
   if (!token) {
-    return res.status(400).json({ error: 'Token es obligatorio' });
+    return next(new AppError('Token es obligatorio', 400, 'VALIDATION_ERROR'));
   }
 
   try {
     const invitation = await verifyTripPublicToken(token);
 
     if (!invitation) {
-      return res.status(404).json({ error: 'Enlace de invitación no válido' });
+      return next(new AppError('Enlace de invitación no válido', 404, 'INVITATION_NOT_FOUND'));
     }
 
     if (invitation.expired) {
-      return res.status(410).json({
-        error: 'El enlace ha caducado. Pide al organizador que comparta el nuevo enlace.',
-        expired: true,
-      });
+      return next(new AppError(
+        'El enlace ha caducado. Pide al organizador que comparta el nuevo enlace.',
+        410,
+        'INVITATION_EXPIRED',
+        { expired: true }
+      ));
     }
 
     if (invitation.rotated) {
-      return res.status(410).json({
-        error: 'Este enlace ya no es válido. El organizador ha generado uno nuevo.',
-        rotated: true,
-      });
+      return next(new AppError(
+        'Este enlace ya no es válido. El organizador ha generado uno nuevo.',
+        410,
+        'INVITATION_ROTATED',
+        { rotated: true }
+      ));
     }
 
     return res.json({
@@ -252,17 +259,17 @@ const verifyTripPublicTokenHandler = async (req, res) => {
     });
   } catch (error) {
     console.error('Error al verificar enlace público:', error.message);
-    return res.status(500).json({ error: error.message });
+    return next(error);
   }
 };
 
-const acceptTripPublicInvitationHandler = async (req, res) => {
+const acceptTripPublicInvitationHandler = async (req, res, next) => {
   const { token } = req.body;
   const userId = req.user?.uid;
   const userEmail = req.user?.email;
 
   if (!token || !userId || !userEmail) {
-    return res.status(400).json({ error: 'Token y autenticación son obligatorios' });
+    return next(new AppError('Token y autenticación son obligatorios', 400, 'VALIDATION_ERROR'));
   }
 
   try {
@@ -283,17 +290,17 @@ const acceptTripPublicInvitationHandler = async (req, res) => {
     });
   } catch (error) {
     console.error('Error al aceptar enlace público:', error.message);
-    return res.status(400).json({ error: error.message });
+    return next(new AppError(error.message, 400, 'BAD_REQUEST'));
   }
 };
 
-const acceptInvitationHandler = async (req, res) => {
+const acceptInvitationHandler = async (req, res, next) => {
   const { token } = req.body;
   const userId = req.user?.uid;
   const userEmail = req.user?.email;
 
   if (!token || !userId) {
-    return res.status(400).json({ error: 'Token y autenticación son obligatorios' });
+    return next(new AppError('Token y autenticación son obligatorios', 400, 'VALIDATION_ERROR'));
   }
 
   try {
@@ -315,16 +322,16 @@ const acceptInvitationHandler = async (req, res) => {
     });
   } catch (error) {
     console.error('Error al aceptar invitación:', error.message);
-    return res.status(400).json({ error: error.message });
+    return next(new AppError(error.message, 400, 'BAD_REQUEST'));
   }
 };
 
-const claimMyInvitationsHandler = async (req, res) => {
+const claimMyInvitationsHandler = async (req, res, next) => {
   const userId = req.user?.uid;
   const userEmail = req.user?.email;
 
   if (!userId || !userEmail) {
-    return res.status(400).json({ error: 'Autenticación inválida para reclamar invitaciones' });
+    return next(new AppError('Autenticación inválida para reclamar invitaciones', 400, 'VALIDATION_ERROR'));
   }
 
   try {
@@ -336,17 +343,17 @@ const claimMyInvitationsHandler = async (req, res) => {
     });
   } catch (error) {
     console.error('Error al reclamar invitaciones:', error.message);
-    return res.status(400).json({ error: error.message });
+    return next(new AppError(error.message, 400, 'BAD_REQUEST'));
   }
 };
 
-const rejectInvitationHandler = async (req, res) => {
+const rejectInvitationHandler = async (req, res, next) => {
   const { invitationId } = req.body;
   const userId = req.user?.uid;
   const userEmail = req.user?.email;
 
   if (!invitationId || !userId || !userEmail) {
-    return res.status(400).json({ error: 'invitationId y autenticación son obligatorios' });
+    return next(new AppError('invitationId y autenticación son obligatorios', 400, 'VALIDATION_ERROR'));
   }
 
   try {
@@ -359,7 +366,7 @@ const rejectInvitationHandler = async (req, res) => {
     });
   } catch (error) {
     console.error('Error al rechazar invitación:', error.message);
-    return res.status(400).json({ error: error.message });
+    return next(new AppError(error.message, 400, 'BAD_REQUEST'));
   }
 };
 

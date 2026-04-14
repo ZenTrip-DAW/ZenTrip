@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test API Hoteles</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: #f1f5f9; padding: 2rem; }
+    h1 { font-size: 1.5rem; margin-bottom: 1.5rem; color: #1e3a5f; }
+
+    form { background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.08); display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    form h2 { grid-column: 1 / -1; font-size: 1rem; color: #555; }
+    label { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; color: #444; }
+    input, select { padding: .5rem .75rem; border: 1px solid #ddd; border-radius: 8px; font-size: .9rem; }
+    button { grid-column: 1 / -1; padding: .75rem; background: #f97316; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+    button:hover { background: #ea6c0a; }
+
+    #status { margin-bottom: 1rem; font-size: .9rem; color: #555; }
+    #status.error { color: #dc2626; }
+
+    #results { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+    .hotel-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    .hotel-card img { width: 100%; height: 160px; object-fit: cover; }
+    .hotel-card .info { padding: 1rem; }
+    .hotel-card .name { font-weight: 700; font-size: .95rem; margin-bottom: .25rem; color: #1e3a5f; }
+    .hotel-card .stars { color: #f59e0b; font-size: .8rem; margin-bottom: .5rem; }
+    .hotel-card .score { display: inline-block; background: #1e3a5f; color: white; font-size: .8rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; margin-bottom: .5rem; }
+    .hotel-card .price { font-size: 1rem; font-weight: 700; color: #f97316; }
+    .hotel-card .location { font-size: .8rem; color: #888; margin-top: .25rem; }
+    .hotel-card .actions { margin-top: .85rem; }
+    .hotel-card .more-btn { width: 100%; padding: .7rem .9rem; border: 0; border-radius: 10px; background: #1e3a5f; color: white; font-weight: 700; cursor: pointer; }
+    .hotel-card .more-btn:hover { background: #13263f; }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, .65); display: none; align-items: center; justify-content: center; padding: 1rem; z-index: 50; }
+    .modal-backdrop.open { display: flex; }
+    .modal { width: min(720px, 100%); max-height: 85vh; overflow: auto; background: white; border-radius: 18px; box-shadow: 0 24px 80px rgba(0,0,0,.3); }
+    .modal header { position: sticky; top: 0; background: white; border-bottom: 1px solid #e5e7eb; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .modal header h3 { font-size: 1.1rem; color: #1e3a5f; }
+    .modal header button { grid-column: auto; padding: .55rem .8rem; border-radius: 10px; background: #e2e8f0; color: #0f172a; }
+    .modal .content { padding: 1.25rem; display: grid; gap: 1rem; }
+    .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .75rem; }
+    .detail-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: .85rem; }
+    .detail-box .label { display: block; font-size: .75rem; color: #64748b; margin-bottom: .25rem; text-transform: uppercase; letter-spacing: .04em; }
+    .detail-box .value { font-size: .95rem; font-weight: 600; color: #0f172a; }
+  </style>
+</head>
+<body>
+
+  <h1>🏨 Test API Hoteles — ZenTrip</h1>
+
+  <form id="searchForm">
+    <h2>Parámetros de búsqueda</h2>
+
+    <label>
+      Ciudad
+      <input type="text" id="city" value="Madrid" placeholder="Ej: Madrid, Barcelona, Sevilla" />
+    </label>
+
+    <label>
+      Tipo de búsqueda
+      <select id="searchType">
+        <option value="CITY">CITY</option>
+        <option value="HOTEL">HOTEL</option>
+        <option value="DISTRICT">DISTRICT</option>
+        <option value="REGION">REGION</option>
+      </select>
+    </label>
+
+    <label>
+      Fecha entrada
+      <input type="date" id="arrivalDate" value="2026-05-01" />
+    </label>
+
+    <label>
+      Fecha salida
+      <input type="date" id="departureDate" value="2026-05-05" />
+    </label>
+
+    <label>
+      Adultos
+      <input type="number" id="adults" value="2" min="1" max="10" />
+    </label>
+
+    <label>
+      Habitaciones
+      <input type="number" id="roomQty" value="1" min="1" max="5" />
+    </label>
+
+    <button type="submit">Buscar hoteles</button>
+  </form>
+
+  <div id="status"></div>
+  <div id="results"></div>
+
+  <div id="detailsModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailsTitle">
+      <header>
+        <h3 id="detailsTitle">Detalle del hotel</h3>
+        <button type="button" id="closeDetails">Cerrar</button>
+      </header>
+      <div class="content" id="detailsContent"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin && window.location.origin !== 'null'
+      ? window.location.origin
+      : 'http://localhost:5000';
+
+    const detailsModal = document.getElementById('detailsModal');
+    const detailsTitle = document.getElementById('detailsTitle');
+    const detailsContent = document.getElementById('detailsContent');
+
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>"]+/g, (character) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+    })[character]);
+
+    const getHotelId = (hotel, property) => hotel.hotel_id || property.hotelId || property.hotel_id || property.id || property.propertyId || property.entityId || '';
+
+    const closeDetailsModal = () => {
+      detailsModal.classList.remove('open');
+      detailsModal.setAttribute('aria-hidden', 'true');
+      detailsContent.innerHTML = '';
+    };
+
+    const openDetailsModal = (title, html) => {
+      detailsTitle.textContent = title;
+      detailsContent.innerHTML = html;
+      detailsModal.classList.add('open');
+      detailsModal.setAttribute('aria-hidden', 'false');
+    };
+
+    const renderDetailBox = (label, value) => `
+      <div class="detail-box">
+        <span class="label">${escapeHtml(label)}</span>
+        <span class="value">${escapeHtml(value || '—')}</span>
+      </div>
+    `;
+
+    const formatPrice = (value, currency) => value ? `${Math.round(value)} ${currency || ''}` : 'Precio no disponible';
+
+    const showHotelDetails = async (hotelId, hotelName, arrivalDate, departureDate) => {
+      if (!hotelId) {
+        openDetailsModal(hotelName, '<p>No se pudo obtener el ID del hotel para consultar el detalle.</p>');
+        return;
+      }
+
+      openDetailsModal(hotelName, '<p>Buscando información ampliada...</p>');
+
+      try {
+        const response = await fetch(`${API_BASE}/api/hotels/details?hotelId=${encodeURIComponent(hotelId)}&arrivalDate=${encodeURIComponent(arrivalDate)}&departureDate=${encodeURIComponent(departureDate)}&adults=1&roomQty=1&units=metric&temperatureUnit=c&languageCode=en-us&currencyCode=EUR`);
+        const contentType = response.headers.get('content-type') || '';
+        const data = contentType.includes('application/json')
+          ? await response.json()
+          : { message: await response.text() };
+
+        if (!response.ok || data.error) {
+          openDetailsModal(hotelName, `<p>Error: ${escapeHtml(data.error || data.message || `HTTP ${response.status}`)}</p>`);
+          return;
+        }
+
+        const hotel = data.data || data.result || data.hotel || data;
+        const grossPrice = hotel.product_price_breakdown?.gross_amount || hotel.priceBreakdown?.grossPrice;
+        const strikethroughPrice = hotel.product_price_breakdown?.strikethrough_amount || hotel.priceBreakdown?.strikethroughPrice;
+        const priceInfo = grossPrice ? formatPrice(grossPrice.value, grossPrice.currency) : 'Precio no disponible';
+        const originalPrice = strikethroughPrice ? formatPrice(strikethroughPrice.value, strikethroughPrice.currency) : '—';
+        const facilities = Array.isArray(hotel.family_facilities) && hotel.family_facilities.length > 0
+          ? hotel.family_facilities.join(', ')
+          : '—';
+        const bookingUrl = hotel.url || `https://www.booking.com/hotel/${encodeURIComponent(hotel.hotel_id || hotelId)}`;
+        const content = `
+          <div class="detail-grid">
+            ${renderDetailBox('Nombre', hotel.hotel_name || hotel.name || hotelName)}
+            ${renderDetailBox('Tipo', hotel.accommodation_type_name || hotel.propertyClass || '—')}
+            ${renderDetailBox('Precio actual', priceInfo)}
+            ${renderDetailBox('Precio original', originalPrice)}
+            ${renderDetailBox('Dirección', hotel.address || '—')}
+            ${renderDetailBox('Ciudad', hotel.city || hotel.city_name_en || '—')}
+            ${renderDetailBox('Barrio', hotel.district || '—')}
+            ${renderDetailBox('Habitaciones disponibles', hotel.available_rooms ?? '—')}
+            ${renderDetailBox('Familias', facilities)}
+            ${renderDetailBox('Referencia', hotel.hotel_id || hotelId)}
+          </div>
+          <div class="detail-box">
+            <span class="label">Enlace</span>
+            <div class="value"><a href="${escapeHtml(bookingUrl)}" target="_blank" rel="noreferrer">Abrir en Booking</a></div>
+          </div>
+        `;
+
+        openDetailsModal(hotel.name || hotelName, content);
+      } catch (error) {
+        openDetailsModal(hotelName, `<p>Error de conexión: ${escapeHtml(error.message)}</p>`);
+      }
+    };
+
+    document.getElementById('closeDetails').addEventListener('click', closeDetailsModal);
+    detailsModal.addEventListener('click', (event) => {
+      if (event.target === detailsModal) closeDetailsModal();
+    });
+
+    document.getElementById('searchForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const city        = document.getElementById('city').value;
+      const searchType  = document.getElementById('searchType').value;
+      const arrivalDate = document.getElementById('arrivalDate').value;
+      const departureDate = document.getElementById('departureDate').value;
+      const adults      = document.getElementById('adults').value;
+      const roomQty     = document.getElementById('roomQty').value;
+
+      const status  = document.getElementById('status');
+      const results = document.getElementById('results');
+
+      status.textContent = 'Buscando hoteles...';
+      status.className   = '';
+      results.innerHTML  = '';
+
+      try {
+        const url = `${API_BASE}/api/hotels/search?city=${encodeURIComponent(city)}&searchType=${searchType}&arrivalDate=${arrivalDate}&departureDate=${departureDate}&adults=${adults}&roomQty=${roomQty}`;
+        const res  = await fetch(url);
+
+        const contentType = res.headers.get('content-type') || '';
+        const data = contentType.includes('application/json')
+          ? await res.json()
+          : { message: await res.text() };
+
+        if (!res.ok || data.error || data.message && !data.data) {
+          status.textContent = 'Error: ' + (data.error || data.message || `HTTP ${res.status}`);
+          status.className = 'error';
+          return;
+        }
+
+        const hotels = data.data?.hotels ?? data.hotels ?? [];
+        const resolvedCity = data.meta?.city || city;
+        status.textContent = `${hotels.length} hoteles encontrados en ${resolvedCity}`;
+
+        hotels.forEach((hotel) => {
+          const property = hotel.property || {};
+          const stars = '★'.repeat(property.propertyClass || 0);
+          const price = property.priceBreakdown?.grossPrice?.value
+            ? `${Math.round(property.priceBreakdown.grossPrice.value)} ${property.priceBreakdown.grossPrice.currency}`
+            : 'Precio no disponible';
+          const hotelId = getHotelId(hotel, property);
+          const hotelArrivalDate = property.checkinDate || hotel.checkinDate || arrivalDate;
+          const hotelDepartureDate = property.checkoutDate || hotel.checkoutDate || departureDate;
+
+          const card = document.createElement('div');
+          card.className = 'hotel-card';
+          card.innerHTML = `
+            <img src="${property.photoUrls?.[0] ?? ''}" alt="${property.name}" onerror="this.style.display='none'" />
+            <div class="info">
+              <div class="name">${property.name}</div>
+              <div class="stars">${stars}</div>
+              <span class="score">${property.reviewScore ?? '—'} ${property.reviewScoreWord ?? ''}</span>
+              <div class="price">${price}</div>
+              <div class="location">${property.wishlistName ?? ''}</div>
+              <div class="actions">
+                <button type="button" class="more-btn">Ver más información</button>
+              </div>
+            </div>
+          `;
+          card.querySelector('.more-btn').addEventListener('click', () => showHotelDetails(hotelId, property.name, hotelArrivalDate, hotelDepartureDate));
+          results.appendChild(card);
+        });
+
+      } catch (err) {
+        status.textContent = 'Error de conexión: ' + err.message;
+        status.className = 'error';
+      }
+    });
+  </script>
+
+</body>
+</html>

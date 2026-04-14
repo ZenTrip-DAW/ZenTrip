@@ -14,15 +14,16 @@ export default function CategoryBar() {
       className="w-full rounded-2xl px-3 sm:px-6 md:px-10 py-3 sm:py-4 md:py-5 border border-white/50"
       style={{ backgroundColor: "rgba(200, 200, 200, 0.63)" }}
     >
-      <div className="flex flex-wrap md:flex-nowrap items-stretch gap-2 md:gap-6 w-full">
+      {/* Mobile: 4 cols → 2 rows | sm: horizontal scroll | md+: flex row filling full width */}
+      <div className="grid grid-cols-4 gap-2 sm:flex sm:flex-nowrap sm:overflow-x-auto sm:gap-3 md:overflow-x-visible md:gap-6 w-full scrollbar-none">
         {CATEGORIES.map((cat) => (
           <button
             key={cat.key}
             type="button"
-            className="flex-1 basis-[calc(25%-6px)] sm:basis-[calc(14%-6px)] md:basis-auto cursor-pointer group"
+            className="w-full sm:flex-none sm:w-20 md:flex-1 md:w-auto cursor-pointer group"
           >
-            <div className="w-full h-20 md:h-24 rounded-xl md:rounded-2xl bg-white/45 border border-white/40 group-hover:scale-110 transition-transform duration-200 flex flex-col items-center justify-center gap-0.5 px-1 md:px-2 pb-1 md:pb-2 pt-2 md:pt-3">
-              <img src={cat.img} alt={cat.label} className="w-10 h-10 md:w-16 md:h-16 object-contain shrink-0" />
+            <div className="w-full min-h-20 md:min-h-24 rounded-xl md:rounded-2xl bg-white/45 border border-white/40 group-hover:scale-110 transition-transform duration-200 flex flex-col items-center justify-center gap-1 px-1 md:px-2 py-2">
+              <img src={cat.img} alt={cat.label} className="w-8 h-8 md:w-12 md:h-12 object-contain shrink-0" />
               <span className="text-[10px] md:text-sm font-semibold text-secondary-6 text-center leading-tight line-clamp-2">
                 {cat.label}
               </span>

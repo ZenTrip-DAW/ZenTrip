@@ -1,4 +1,5 @@
 const admin = require('../config/firebase');
+const { AppError } = require('../errors');
 const USER_COLLECTIONS = ['users'];
 
 const getProtectedData = (req, res) => {
@@ -9,13 +10,13 @@ const getProtectedData = (req, res) => {
   });
 };
 
-const createUserAdmin = async (req, res) => {
+const createUserAdmin = async (req, res, next) => {
   const { email, password } = req.body;
   try {
     const userRecord = await admin.auth().createUser({ email, password });
     res.status(201).json({ message: 'Usuario creado exitosamente', uid: userRecord.uid });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return next(error);
   }
 };
 
@@ -51,11 +52,11 @@ function matchesEmailQuery(email, term) {
   return email.includes(term);
 }
 
-const searchUsers = async (req, res) => {
+const searchUsers = async (req, res, next) => {
   const { query, limit = 8, type = 'username' } = req.query;
 
   if (!query || query.trim() === '') {
-    return res.status(400).json({ error: 'Query parameter is required' });
+    return next(new AppError('Query parameter is required', 400, 'VALIDATION_ERROR'));
   }
 
   try {
@@ -93,13 +94,13 @@ const searchUsers = async (req, res) => {
     res.json(results);
   } catch (error) {
     console.error('Error en searchUsers:', error);
-    res.status(500).json({ error: error.message });
+    return next(error);
   }
 };
 
-const getUserByUid = async (req, res) => {
+const getUserByUid = async (req, res, next) => {
   const { uid } = req.params;
-  if (!uid) return res.status(400).json({ error: 'uid is required' });
+  if (!uid) return next(new AppError('uid is required', 400, 'VALIDATION_ERROR'));
 
   try {
     const db = admin.firestore();
@@ -117,7 +118,7 @@ const getUserByUid = async (req, res) => {
 
     res.json(buildUserResponse(uid, userData));
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return next(error);
   }
 };
 
