@@ -1,4 +1,4 @@
-const { findHotels, getHotelDetails, getHotelPolicies } = require('../services/external/hotelService');
+const { findHotels, getHotelDetails, getHotelPolicies, getHotelPhotos, getChildrenPolicies } = require('../services/external/hotelService');
 const { AppError } = require('../errors');
 
 const isValidDateString = (value) => {
@@ -13,6 +13,7 @@ const parsePositiveInteger = (value, fieldName) => {
   }
   return parsed;
 };
+//buscar hotel
 
 const searchHotelsController = async (req, res, next) => {
   const { city, destId, arrivalDate, departureDate, adults, roomQty, languageCode, currencyCode, pageNumber } = req.query;
@@ -63,7 +64,7 @@ const searchHotelsController = async (req, res, next) => {
     return next(error);
   }
 };
-
+// detalles de hoteles
 const getHotelDetailsController = async (req, res, next) => {
   const { hotelId, arrivalDate, departureDate, adults, childrenAge, roomQty, units, temperatureUnit, languageCode, currencyCode } = req.query;
 
@@ -78,7 +79,7 @@ const getHotelDetailsController = async (req, res, next) => {
     return next(error);
   }
 };
-
+// politicas de hoteles
 const getHotelPoliciesController = async (req, res, next) => {
   const { hotelId, languageCode } = req.query;
 
@@ -94,4 +95,38 @@ const getHotelPoliciesController = async (req, res, next) => {
   }
 };
 
-module.exports = { searchHotelsController, getHotelDetailsController, getHotelPoliciesController };
+
+
+// fotos de hoteles
+const getHotelPhotosController = async (req, res, next) => {
+  const { hotelId } = req.query;
+
+  if (!hotelId) {
+    return next(new AppError('hotelId es obligatorio.', 400, 'VALIDATION_ERROR'));
+  }
+
+  try {
+    const photos = await getHotelPhotos({ hotelId });
+    res.json(photos);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// politicas de niños
+const getChildrenPoliciesController = async (req, res, next) => {
+  const { hotelId, languageCode } = req.query;
+
+  if (!hotelId) {
+    return next(new AppError('hotelId es obligatorio.', 400, 'VALIDATION_ERROR'));
+  }
+
+  try {
+    const policies = await getChildrenPolicies({ hotelId, languageCode });
+    res.json(policies);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+module.exports = { searchHotelsController, getHotelDetailsController, getHotelPoliciesController, getHotelPhotosController, getChildrenPoliciesController };

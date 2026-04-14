@@ -10,7 +10,7 @@ const rapidApiHeaders = {
   'x-rapidapi-host': RAPIDAPI_HOST,
 };
 
-// --- Llamadas directas a la API externa ---
+
 
 const resolveDestinationByCity = async ({ city, languageCode = 'es' }) => {
   const response = await axios.get(`${BASE_URL}/hotels/searchDestination`, {
@@ -105,7 +105,7 @@ const getHotelPolicies = async ({ hotelId, languageCode = 'en-us' }) => {
   return response.data;
 };
 
-// --- Lógica de negocio ---
+ 
 
 const findHotels = async ({ city, destId, arrivalDate, departureDate, adults, roomQty, languageCode, currencyCode, pageNumber }) => {
   const toUtcDate = (value) => new Date(`${value}T00:00:00Z`);
@@ -165,4 +165,27 @@ const findHotels = async ({ city, destId, arrivalDate, departureDate, adults, ro
   };
 };
 
-module.exports = { findHotels, getHotelDetails, getHotelPolicies };
+const getHotelPhotos = async ({ hotelId }) => {
+  const response = await axios.get(`${BASE_URL}/hotels/getHotelPhotos`, {
+    headers: rapidApiHeaders,
+    params: {
+      hotel_id: hotelId,
+    },
+  });
+
+  return response.data;
+};
+
+const getChildrenPolicies = async ({ hotelId, languageCode = 'en-us' }) => {
+  const response = await axios.get(`${BASE_URL}/hotels/propertyChildrenPolicies`, {
+    headers: rapidApiHeaders,
+    params: {
+      hotel_id: hotelId,
+      languagecode: languageCode,
+    },
+  });
+
+  return response.data;
+};
+
+module.exports = { findHotels, getHotelDetails, getHotelPolicies, getHotelPhotos, getChildrenPolicies };
