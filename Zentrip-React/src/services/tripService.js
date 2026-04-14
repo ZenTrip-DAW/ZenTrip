@@ -127,3 +127,30 @@ export async function getTripPublicInvitePreview() {
 export async function getTripPublicInviteLink(tripId, preferredToken = '') {
   return apiClient.post('/invitations/public-link', { tripId, preferredToken });
 }
+
+export async function getTripById(tripId) {
+  const snap = await getDoc(doc(db, 'trips', tripId));
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...snap.data() };
+}
+
+export async function getTripMembers(tripId) {
+  return apiClient.get(`/trips/${tripId}/members`);
+}
+
+export async function getActivities(tripId) {
+  const snap = await getDocs(collection(db, 'trips', tripId, 'activities'));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function addActivity(tripId, activity) {
+  const docRef = await addDoc(collection(db, 'trips', tripId, 'activities'), {
+    ...activity,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function deleteActivity(tripId, activityId) {
+  await deleteDoc(doc(db, 'trips', tripId, 'activities', activityId));
+}
