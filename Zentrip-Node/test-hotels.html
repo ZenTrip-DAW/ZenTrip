@@ -31,6 +31,11 @@
     .hotel-card .actions { margin-top: .85rem; }
     .hotel-card .more-btn { width: 100%; padding: .7rem .9rem; border: 0; border-radius: 10px; background: #1e3a5f; color: white; font-weight: 700; cursor: pointer; }
     .hotel-card .more-btn:hover { background: #13263f; }
+    #pagination { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 1.5rem; }
+    #pagination button { padding: .6rem 1.2rem; border: none; border-radius: 8px; background: #1e3a5f; color: white; font-weight: 600; cursor: pointer; }
+    #pagination button:disabled { background: #cbd5e1; cursor: not-allowed; }
+    #pagination button:not(:disabled):hover { background: #13263f; }
+    #pageInfo { font-size: .9rem; color: #555; }
     .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, .65); display: none; align-items: center; justify-content: center; padding: 1rem; z-index: 50; }
     .modal-backdrop.open { display: flex; }
     .modal { width: min(720px, 100%); max-height: 85vh; overflow: auto; background: white; border-radius: 18px; box-shadow: 0 24px 80px rgba(0,0,0,.3); }
@@ -54,16 +59,6 @@
     <label>
       Ciudad
       <input type="text" id="city" value="Madrid" placeholder="Ej: Madrid, Barcelona, Sevilla" />
-    </label>
-
-    <label>
-      Tipo de búsqueda
-      <select id="searchType">
-        <option value="CITY">CITY</option>
-        <option value="HOTEL">HOTEL</option>
-        <option value="DISTRICT">DISTRICT</option>
-        <option value="REGION">REGION</option>
-      </select>
     </label>
 
     <label>
@@ -91,6 +86,11 @@
 
   <div id="status"></div>
   <div id="results"></div>
+  <div id="pagination" style="display:none;">
+    <button id="prevBtn" type="button">← Anterior</button>
+    <span id="pageInfo"></span>
+    <button id="nextBtn" type="button">Siguiente →</button>
+  </div>
 
   <div id="detailsModal" class="modal-backdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailsTitle">
@@ -106,6 +106,9 @@
     const API_BASE = window.location.origin && window.location.origin !== 'null'
       ? window.location.origin
       : 'http://localhost:5000';
+
+    let currentPage = 1;
+    let lastSearchParams = null;
 
     const detailsModal = document.getElementById('detailsModal');
     const detailsTitle = document.getElementById('detailsTitle');
@@ -201,25 +204,18 @@
       if (event.target === detailsModal) closeDetailsModal();
     });
 
-    document.getElementById('searchForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    const fetchAndRender = async (params, page) => {
+      const status     = document.getElementById('status');
+      const results    = document.getElementById('results');
+      const pagination = document.getElementById('pagination');
 
-      const city        = document.getElementById('city').value;
-      const searchType  = document.getElementById('searchType').value;
-      const arrivalDate = document.getElementById('arrivalDate').value;
-      const departureDate = document.getElementById('departureDate').value;
-      const adults      = document.getElementById('adults').value;
-      const roomQty     = document.getElementById('roomQty').value;
-
-      const status  = document.getElementById('status');
-      const results = document.getElementById('results');
-
-      status.textContent = 'Buscando hoteles...';
+      status.textContent = `Buscando hoteles (página ${page})...`;
       status.className   = '';
       results.innerHTML  = '';
+      pagination.style.display = 'none';
 
       try {
-        const url = `${API_BASE}/api/hotels/search?city=${encodeURIComponent(city)}&searchType=${searchType}&arrivalDate=${arrivalDate}&departureDate=${departureDate}&adults=${adults}&roomQty=${roomQty}`;
+        const url = `${API_BASE}/api/hotels/search?city=${encodeURIComponent(params.city)}&searchType=${params.searchType}&arrivalDate=${params.arrivalDate}&departureDate=${params.departureDate}&adults=${params.adults}&roomQty=${params.roomQty}&pageNumber=${page}`;
         const res  = await fetch(url);
 
         const contentType = res.headers.get('content-type') || '';
@@ -227,14 +223,16 @@
           ? await res.json()
           : { message: await res.text() };
 
-        if (!res.ok || data.error || data.message && !data.data) {
+        if (!res.ok || data.error || (data.message && !data.data)) {
           status.textContent = 'Error: ' + (data.error || data.message || `HTTP ${res.status}`);
           status.className = 'error';
           return;
         }
 
         const hotels = data.data?.hotels ?? data.hotels ?? [];
-        const resolvedCity = data.meta?.city || city;
+        const resolvedCity = data.meta?.city || params.city;
+        const pagination_meta = data.meta?.pagination;
+
         status.textContent = `${hotels.length} hoteles encontrados en ${resolvedCity}`;
 
         hotels.forEach((hotel) => {
@@ -244,8 +242,8 @@
             ? `${Math.round(property.priceBreakdown.grossPrice.value)} ${property.priceBreakdown.grossPrice.currency}`
             : 'Precio no disponible';
           const hotelId = getHotelId(hotel, property);
-          const hotelArrivalDate = property.checkinDate || hotel.checkinDate || arrivalDate;
-          const hotelDepartureDate = property.checkoutDate || hotel.checkoutDate || departureDate;
+          const hotelArrivalDate = property.checkinDate || hotel.checkinDate || params.arrivalDate;
+          const hotelDepartureDate = property.checkoutDate || hotel.checkoutDate || params.departureDate;
 
           const card = document.createElement('div');
           card.className = 'hotel-card';
@@ -266,10 +264,46 @@
           results.appendChild(card);
         });
 
+        // Mostrar paginación si hay resultados
+        if (hotels.length > 0) {
+          pagination.style.display = 'flex';
+          document.getElementById('prevBtn').disabled = page <= 1;
+          document.getElementById('nextBtn').disabled = hotels.length < 5;
+          document.getElementById('pageInfo').textContent = `Página ${page}`;
+        }
+
       } catch (err) {
         status.textContent = 'Error de conexión: ' + err.message;
         status.className = 'error';
       }
+    };
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        fetchAndRender(lastSearchParams, currentPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      currentPage++;
+      fetchAndRender(lastSearchParams, currentPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    document.getElementById('searchForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      currentPage = 1;
+      lastSearchParams = {
+        city:           document.getElementById('city').value,
+        searchType:     'CITY',
+        arrivalDate:    document.getElementById('arrivalDate').value,
+        departureDate:  document.getElementById('departureDate').value,
+        adults:         document.getElementById('adults').value,
+        roomQty:        document.getElementById('roomQty').value,
+      };
+      fetchAndRender(lastSearchParams, currentPage);
     });
   </script>
 

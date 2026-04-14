@@ -1,15 +1,16 @@
 const axios = require('axios');
+const { AppError } = require('../../errors');
 
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
-//cabecera de la api para las peticiones
 const RAPIDAPI_HOST = 'booking-com15.p.rapidapi.com';
-//la que utilizo para las llamadas
 const BASE_URL = `https://${RAPIDAPI_HOST}/api/v1`;
 
 const rapidApiHeaders = {
   'x-rapidapi-key': RAPIDAPI_KEY,
   'x-rapidapi-host': RAPIDAPI_HOST,
 };
+
+// --- Llamadas directas a la API externa ---
 
 const resolveDestinationByCity = async ({ city, languageCode = 'es' }) => {
   const response = await axios.get(`${BASE_URL}/hotels/searchDestination`, {
@@ -30,9 +31,7 @@ const resolveDestinationByCity = async ({ city, languageCode = 'es' }) => {
   }) || destinations[0];
 
   if (!matchedDestination) {
-    const error = new Error(`No se encontró ningún destino para la ciudad "${city}".`);
-    error.status = 404;
-    throw error;
+    throw new AppError(`No se encontró ningún destino para la ciudad "${city}".`, 404, 'DESTINATION_NOT_FOUND');
   }
 
   return {
@@ -51,6 +50,7 @@ const searchHotels = async ({
   languageCode = 'es',
   currencyCode = 'EUR',
   pageNumber = 1,
+  pageSize = 5,
 }) => {
   const response = await axios.get(`${BASE_URL}/hotels/searchHotels`, {
     headers: rapidApiHeaders,
@@ -62,6 +62,7 @@ const searchHotels = async ({
       adults,
       room_qty: roomQty,
       page_number: pageNumber,
+      page_size: pageSize,
       languagecode: languageCode,
       currency_code: currencyCode,
       units: 'metric',
@@ -92,8 +93,76 @@ const getHotelDetails = async ({ hotelId, arrivalDate, departureDate, adults = 1
   return response.data;
 };
 
-module.exports = { resolveDestinationByCity, searchHotels, getHotelDetails };
+const getHotelPolicies = async ({ hotelId, languageCode = 'en-us' }) => {
+  const response = await axios.get(`${BASE_URL}/hotels/getHotelPolicies`, {
+    headers: rapidApiHeaders,
+    params: {
+      hotel_id: hotelId,
+      languagecode: languageCode,
+    },
+  });
 
+  return response.data;
+};
 
-//recibe los parametros ya listos, llama a booking y devuelve la respuesta
-//solo hace la llamada  a la api externa
+// --- Lógica de negocio ---
+
+const findHotels = async ({ city, destId, arrivalDate, departureDate, adults, roomQty, languageCode, currencyCode, pageNumber }) => {
+  const toUtcDate = (value) => new Date(`${value}T00:00:00Z`);
+
+  const arrival = toUtcDate(arrivalDate);
+  const departure = toUtcDate(departureDate);
+  const today = new Date();
+  const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+
+  if (departure <= arrival) {
+    throw new AppError('departureDate debe ser posterior a arrivalDate.', 400, 'VALIDATION_ERROR');
+  }
+
+  if (arrival < todayUtc) {
+    throw new AppError('arrivalDate no puede ser una fecha pasada.', 400, 'VALIDATION_ERROR');
+  }
+
+  let resolvedDestId = destId;
+  let destination = null;
+
+  if (!resolvedDestId && city) {
+    const resolved = await resolveDestinationByCity({ city, languageCode });
+    resolvedDestId = resolved.destId;
+    destination = resolved.destination;
+  }
+
+  if (!resolvedDestId) {
+    throw new AppError(`No se pudo resolver la ciudad "${city}".`, 404, 'DESTINATION_NOT_FOUND');
+  }
+
+  const pageSize = 5;
+  const page = pageNumber || 1;
+
+  const hotels = await searchHotels({
+    destId: resolvedDestId,
+    arrivalDate,
+    departureDate,
+    adults,
+    roomQty,
+    languageCode,
+    currencyCode,
+    pageNumber: page,
+    pageSize,
+  });
+
+  return {
+    ...hotels,
+    meta: {
+      city: city || destination?.cityName || destination?.name || null,
+      destination,
+      destId: resolvedDestId,
+      pagination: {
+        page,
+        pageSize,
+      },
+    },
+  };
+};
+
+module.exports = { findHotels, getHotelDetails, getHotelPolicies };
