@@ -5,7 +5,8 @@ import { useTripDetail } from './hooks/useTripDetail';
 import { addActivity } from '../../../services/tripService';
 import TripDetailHeader from './components/TripDetailHeader';
 import TripDetailTabs from './components/TripDetailTabs';
-import ItinerarioTab from './components/tabs/ItinerarioTab';
+import ItineraryTab from './components/tabs/ItineraryTab';
+import BookingsTab from './components/tabs/BookingsTab';
 import PlaceholderTab from './components/tabs/PlaceholderTab';
 
 
@@ -34,8 +35,7 @@ function ErrorState({ message, onBack }) {
   );
 }
 
-const TAB_COMPONENTS = {
-  reservas:    <PlaceholderTab label="Reservas"    emoji="🏨" />,
+const TAB_PLACEHOLDERS = {
   votaciones:  <PlaceholderTab label="Votaciones"  emoji="🗳️" />,
   presupuesto: <PlaceholderTab label="Presupuesto" emoji="💰" />,
   equipaje:    <PlaceholderTab label="Equipaje"    emoji="🧳" />,
@@ -47,6 +47,12 @@ export default function TripDetail() {
   const { tripId } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('itinerario');
+  const [reservasSubTab, setReservasSubTab] = useState('hoteles');
+
+  const handleBook = (subTab) => {
+    setReservasSubTab(subTab);
+    setActiveTab('reservas');
+  };
 
   const {
     trip,
@@ -84,7 +90,7 @@ export default function TripDetail() {
   const renderTab = () => {
     if (activeTab === 'itinerario') {
       return (
-        <ItinerarioTab
+        <ItineraryTab
           trip={trip}
           members={members}
           activities={activities}
@@ -92,10 +98,21 @@ export default function TripDetail() {
           tripDays={tripDays}
           onAddActivity={handleAddActivity}
           onInvite={() => navigate('/trips/create')}
+          onBook={handleBook}
         />
       );
     }
-    return TAB_COMPONENTS[activeTab] ?? null;
+    if (activeTab === 'reservas') {
+      return (
+        <BookingsTab
+          trip={trip}
+          members={members}
+          tripId={tripId}
+          initialSubTab={reservasSubTab}
+        />
+      );
+    }
+    return TAB_PLACEHOLDERS[activeTab] ?? null;
   };
 
   return (
