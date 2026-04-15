@@ -1,14 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../../../context/AuthContext';
-import { createTrip, getTripPublicInviteLink, getTripPublicInvitePreview, saveTripDraft, sendTripInvitations } from '../../../../services/tripService';
+import { createTrip, deleteTrip, getTripPublicInviteLink, getTripPublicInvitePreview, saveTripDraft, sendTripInvitations } from '../../../../services/tripService';
 import { ROUTES } from '../../../../config/routes';
 import { STORAGE_KEY, useTripDraft } from './useTripDraft';
 import { useRecentMembers } from './useRecentMembers';
 
 export function useCreateTripController() {
   const { user } = useAuth();
+  const location = useLocation();
   const { step, form, setForm, fieldErrors, handleChange, handleNext, handleBack, handleGoToStep, handleCancel, navigate } = useTripDraft();
   const { recientes, addToRecentMembers } = useRecentMembers(user);
+
+  const draftIdRef = useRef(location.state?.draftId || null);
 
   const [previewJoinToken, setPreviewJoinToken] = useState('');
   const [inviteLink, setInviteLink] = useState('');
@@ -134,6 +138,11 @@ export function useCreateTripController() {
       }
 
       localStorage.removeItem(STORAGE_KEY);
+
+      if (draftIdRef.current) {
+        try { await deleteTrip(draftIdRef.current); } catch (e) { console.warn('Could not delete draft:', e); }
+      }
+
       navigate(ROUTES.TRIPS.LIST);
     } catch (error) {
       console.error('Could not create trip:', error);
@@ -147,7 +156,8 @@ export function useCreateTripController() {
   const handleSaveDraft = async () => {
     if (!user?.uid) return;
     try {
-      await saveTripDraft(user.uid, form);
+      const savedId = await saveTripDraft(user.uid, form, draftIdRef.current);
+      draftIdRef.current = savedId;
       localStorage.removeItem(STORAGE_KEY);
     } catch (err) {
       console.error('Error saving draft:', err);

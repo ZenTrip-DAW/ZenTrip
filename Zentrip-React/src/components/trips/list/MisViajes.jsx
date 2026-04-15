@@ -98,7 +98,7 @@ export default function MisViajes() {
                     if (trip.formSnapshot) {
                       localStorage.setItem(STORAGE_KEY, JSON.stringify({ step: 0, form: trip.formSnapshot }));
                     }
-                    navigate(ROUTES.TRIPS.CREATE);
+                    navigate(ROUTES.TRIPS.CREATE, { state: { draftId: trip.id } });
                   }}
                 />
               </section>
