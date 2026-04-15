@@ -12,7 +12,6 @@ import CreateTrip from './components/trips/create/CreateTrip';
 import MisViajes from './components/trips/list/MisViajes';
 import FlightsExplorer from './components/flights/FlightsExplorer';
 import TripDetail from './components/trips/detail/TripDetail';
-import FlightsExplorer from './components/flights/FlightsExplorer';
 import Landing from './components/landing/landing';
 import Home from './components/home/Home';
 import MainLayout from './layouts/MainLayout';
