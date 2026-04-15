@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import BookingBar from '../itinerario/BookingBar';
-import TripSummaryCard from '../itinerario/TripSummaryCard';
-import ParticipantsCard from '../itinerario/ParticipantsCard';
-import DayCalendar from '../itinerario/DayCalendar';
-import DayActivities from '../itinerario/DayActivities';
+import BookingBar from '../itinerary/BookingBar';
+import TripSummaryCard from '../itinerary/TripSummaryCard';
+import ParticipantsCard from '../itinerary/ParticipantsCard';
+import DayCalendar from '../itinerary/DayCalendar';
+import DayActivities from '../itinerary/DayActivities';
 
 export default function ItinerarioTab({
   trip,
@@ -13,6 +13,7 @@ export default function ItinerarioTab({
   tripDays,
   onAddActivity,
   onInvite,
+  onBook,
 }) {
   const [selectedDay, setSelectedDay] = useState(tripDays[0] ?? null);
 
@@ -20,13 +21,13 @@ export default function ItinerarioTab({
     <div className="flex flex-col gap-4">
       {/* Barra de reservas */}
       <div className="bg-white rounded-2xl border border-neutral-1 px-4 py-3">
-        <BookingBar />
+        <BookingBar onBook={onBook} />
       </div>
 
       {/* Contenido principal: sidebar + calendario/actividades */}
       <div className="flex gap-4 items-start">
         {/* Sidebar izquierdo */}
-        <div className="flex flex-col gap-4 w-56 shrink-0 hidden lg:flex">
+        <div className="hidden lg:flex flex-col gap-4 w-56 shrink-0">
           <TripSummaryCard
             trip={trip}
             activityCount={activities.length}
