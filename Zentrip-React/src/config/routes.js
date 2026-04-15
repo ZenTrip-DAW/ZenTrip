@@ -14,6 +14,7 @@ export const ROUTES = {
   TRIPS: {
     CREATE: '/trips/create',
     LIST: '/trips',
+    DETAIL: '/trips/:tripId',
   },
   LEGAL: {
     PRIVACY: '/legal/privacidad',

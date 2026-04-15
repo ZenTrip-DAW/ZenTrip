@@ -15,7 +15,7 @@ const PERSONAL_FIELDS = [
   { name: 'firstName', label: 'Nombre', type: 'text', placeholder: 'Tu nombre', required: true },
   { name: 'lastName', label: 'Apellidos', type: 'text', placeholder: 'Tus apellidos', required: true },
   { name: 'username', label: 'Nombre de usuario', type: 'text', placeholder: 'usuario123', required: true },
-  { name: 'phone', label: 'Teléfono', type: 'tel', placeholder: '+34 600 000 000' },
+  { name: 'phone', label: 'Teléfono', type: 'tel', placeholder: '+34 600 000 000', required: true },
 ];
 
 const PREFERENCE_SELECTS = [
@@ -98,6 +98,8 @@ const REQUIRED_CHECKLIST = [
   { name: 'firstName', label: 'Nombre' },
   { name: 'lastName', label: 'Apellidos' },
   { name: 'username', label: 'Nombre de usuario' },
+  { name: 'phone', label: 'Teléfono' },
+  { name: 'country', label: 'País' },
 ];
 
 function PersonalSection({ form, fieldErrors, onChange, setForm }) {
@@ -145,11 +147,21 @@ function PersonalSection({ form, fieldErrors, onChange, setForm }) {
       )}
 
       <div>
-        <label className={LABEL_CLASS}>País</label>
-        <select name="country" value={form.country} onChange={onChange} className={SELECT_CLASS}>
+        <label className={LABEL_CLASS}>
+          País<span className="text-red-500 ml-0.5">*</span>
+        </label>
+        <select
+          name="country"
+          value={form.country}
+          onChange={onChange}
+          className={`${SELECT_CLASS} ${fieldErrors.country ? 'border-feedback-error focus:ring-feedback-error' : ''}`}
+        >
           <option value="" disabled>Seleccione país</option>
           {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
+        {fieldErrors.country && (
+          <p className="mt-1 body-3 text-feedback-error">{fieldErrors.country}</p>
+        )}
       </div>
 
       <div>

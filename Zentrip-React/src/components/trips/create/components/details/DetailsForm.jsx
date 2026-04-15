@@ -2,6 +2,7 @@ import currency from 'currency.js';
 import Select from 'react-select';
 import Input from '../../../../ui/Input';
 import Button from '../../../../ui/Button';
+import CityAutocomplete from '../../../../ui/CityAutocomplete';
 import { DIVISAS } from '../../../../../utils/divisas';
 
 const selectStyles = {
@@ -37,6 +38,12 @@ const CURRENCY_OPTIONS = DIVISAS.map((d) => ({ value: d.code, label: d.label }))
 
 const labelClass = 'block text-slate-600 mb-1 body-bold';
 
+function addDays(dateStr, days) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+
 export default function DetailsForm({
   form,
   fieldErrors,
@@ -44,6 +51,9 @@ export default function DetailsForm({
   onNext,
   onCancel,
 }) {
+  const today = new Date().toISOString().split('T')[0];
+  const minEndDate = form.startDate ? addDays(form.startDate, 1) : today;
+
   return (
     <form onSubmit={onNext} noValidate>
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
@@ -61,8 +71,7 @@ export default function DetailsForm({
             required
           />
           <div />
-          <Input
-            variant="light"
+          <CityAutocomplete
             label="Origen"
             name="origin"
             placeholder="Ej. Madrid, España"
@@ -70,11 +79,10 @@ export default function DetailsForm({
             onChange={onChange}
             error={fieldErrors.origin}
           />
-          <Input
-            variant="light"
+          <CityAutocomplete
             label="Destino"
             name="destination"
-            placeholder="Ej. Paris, Francia"
+            placeholder="Ej. París, Francia"
             value={form.destination}
             onChange={onChange}
             error={fieldErrors.destination}
@@ -91,6 +99,7 @@ export default function DetailsForm({
               value={form.startDate}
               onChange={onChange}
               error={fieldErrors.startDate}
+              min={today}
             />
             <Input
               variant="light"
@@ -100,7 +109,8 @@ export default function DetailsForm({
               value={form.endDate}
               onChange={onChange}
               error={fieldErrors.endDate}
-              min={form.startDate || undefined}
+              min={minEndDate}
+              disabled={!form.startDate}
             />
           </div>
           <div>

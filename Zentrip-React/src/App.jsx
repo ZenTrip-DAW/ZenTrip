@@ -11,6 +11,8 @@ import EditProfile from './components/profile/EditProfile';
 import CreateTrip from './components/trips/create/CreateTrip';
 import MisViajes from './components/trips/list/MisViajes';
 import FlightsExplorer from './components/flights/FlightsExplorer';
+import TripDetail from './components/trips/detail/TripDetail';
+import FlightsExplorer from './components/flights/FlightsExplorer';
 import Landing from './components/landing/landing';
 import Home from './components/home/Home';
 import MainLayout from './layouts/MainLayout';
@@ -32,6 +34,7 @@ const router = createBrowserRouter([
           { path: ROUTES.PROFILE.EDIT, element: <EditProfile /> },
           { path: ROUTES.TRIPS.CREATE, element: <CreateTrip /> },
           { path: ROUTES.TRIPS.LIST, element: <MisViajes /> },
+          { path: ROUTES.TRIPS.DETAIL, element: <TripDetail /> },
           { path: ROUTES.PROFILE.SETUP, element: <EditProfile isOnboarding /> },
           { path: ROUTES.LEGAL.PRIVACY, element: <PrivacyPolicy /> },
           { path: ROUTES.LEGAL.TERMS, element: <TermsOfUse /> },

@@ -10,7 +10,7 @@ function calcNights(startDate, endDate) {
 }
 
 function EmptyLine({ colorClass = 'bg-secondary-5' }) {
-  return <span className={`block w-20 h-[2px] rounded-full ${colorClass}`} />;
+  return <span className={`block w-20 h-0.5 rounded-full ${colorClass}`} />;
 }
 
 function SectionRow({ label, children }) {
