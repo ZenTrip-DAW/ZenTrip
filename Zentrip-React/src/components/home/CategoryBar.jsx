@@ -1,3 +1,6 @@
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../config/routes';
+
 const CATEGORIES = [
   { key: "vuelos",      label: "Vuelos",           img: new URL("./img/image 34.png",    import.meta.url).href },
   { key: "hoteles",     label: "Hoteles",           img: new URL("./img/hoteles.png",     import.meta.url).href },
@@ -9,6 +12,14 @@ const CATEGORIES = [
 ];
 
 export default function CategoryBar() {
+  const navigate = useNavigate();
+
+  const handleCategoryClick = (categoryKey) => {
+    if (categoryKey === 'vuelos') {
+      navigate(ROUTES.FLIGHTS);
+    }
+  };
+
   return (
     <div
       className="w-full rounded-2xl px-3 sm:px-6 md:px-10 py-3 sm:py-4 md:py-5 border border-white/50"
@@ -20,6 +31,7 @@ export default function CategoryBar() {
           <button
             key={cat.key}
             type="button"
+            onClick={() => handleCategoryClick(cat.key)}
             className="w-full sm:flex-none sm:w-20 md:flex-1 md:w-auto cursor-pointer group"
           >
             <div className="w-full min-h-20 md:min-h-24 rounded-xl md:rounded-2xl bg-white/45 border border-white/40 group-hover:scale-110 transition-transform duration-200 flex flex-col items-center justify-center gap-1 px-1 md:px-2 py-2">

@@ -53,17 +53,24 @@ npm install
 ```
 
 ---
-
 ## Configuración
 
-Crea un archivo `.env` en la raíz del proyecto con las siguientes variables:
-
-```env
-PORT=5000
 ```
 
-Además, coloca el archivo de credenciales de Firebase (`serviceAccountKey.json`) en la ruta configurada en `server.js` o bien configura las credenciales mediante variables de entorno.
-
+ `GET /api/flights/destinations?query=new`
+	- Busca destinos de vuelo.
+ `GET /api/flights/search?fromId=BOM.AIRPORT&toId=DEL.AIRPORT&stops=none&pageNo=1&adults=1&children=0,17&sort=BEST&cabinClass=ECONOMY&currencyCode=AED`
+	- Busca vuelos directos o con filtros.
+ `GET /api/flights/search-multi-stops?legs=[...]&pageNo=1&adults=1&children=0,17&sort=BEST&cabinClass=ECONOMY&currencyCode=AED`
+	- Busca vuelos con varios tramos.
+ `GET /api/flights/details?currencyCode=AED`
+	- Obtiene detalles de vuelo.
+ `GET /api/flights/min-price?fromId=BOM.AIRPORT&toId=DEL.AIRPORT&cabinClass=ECONOMY&currencyCode=AED`
+	- Obtiene el precio mínimo.
+ `GET /api/flights/min-price-multi-stops?legs=[...]&cabinClass=ECONOMY,PREMIUM_ECONOMY,BUSINESS,FIRST&currencyCode=AED`
+	- Obtiene el precio mínimo para varios tramos.
+ `GET /api/flights/seat-map?currencyCode=AED`
+	- Obtiene el mapa de asientos.
 ---
 
 ## Ejecución

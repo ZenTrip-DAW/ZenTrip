@@ -1,5 +1,6 @@
 export const ROUTES = {
   HOME: '/home',
+  FLIGHTS: '/flights',
   AUTH: {
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
