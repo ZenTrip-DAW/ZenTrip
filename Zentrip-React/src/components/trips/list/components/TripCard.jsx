@@ -223,7 +223,7 @@ export default function TripCard({ trip, isDraft, memberCount, onClick, onDelete
     <>
       <div
         onClick={!blockClick ? onClick : undefined}
-        className="bg-white rounded-2xl shadow-sm border border-neutral-1 overflow-hidden cursor-pointer hover:shadow-md transition-shadow w-60 shrink-0 flex flex-col relative"
+        className="bg-white rounded-2xl shadow-sm border border-neutral-1 overflow-hidden cursor-pointer hover:shadow-md transition-shadow flex flex-col relative"
       >
         {/* Imagen / gradiente */}
         <div

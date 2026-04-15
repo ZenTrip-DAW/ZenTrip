@@ -13,7 +13,7 @@ function SectionTitle({ children }) {
 
 function TripRow({ trips, isDraft, onCardClick, onDelete, onImageUpload, userId }) {
   return (
-    <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
       {trips.map((trip, i) => (
         <TripCard
           key={trip.id || i}
@@ -56,7 +56,7 @@ export default function MisViajes() {
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-7xl mx-auto">
 
         {/* Cabecera */}
         <div className="flex items-start justify-between mb-8">
