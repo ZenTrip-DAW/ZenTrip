@@ -134,6 +134,7 @@ export function useCreateTripController() {
       }
 
       localStorage.removeItem(STORAGE_KEY);
+      navigate(ROUTES.TRIPS.LIST);
     } catch (error) {
       console.error('Could not create trip:', error);
       if (!tripCreated) setTripCreationLocked(false);
