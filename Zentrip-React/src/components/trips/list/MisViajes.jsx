@@ -14,7 +14,7 @@ function SectionTitle({ children }) {
 
 const INITIAL_COUNT = 5;
 
-function TripRow({ trips, isDraft, onCardClick, onDelete, onImageUpload, userId }) {
+function TripRow({ trips, isDraft, onCardClick, onDelete, onEdit, onImageUpload, userId }) {
   const [expanded, setExpanded] = useState(false);
   const hasMore = trips.length > INITIAL_COUNT;
   const visible = expanded ? trips : trips.slice(0, INITIAL_COUNT);
@@ -30,6 +30,7 @@ function TripRow({ trips, isDraft, onCardClick, onDelete, onImageUpload, userId 
             memberCount={isDraft ? (trip.members?.length ?? 0) + 1 : undefined}
             onClick={() => onCardClick(trip)}
             onDelete={onDelete && trip.uid === userId ? () => onDelete(trip.id) : undefined}
+            onEdit={onEdit && trip.uid === userId ? () => onEdit(trip) : undefined}
             onImageUpload={onImageUpload && trip.uid === userId ? (url) => onImageUpload(trip.id, url) : undefined}
           />
         ))}
@@ -67,6 +68,22 @@ function EmptyState({ onCreateClick }) {
 export default function MisViajes() {
   const navigate = useNavigate();
   const { borradores, enCurso, proximos, pasados, loading, userId, handleDeleteTrip, handleUpdateTripCover } = useMyTrips();
+
+  const handleEditTrip = (trip) => {
+    const tripForm = {
+      name: trip.name || '',
+      origin: trip.origin || '',
+      destination: trip.destination || '',
+      startDate: trip.startDate || '',
+      endDate: trip.endDate || '',
+      currency: trip.currency || '',
+      budget: trip.budget || '',
+      hasPet: Boolean(trip.hasPet),
+      members: [],
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ step: 0, form: tripForm }));
+    navigate(ROUTES.TRIPS.CREATE, { state: { editTripId: trip.id } });
+  };
 
   const hasDraft    = borradores.length > 0;
   const hasTrips    = enCurso.length + proximos.length + pasados.length > 0;
@@ -132,6 +149,7 @@ export default function MisViajes() {
                 <TripRow
                   trips={enCurso}
                   onDelete={handleDeleteTrip}
+                  onEdit={handleEditTrip}
                   onImageUpload={handleUpdateTripCover}
                   userId={userId}
                   onCardClick={(t) => navigate(`/trips/${t.id}`)}
@@ -146,6 +164,7 @@ export default function MisViajes() {
                 <TripRow
                   trips={proximos}
                   onDelete={handleDeleteTrip}
+                  onEdit={handleEditTrip}
                   onImageUpload={handleUpdateTripCover}
                   userId={userId}
                   onCardClick={(t) => navigate(`/trips/${t.id}`)}
@@ -160,6 +179,7 @@ export default function MisViajes() {
                 <TripRow
                   trips={pasados}
                   onDelete={handleDeleteTrip}
+                  onEdit={handleEditTrip}
                   onImageUpload={handleUpdateTripCover}
                   userId={userId}
                   onCardClick={(t) => navigate(`/trips/${t.id}`)}

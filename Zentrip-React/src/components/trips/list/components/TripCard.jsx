@@ -76,8 +76,17 @@ function IconCamera() {
   );
 }
 
+function IconPencil() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6.536-6.536a2 2 0 012.828 2.828L11.828 13.828A2 2 0 0110.414 14H8v-2.414a2 2 0 01.586-1.414z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18" />
+    </svg>
+  );
+}
 
-export default function TripCard({ trip, isDraft, memberCount, onClick, onDelete, onImageUpload }) {
+
+export default function TripCard({ trip, isDraft, memberCount, onClick, onDelete, onEdit, onImageUpload }) {
   const [confirming, setConfirming] = useState(false);
   const [nameConfirm, setNameConfirm] = useState(false);
   const [nameInput, setNameInput] = useState('');
@@ -119,6 +128,16 @@ export default function TripCard({ trip, isDraft, memberCount, onClick, onDelete
                 aria-label="Cambiar imagen del viaje"
               >
                 <IconCamera />
+              </button>
+            )}
+            {onEdit && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                className="w-7 h-7 rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-neutral-4 hover:text-primary-3 transition-colors"
+                aria-label="Editar viaje"
+              >
+                <IconPencil />
               </button>
             )}
             {onDelete && (

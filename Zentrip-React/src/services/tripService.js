@@ -89,6 +89,22 @@ export async function updateTripCover(tripId, imageUrl) {
   await updateDoc(doc(db, 'trips', tripId), { coverImage: imageUrl });
 }
 
+export async function updateTrip(tripId, form) {
+  const { members, ...tripData } = form;
+  await updateDoc(doc(db, 'trips', tripId), {
+    name: tripData.name || '',
+    origin: tripData.origin || '',
+    destination: tripData.destination || '',
+    startDate: tripData.startDate || '',
+    endDate: tripData.endDate || '',
+    currency: tripData.currency || '',
+    budget: tripData.budget || '',
+    hasPet: Boolean(tripData.hasPet),
+    updatedAt: serverTimestamp(),
+  });
+  return tripId;
+}
+
 export async function getUserTrips(uid) {
   // Viajes creados por el usuario
   const creatorSnapshot = await getDocs(

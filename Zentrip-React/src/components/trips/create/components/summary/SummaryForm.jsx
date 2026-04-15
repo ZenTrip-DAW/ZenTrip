@@ -90,6 +90,7 @@ export default function SummaryForm({
   onSaveDraft,
   isCreatingTrip = false,
   tripCreationLocked = false,
+  isEditing = false,
 }) {
   const disableCreate = isCreatingTrip || tripCreationLocked;
   const nights = calcNights(form.startDate, form.endDate);
@@ -151,9 +152,11 @@ export default function SummaryForm({
           </Button>
         </div>
         <div className="flex gap-3">
-          <Button variant="ghost" type="button" onClick={onSaveDraft} className="w-auto! px-4 sm:px-6">
-            Continuar más tarde
-          </Button>
+          {!isEditing && (
+            <Button variant="ghost" type="button" onClick={onSaveDraft} className="w-auto! px-4 sm:px-6">
+              Continuar más tarde
+            </Button>
+          )}
           <Button
             variant="orange"
             type="button"
@@ -161,7 +164,11 @@ export default function SummaryForm({
             onClick={onCreateTrip}
             disabled={disableCreate}
           >
-            {isCreatingTrip ? 'Creando...' : tripCreationLocked ? 'Viaje creado' : 'Crear viaje'}
+            {isCreatingTrip
+              ? (isEditing ? 'Guardando...' : 'Creando...')
+              : tripCreationLocked
+                ? (isEditing ? 'Guardado' : 'Viaje creado')
+                : (isEditing ? 'Guardar cambios' : 'Crear viaje')}
           </Button>
         </div>
       </div>

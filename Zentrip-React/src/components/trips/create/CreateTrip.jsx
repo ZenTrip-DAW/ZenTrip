@@ -12,6 +12,7 @@ export default function CreateTrip() {
     fieldErrors,
     isCreatingTrip,
     tripCreationLocked,
+    isEditing,
     inviteLink,
     handleChange,
     handleNext,
@@ -29,7 +30,9 @@ export default function CreateTrip() {
     <div className="min-h-screen bg-slate-50 px-4 py-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="title-h1-mobile md:title-h1-desktop text-secondary-5 mb-6">
-          Crear <span className="text-primary-3">nuevo</span> viaje
+          {isEditing
+            ? <>Editar <span className="text-primary-3">viaje</span></>
+            : <>Crear <span className="text-primary-3">nuevo</span> viaje</>}
         </h1>
 
         <StepBar activeStep={step} onStepClick={handleGoToStep} />
@@ -66,6 +69,7 @@ export default function CreateTrip() {
             onSaveDraft={handleSaveDraft}
             isCreatingTrip={isCreatingTrip}
             tripCreationLocked={tripCreationLocked}
+            isEditing={isEditing}
           />
         )}
       </div>

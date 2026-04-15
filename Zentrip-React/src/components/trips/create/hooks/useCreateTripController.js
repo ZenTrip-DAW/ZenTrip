@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../../../context/AuthContext';
-import { createTrip, deleteTrip, getTripPublicInviteLink, getTripPublicInvitePreview, saveTripDraft, sendTripInvitations } from '../../../../services/tripService';
+import { createTrip, deleteTrip, getTripPublicInviteLink, getTripPublicInvitePreview, saveTripDraft, sendTripInvitations, updateTrip } from '../../../../services/tripService';
 import { ROUTES } from '../../../../config/routes';
 import { STORAGE_KEY, useTripDraft } from './useTripDraft';
 import { useRecentMembers } from './useRecentMembers';
@@ -13,6 +13,8 @@ export function useCreateTripController() {
   const { recientes, addToRecentMembers } = useRecentMembers(user);
 
   const draftIdRef = useRef(location.state?.draftId || null);
+  const editTripIdRef = useRef(location.state?.editTripId || null);
+  const isEditing = Boolean(editTripIdRef.current);
 
   const [previewJoinToken, setPreviewJoinToken] = useState('');
   const [inviteLink, setInviteLink] = useState('');
@@ -100,6 +102,13 @@ export function useCreateTripController() {
     let tripCreated = false;
 
     try {
+      if (isEditing) {
+        await updateTrip(editTripIdRef.current, form);
+        localStorage.removeItem(STORAGE_KEY);
+        navigate(ROUTES.TRIPS.LIST);
+        return;
+      }
+
       const tripId = await createTrip(user.uid, form);
       tripCreated = true;
       setTripCreationLocked(true);
@@ -172,6 +181,7 @@ export function useCreateTripController() {
     fieldErrors,
     isCreatingTrip,
     tripCreationLocked,
+    isEditing,
     inviteLink,
     handleChange,
     handleNext,
