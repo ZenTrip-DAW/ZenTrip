@@ -53,7 +53,7 @@ export async function createTrip(uid, form) {
   return docRef.id;
 }
 
-export async function saveTripDraft(uid, form) {
+export async function saveTripDraft(uid, form, existingDraftId = null) {
   const { members, ...tripData } = form;
   const payload = {
     uid,
@@ -68,8 +68,15 @@ export async function saveTripDraft(uid, form) {
     hasPet: Boolean(tripData.hasPet),
     members: members || [],
     formSnapshot: form,
-    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   };
+
+  if (existingDraftId) {
+    await setDoc(doc(db, 'trips', existingDraftId), payload, { merge: true });
+    return existingDraftId;
+  }
+
+  payload.createdAt = serverTimestamp();
   const docRef = await addDoc(collection(db, 'trips'), payload);
   return docRef.id;
 }
