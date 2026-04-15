@@ -40,6 +40,8 @@ export function useMyTrips() {
   }));
 
   const handleDeleteTrip = async (tripId) => {
+    const trip = trips.find((t) => t.id === tripId);
+    if (!trip || trip.uid !== user?.uid) return;
     try {
       await deleteTrip(tripId);
       setTrips((prev) => prev.filter((t) => t.id !== tripId));
@@ -54,6 +56,7 @@ export function useMyTrips() {
     proximos: reales.filter((t) => t.status === 'proximo'),
     pasados:  reales.filter((t) => t.status === 'pasado'),
     loading,
+    userId: user?.uid,
     handleDeleteTrip,
   };
 }
