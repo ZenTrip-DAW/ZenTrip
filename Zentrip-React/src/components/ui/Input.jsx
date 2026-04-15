@@ -36,8 +36,8 @@ const Input = ({
   const rightPaddingClass = rightElement ? 'pr-10' : '';
 
   const inputClass = variant === 'light'
-    ? `w-full border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition ${s.input} ${s.inputText} ${rightPaddingClass} ${inputTextClass} ${className}`
-    : `mt-1 w-full rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/30 outline-none transition focus:border-orange-400/50 focus:ring-2 focus:ring-orange-400/30 ${s.input} ${s.inputText} ${rightPaddingClass} ${inputTextClass} ${className}`;
+    ? `w-full border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed ${s.input} ${s.inputText} ${rightPaddingClass} ${inputTextClass} ${className}`
+    : `mt-1 w-full rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/30 outline-none transition focus:border-orange-400/50 focus:ring-2 focus:ring-orange-400/30 disabled:opacity-40 disabled:cursor-not-allowed ${s.input} ${s.inputText} ${rightPaddingClass} ${inputTextClass} ${className}`;
 
   const labelClassName = variant === 'light'
     ? `block text-slate-600 mb-1 ${s.label} ${labelClass}`
