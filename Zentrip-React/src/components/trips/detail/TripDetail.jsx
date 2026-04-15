@@ -116,7 +116,7 @@ export default function TripDetail() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto flex flex-col gap-4">
+    <div className="max-w-7xl mx-auto flex flex-col gap-4">
       {/* Back link */}
       <button
         type="button"
