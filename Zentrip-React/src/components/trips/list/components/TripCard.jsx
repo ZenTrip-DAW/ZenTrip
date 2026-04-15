@@ -68,6 +68,8 @@ function IconTrash() {
 
 export default function TripCard({ trip, isDraft, memberCount, onClick, onDelete }) {
   const [confirming, setConfirming] = useState(false);
+  const [nameConfirm, setNameConfirm] = useState(false);
+  const [nameInput, setNameInput] = useState('');
   const name        = trip.name        || 'Viaje sin nombre';
   const origin      = trip.origin      || '';
   const destination = trip.destination || '';
@@ -147,11 +149,53 @@ export default function TripCard({ trip, isDraft, memberCount, onClick, onDelete
             </button>
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              onClick={(e) => { e.stopPropagation(); setConfirming(false); setNameInput(''); setNameConfirm(true); }}
               className="flex-1 py-2 rounded-xl bg-primary-3 text-white body-3 font-semibold hover:opacity-90 transition-opacity"
             >
               Eliminar
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación por nombre */}
+      {nameConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+              <p className="body-bold text-neutral-6">Confirmar eliminación</p>
+              <p className="body-3 text-neutral-3">
+                Escribe <span className="font-semibold text-neutral-6">{name}</span> para confirmar que quieres eliminar este viaje. Esta acción no se puede deshacer.
+              </p>
+            </div>
+            <input
+              type="text"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              placeholder={name}
+              className="w-full border border-neutral-2 rounded-xl px-3 py-2 body-3 text-neutral-6 focus:outline-none focus:border-primary-3"
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setNameConfirm(false); setNameInput(''); }}
+                className="flex-1 py-2 rounded-xl border border-neutral-2 body-3 text-neutral-5 hover:bg-neutral-1 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={nameInput !== name}
+                onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                className="flex-1 py-2 rounded-xl bg-feedback-error-solid text-white body-3 font-semibold transition-opacity disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:opacity-90"
+              >
+                Eliminar
+              </button>
+            </div>
           </div>
         </div>
       )}
