@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { uploadImage } from '../../../../services/cloudinaryService';
+import { uploadImage, validateImageFile } from '../../../../services/cloudinaryService';
 
 function IconUpload() {
   return (
@@ -8,8 +8,6 @@ function IconUpload() {
     </svg>
   );
 }
-
-const MAX_MB = 5;
 
 export default function CoverUploadModal({ onSave, onClose }) {
   const fileInputRef = useRef(null);
@@ -20,15 +18,12 @@ export default function CoverUploadModal({ onSave, onClose }) {
   const [error, setError] = useState(null);
 
   const handleFile = (f) => {
-    if (!f) return;
-    if (!f.type.startsWith('image/')) {
-      setError('El archivo debe ser una imagen (JPG, PNG, WebP...)');
+    const validationError = validateImageFile(f);
+    if (validationError) {
+      setError(validationError);
       return;
     }
-    if (f.size > MAX_MB * 1024 * 1024) {
-      setError(`La imagen no puede superar ${MAX_MB} MB.`);
-      return;
-    }
+
     setFile(f);
     setPreview(URL.createObjectURL(f));
     setError(null);
@@ -49,7 +44,7 @@ export default function CoverUploadModal({ onSave, onClose }) {
       onSave(url);
     } catch (err) {
       console.error('Error uploading trip cover:', err);
-      setError('No se pudo subir la imagen. Inténtalo de nuevo.');
+      setError(err?.message || 'No se pudo subir la imagen. Inténtalo de nuevo.');
     } finally {
       setUploading(false);
     }

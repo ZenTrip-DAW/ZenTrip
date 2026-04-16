@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { getNames } from 'country-list';
 import ISO6391 from 'iso-639-1';
-import { uploadImage } from '../../../services/cloudinaryService';
+import { uploadImage, validateImageFile } from '../../../services/cloudinaryService';
 import Input from '../../ui/Input';
 import Button from '../../ui/Button';
 import AlertMessage from '../../ui/AlertMessage';
@@ -44,13 +44,20 @@ function AvatarUpload({ value, fullName, onUploaded }) {
   async function handleFile(e) {
     const file = e.target.files[0];
     if (!file) return;
+
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      setUploadError(validationError);
+      return;
+    }
+
     setUploadError(null);
     setUploading(true);
     try {
       const url = await uploadImage(file);
       onUploaded(url);
-    } catch {
-      setUploadError('No se pudo subir la imagen. Inténtalo de nuevo.');
+    } catch (err) {
+      setUploadError(err?.message || 'No se pudo subir la imagen. Inténtalo de nuevo.');
     } finally {
       setUploading(false);
     }
