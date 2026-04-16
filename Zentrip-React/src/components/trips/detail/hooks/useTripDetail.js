@@ -86,5 +86,6 @@ export function useTripDetail(tripId) {
     loading,
     error,
     setActivities,
+    setMembers,
   };
 }

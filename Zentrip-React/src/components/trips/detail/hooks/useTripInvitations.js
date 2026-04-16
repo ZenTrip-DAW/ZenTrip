@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../../../context/AuthContext';
-import { addMemberToTrip, getTripPublicInviteLink, sendTripInvitations } from '../../../../services/tripService';
+import { addMemberToTrip, removeMemberFromTrip, getTripPublicInviteLink, sendTripInvitations } from '../../../../services/tripService';
 import { useRecentMembers } from '../../create/hooks/useRecentMembers';
 
-export function useTripInvitations(tripId, tripName, initialMembers = []) {
+export function useTripInvitations(tripId, tripName, initialMembers = [], onMemberRemoved) {
   const { user } = useAuth();
   const [invitados, setInvitados] = useState(initialMembers);
   const [inviteLink, setInviteLink] = useState('');
@@ -88,11 +88,27 @@ export function useTripInvitations(tripId, tripName, initialMembers = []) {
     }
   };
 
+  const handleRemoveMember = async (invitadoId) => {
+    const member = invitados.find((i) => i.id === invitadoId);
+    if (!member || member.role === 'coordinator') return;
+
+    setInvitados((prev) => prev.filter((i) => i.id !== invitadoId));
+
+    try {
+      await removeMemberFromTrip(tripId, member.uid || invitadoId);
+      onMemberRemoved?.(member.uid || invitadoId);
+    } catch (err) {
+      console.error('[useTripInvitations] Error al eliminar miembro:', err);
+      setInvitados((prev) => [...prev, member]);
+    }
+  };
+
   return {
     invitados,
     inviteLink,
     recientes,
     handleAddMember,
     handleAddEmailGuest,
+    handleRemoveMember,
   };
 }

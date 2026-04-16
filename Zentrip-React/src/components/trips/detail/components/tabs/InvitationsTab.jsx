@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import UserAvatar from '../../../../ui/UserAvatar';
+import ConfirmModal from '../../../../ui/ConfirmModal';
 import TabMembers from '../../../create/components/invitations/TabMembers';
 import TabEmailLink from '../../../create/components/invitations/TabEmailLink';
 import PanelInvitados from '../../../create/components/invitations/InvitadosPanel';
@@ -26,9 +27,10 @@ const TABS = [
   { id: 'enlace',  label: 'Enlace / Email', icon: <IconLink /> },
 ];
 
-export default function InvitationsTab({ tripId, tripName, members, isCreator }) {
+export default function InvitationsTab({ tripId, tripName, members, isCreator, onLeaveTrip, onMemberRemoved }) {
   const [activeTab, setActiveTab] = useState('members');
-  const { invitados, inviteLink, recientes, handleAddMember, handleAddEmailGuest } = useTripInvitations(tripId, tripName, members);
+  const [memberToRemove, setMemberToRemove] = useState(null);
+  const { invitados, inviteLink, recientes, handleAddMember, handleAddEmailGuest, handleRemoveMember } = useTripInvitations(tripId, tripName, members, onMemberRemoved);
 
   if (!isCreator) {
     return (
@@ -63,6 +65,17 @@ export default function InvitationsTab({ tripId, tripName, members, isCreator })
               </li>
             ))}
           </ul>
+        )}
+        {onLeaveTrip && (
+          <div className="mt-6 pt-5 border-t border-neutral-1 flex justify-end">
+            <button
+              type="button"
+              onClick={onLeaveTrip}
+              className="body-2-semibold text-red-500 hover:text-red-600 transition-colors"
+            >
+              Salir del viaje
+            </button>
+          </div>
         )}
       </div>
     );
@@ -105,8 +118,23 @@ export default function InvitationsTab({ tripId, tripName, members, isCreator })
       </div>
 
       <div className="md:ml-4 w-full md:w-auto">
-        <PanelInvitados invitados={invitados} />
+        <PanelInvitados invitados={invitados} onEliminarInvitado={(id) => setMemberToRemove(id)} />
       </div>
+
+      {memberToRemove && (() => {
+        const member = invitados.find((i) => i.id === memberToRemove);
+        return (
+          <ConfirmModal
+            title="Eliminar participante"
+            message={`¿Seguro que quieres eliminar a ${member?.name || member?.email || 'este participante'} del viaje?`}
+            confirmLabel="Eliminar"
+            cancelLabel="Cancelar"
+            confirmVariant="danger"
+            onConfirm={() => { handleRemoveMember(memberToRemove); setMemberToRemove(null); }}
+            onCancel={() => setMemberToRemove(null)}
+          />
+        );
+      })()}
     </div>
   );
 }

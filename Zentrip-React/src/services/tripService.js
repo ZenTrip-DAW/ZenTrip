@@ -165,6 +165,10 @@ export async function getTripMembers(tripId) {
   return apiClient.get(`/trips/${tripId}/members`);
 }
 
+export async function removeMemberFromTrip(tripId, memberUid) {
+  await deleteDoc(doc(db, 'trips', tripId, 'members', memberUid));
+}
+
 export async function addMemberToTrip(tripId, member) {
   if (!member?.uid) return;
   const memberRef = doc(db, 'trips', tripId, 'members', member.uid);
