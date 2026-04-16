@@ -50,13 +50,13 @@ export default function CreateTrip() {
         {step === 1 && (
           <InvitationsForm
             recientes={recientes}
-            participantes={form.members}
+            invitados={form.members}
             enlaceInvitacion={inviteLink}
             onAtras={handleBack}
             onSiguiente={handleNext}
             onAgregarMiembro={handleAddMember}
             onAgregarInvitadoEmail={handleAddEmailGuest}
-            onEliminarParticipante={handleRemoveMember}
+            onEliminarInvitado={handleRemoveMember}
           />
         )}
 

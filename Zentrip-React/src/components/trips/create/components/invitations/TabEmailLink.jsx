@@ -6,7 +6,7 @@ import { searchUsersByEmail } from '../../../../../services/userService';
 import { getSearchErrorMessage } from '../../../../../utils/errors/searchErrors';
 import { validateEmail } from '../../../../../utils/validation/register/rules';
 
-export default function TabEnlaceEmail({ enlaceInvitacion = '', participantes = [], onAgregarInvitadoEmail, disabled = false }) {
+export default function TabEnlaceEmail({ enlaceInvitacion = '', invitados = [], onAgregarInvitadoEmail, disabled = false }) {
   const { user } = useAuth();
   const [query, setQuery] = useState('');
   const [resultados, setResultados] = useState([]);
@@ -17,9 +17,9 @@ export default function TabEnlaceEmail({ enlaceInvitacion = '', participantes = 
   const currentUserUid = user?.uid || '';
   const currentUserEmail = (user?.email || '').trim().toLowerCase();
 
-  const participantesSet = useMemo(
-    () => new Set(participantes.map((item) => (item.email || item.uid || '').toLowerCase())),
-    [participantes],
+  const invitadosSet = useMemo(
+    () => new Set(invitados.map((item) => (item.email || item.uid || '').toLowerCase())),
+    [invitados],
   );
 
   const buscarEmails = async (rawQuery = query) => {
@@ -179,7 +179,7 @@ export default function TabEnlaceEmail({ enlaceInvitacion = '', participantes = 
           <div className="mt-3 rounded-xl border border-neutral-1 divide-y divide-neutral-1 overflow-hidden max-h-56 overflow-y-auto bg-white">
             {resultados.map((user) => {
               const email = (user.email || '').toLowerCase();
-              const yaInvitado = participantesSet.has(email) || participantesSet.has(user.uid);
+              const yaInvitado = invitadosSet.has(email) || invitadosSet.has(user.uid);
 
               return (
                 <button

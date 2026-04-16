@@ -165,6 +165,24 @@ export async function getTripMembers(tripId) {
   return apiClient.get(`/trips/${tripId}/members`);
 }
 
+export async function removeMemberFromTrip(tripId, memberUid) {
+  await deleteDoc(doc(db, 'trips', tripId, 'members', memberUid));
+}
+
+export async function addMemberToTrip(tripId, member) {
+  if (!member?.uid) return;
+  const memberRef = doc(db, 'trips', tripId, 'members', member.uid);
+  await setDoc(memberRef, {
+    uid: member.uid,
+    email: member.email || '',
+    name: member.name || '',
+    username: member.username || '',
+    avatar: member.avatar || '',
+    role: 'member',
+    invitationStatus: 'pending',
+  }, { merge: true });
+}
+
 export async function getActivities(tripId) {
   const snap = await getDocs(collection(db, 'trips', tripId, 'activities'));
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));

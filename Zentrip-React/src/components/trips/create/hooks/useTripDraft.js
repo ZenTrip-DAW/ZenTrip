@@ -87,7 +87,7 @@ export function useTripDraft() {
 
   const handleBack = () => {
     if (step > 0) setStep((s) => s - 1);
-    else navigate(ROUTES.HOME);
+    else navigate(ROUTES.TRIPS.LIST);
   };
 
   const handleGoToStep = (index) => {
@@ -96,7 +96,7 @@ export function useTripDraft() {
 
   const handleCancel = () => {
     localStorage.removeItem(STORAGE_KEY);
-    navigate(ROUTES.HOME);
+    navigate(ROUTES.TRIPS.LIST);
   };
 
   return {

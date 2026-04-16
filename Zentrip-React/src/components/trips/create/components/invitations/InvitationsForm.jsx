@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Button from '../../../../ui/Button';
 import TabMembers from './TabMembers';
 import TabEmailLink from './TabEmailLink';
-import ParticipantsPanel from './ParticipantsPanel';
+import PanelInvitados from './InvitadosPanel';
 
 function IconPeople() {
   return (
@@ -27,13 +27,13 @@ const TABS = [
 
 export default function InvitacionesForm({
   recientes = [],
-  participantes = [],
+  invitados = [],
   enlaceInvitacion = '',
   onAtras,
   onSiguiente,
   onAgregarMiembro,
   onAgregarInvitadoEmail,
-  onEliminarParticipante,
+  onEliminarInvitado,
 }) {
   const [activeTab, setActiveTab] = useState('members');
 
@@ -66,23 +66,23 @@ export default function InvitacionesForm({
           {activeTab === 'members' ? (
             <TabMembers
               recientes={recientes}
-              participantes={participantes}
+              invitados={invitados}
               onAgregarMiembro={onAgregarMiembro}
             />
           ) : (
             <TabEmailLink
               enlaceInvitacion={enlaceInvitacion}
-              participantes={participantes}
+              invitados={invitados}
               onAgregarInvitadoEmail={onAgregarInvitadoEmail}
             />
           )}
         </div>
 
-        {/* Panel derecho — Participantes */}
+        {/* Panel derecho — Invitados */}
         <div className="md:ml-4 w-full md:w-auto">
-          <ParticipantsPanel
-            participantes={participantes}
-            onEliminarParticipante={onEliminarParticipante}
+          <PanelInvitados
+            invitados={invitados}
+            onEliminarInvitado={onEliminarInvitado}
           />
         </div>
       </div>

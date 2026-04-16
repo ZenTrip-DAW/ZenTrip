@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
 import { useTripDetail } from './hooks/useTripDetail';
-import { addActivity } from '../../../services/tripService';
+import { addActivity, removeMemberFromTrip } from '../../../services/tripService';
+import ConfirmModal from '../../ui/ConfirmModal';
 import TripDetailHeader from './components/TripDetailHeader';
 import TripDetailTabs from './components/TripDetailTabs';
 import ItineraryTab from './components/tabs/ItineraryTab';
 import BookingsTab from './components/tabs/BookingsTab';
+import InvitationsTab from './components/tabs/InvitationsTab';
 import PlaceholderTab from './components/tabs/PlaceholderTab';
 
 
@@ -46,8 +49,10 @@ const TAB_PLACEHOLDERS = {
 export default function TripDetail() {
   const { tripId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('itinerario');
   const [reservasSubTab, setReservasSubTab] = useState('hoteles');
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   const handleBook = (subTab) => {
     setReservasSubTab(subTab);
@@ -63,6 +68,7 @@ export default function TripDetail() {
     loading,
     error,
     setActivities,
+    setMembers,
   } = useTripDetail(tripId);
 
   const handleAddActivity = async (date) => {
@@ -87,6 +93,17 @@ export default function TripDetail() {
   if (loading) return <LoadingState />;
   if (error || !trip) return <ErrorState message={error || 'Viaje no encontrado.'} onBack={() => navigate('/trips')} />;
 
+  const isCreator = user?.uid === trip?.uid;
+
+  const handleLeaveTrip = async () => {
+    try {
+      await removeMemberFromTrip(tripId, user.uid);
+      navigate('/trips');
+    } catch (err) {
+      console.error('[TripDetail] Error al salir del viaje:', err);
+    }
+  };
+
   const renderTab = () => {
     if (activeTab === 'itinerario') {
       return (
@@ -97,8 +114,20 @@ export default function TripDetail() {
           activitiesByDate={activitiesByDate}
           tripDays={tripDays}
           onAddActivity={handleAddActivity}
-          onInvite={() => navigate('/trips/create')}
+          onInvite={isCreator ? () => setActiveTab('invitaciones') : null}
           onBook={handleBook}
+        />
+      );
+    }
+    if (activeTab === 'invitaciones') {
+      return (
+        <InvitationsTab
+          tripId={tripId}
+          tripName={trip.name}
+          members={members}
+          isCreator={isCreator}
+          onLeaveTrip={isCreator ? null : () => setShowLeaveModal(true)}
+          onMemberRemoved={(uid) => setMembers((prev) => prev.filter((m) => m.uid !== uid))}
         />
       );
     }
@@ -117,6 +146,17 @@ export default function TripDetail() {
 
   return (
     <div className="max-w-7xl mx-auto flex flex-col gap-4">
+      {showLeaveModal && (
+        <ConfirmModal
+          title="Salir del viaje"
+          message="¿Seguro que quieres salir de este viaje? No podrás volver a acceder a menos que te inviten de nuevo."
+          confirmLabel="Salir"
+          cancelLabel="Cancelar"
+          confirmVariant="danger"
+          onConfirm={handleLeaveTrip}
+          onCancel={() => setShowLeaveModal(false)}
+        />
+      )}
       {/* Back link */}
       <button
         type="button"

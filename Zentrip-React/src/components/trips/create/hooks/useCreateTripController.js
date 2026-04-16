@@ -87,10 +87,10 @@ export function useCreateTripController() {
     });
   };
 
-  const handleRemoveMember = (participantId) => {
+  const handleRemoveMember = (invitadoId) => {
     setForm((prev) => ({
       ...prev,
-      members: prev.members.filter((item) => item.id !== participantId),
+      members: prev.members.filter((item) => item.id !== invitadoId),
     }));
   };
 

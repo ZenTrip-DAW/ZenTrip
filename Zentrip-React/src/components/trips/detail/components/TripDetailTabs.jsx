@@ -1,12 +1,13 @@
 import { MessageCircle } from 'lucide-react';
 
 const TABS = [
-  { key: 'itinerario',  label: 'Itinerario' },
-  { key: 'reservas',    label: 'Reservas' },
-  { key: 'votaciones',  label: 'Votaciones' },
-  { key: 'presupuesto', label: 'Presupuesto' },
-  { key: 'equipaje',    label: 'Equipaje' },
-  { key: 'galeria',     label: 'Galería' },
+  { key: 'itinerario',   label: 'Itinerario' },
+  { key: 'reservas',     label: 'Reservas' },
+  { key: 'invitaciones', label: 'Participantes' },
+  { key: 'votaciones',   label: 'Votaciones' },
+  { key: 'presupuesto',  label: 'Presupuesto' },
+  { key: 'equipaje',     label: 'Equipaje' },
+  { key: 'galeria',      label: 'Galería' },
 ];
 
 export default function TripDetailTabs({ activeTab, onTabChange, badges = {} }) {

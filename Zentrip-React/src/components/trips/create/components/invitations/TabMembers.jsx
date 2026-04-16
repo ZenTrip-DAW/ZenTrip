@@ -7,7 +7,7 @@ import { searchUsersByUsername } from '../../../../../services/userService';
 import { getSearchErrorMessage } from '../../../../../utils/errors/searchErrors';
 import { getRecentNameParts } from '../../../../../utils/members';
 
-export default function TabMiembros({ recientes = [], participantes = [], onAgregarMiembro }) {
+export default function TabMiembros({ recientes = [], invitados = [], onAgregarMiembro }) {
   const { user } = useAuth();
   const [query, setQuery] = useState('');
   const [resultados, setResultados] = useState([]);
@@ -17,9 +17,9 @@ export default function TabMiembros({ recientes = [], participantes = [], onAgre
   const currentUserUid = user?.uid || '';
   const currentUserEmail = (user?.email || '').trim().toLowerCase();
 
-  const participantesSet = useMemo(
-    () => new Set(participantes.map((item) => item.uid)),
-    [participantes],
+  const invitadosSet = useMemo(
+    () => new Set(invitados.map((item) => item.uid)),
+    [invitados],
   );
 
   const recientesUnicos = useMemo(() => {
@@ -114,7 +114,7 @@ export default function TabMiembros({ recientes = [], participantes = [], onAgre
       {resultados.length > 0 && (
         <div className="mb-5 rounded-xl border border-neutral-1 divide-y divide-neutral-1 overflow-hidden">
           {resultados.map((member) => {
-            const yaInvitado = participantesSet.has(member.uid);
+            const yaInvitado = invitadosSet.has(member.uid);
 
             return (
               <div key={member.uid} className="flex items-center justify-between gap-3 p-3">
@@ -160,7 +160,7 @@ export default function TabMiembros({ recientes = [], participantes = [], onAgre
           <p className="body-bold text-neutral-5 mb-4">Recientes</p>
           <div className="flex flex-wrap gap-x-8 gap-y-6">
             {recientesUnicos.map((user) => {
-              const yaInvitado = participantesSet.has(user.uid);
+              const yaInvitado = invitadosSet.has(user.uid);
               const { firstName, lastName, fullName } = getRecentNameParts(user);
 
               return (
