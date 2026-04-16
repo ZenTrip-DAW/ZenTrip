@@ -20,20 +20,25 @@ export const TIPS = [
 
 /**
  * Transforma un hotel crudo de la API de booking-com15 al shape interno.
+ * @param {object} raw - Hotel crudo de la API
+ * @param {number} nights - Número de noches de la estancia
  */
-export function mapApiHotel(raw) {
+export function mapApiHotel(raw, nights = 1) {
   const prop = raw.property || {};
   const stars = Math.round(prop.accuratePropertyClass ?? prop.propertyClass ?? 0);
-  const price = prop.priceBreakdown?.grossPrice?.value
-    ? Math.round(prop.priceBreakdown.grossPrice.value)
-    : null;
+  const totalPrice = prop.priceBreakdown?.grossPrice?.value ?? null;
+  const price = totalPrice !== null ? Math.round(totalPrice / Math.max(nights, 1)) : null;
   const currency = prop.priceBreakdown?.grossPrice?.currency || 'EUR';
   const photo = prop.photoUrls?.[0] || null;
   const score = prop.reviewScore ? Number(prop.reviewScore).toFixed(1) : null;
 
+  const hotelName = prop.name || '';
+  const ufi = prop.ufi || '';
+  const bookingUrl = `https://www.booking.com/searchresults.es.html?ss=${encodeURIComponent(hotelName)}&dest_id=${ufi}&dest_type=city`;
+
   return {
     id: raw.hotel_id ?? prop.id,
-    name: prop.name || 'Hotel',
+    name: hotelName || 'Hotel',
     loc: prop.wishlistName || prop.address || prop.countryCode || '',
     stars,
     score,
@@ -46,6 +51,7 @@ export function mapApiHotel(raw) {
     tags: (prop.facilities || []).slice(0, 4).map((f) => f.name).filter(Boolean),
     checkin: prop.checkin?.fromTime || null,
     checkout: prop.checkout?.untilTime || null,
+    bookingUrl,
   };
 }
 

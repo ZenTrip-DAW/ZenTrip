@@ -26,11 +26,13 @@ function NumberInput({ value, onChange, min = 1 }) {
 }
 
 function DateInput({ value, onChange }) {
+  const today = new Date().toISOString().split('T')[0];
   return (
     <input
       type="date"
       value={value}
       onChange={onChange}
+      min={today}
       className="w-full h-10 px-3 border border-neutral-2 rounded-lg body-2 text-neutral-7 bg-white outline-none focus:border-secondary-3 focus:ring-2 focus:ring-secondary-3/20 transition"
     />
   );

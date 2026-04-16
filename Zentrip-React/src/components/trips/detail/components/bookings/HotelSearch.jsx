@@ -62,7 +62,7 @@ export default function HotelSearch({ trip, members = [], tripId }) {
       });
       const data = await apiClient.get(`/hotels/search?${params.toString()}`);
       const rawHotels = data?.data?.hotels ?? data?.hotels ?? [];
-      setHotels(rawHotels.map(mapApiHotel));
+      setHotels(rawHotels.map((h) => mapApiHotel(h, nights)));
       setSearchedDest(dest.trim());
       setFilter('all');
       setPage(1);

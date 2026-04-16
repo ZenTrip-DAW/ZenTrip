@@ -182,8 +182,7 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
               {hotel.price != null && (
                 <div className="text-right shrink-0">
                   <p className="body-3 text-neutral-4">desde</p>
-                  <p className="title-h3-desktop text-neutral-7 leading-tight">{hotel.price} {hotel.currency}</p>
-                  <p className="body-3 text-neutral-4">/ noche</p>
+                  <p className="title-h3-desktop text-neutral-7 leading-tight">{hotel.price} {hotel.currency}<span className="body-3 text-neutral-4 font-normal"> /noche</span></p>
                   {nights > 0 && (
                     <p className="body-3 font-bold text-primary-3 mt-0.5">
                       {hotel.price * nights} {hotel.currency} total ({nights} noche{nights !== 1 ? 's' : ''})
@@ -290,7 +289,7 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
             </button>
           )}
           <a
-            href={`https://www.booking.com/hotel/${hotel.id}.es.html`}
+            href={hotel.bookingUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="h-11 px-4 rounded-lg border border-secondary-3 text-secondary-3 flex items-center gap-2 body-2-semibold hover:bg-secondary-1 transition"
