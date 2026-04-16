@@ -5,8 +5,23 @@ import { SectionLabel, TipCard } from './HotelAtoms';
 import HotelSearchForm from './HotelSearchForm';
 import HotelResults from './HotelResults';
 import HotelDetailModal from './HotelDetailModal';
+import { useAuth } from '../../../../../context/AuthContext';
 
 export default function HotelSearch({ trip, members = [], tripId }) {
+  const { user } = useAuth();
+
+  if (!user) {
+    return (
+      <div className="text-center py-16">
+        <div className="w-14 h-14 bg-primary-1 rounded-[50%_50%_50%_0] mx-auto mb-4 flex items-center justify-center text-2xl">
+          🔒
+        </div>
+        <h2 className="title-h3-desktop text-neutral-7 mb-2">Acceso restringido</h2>
+        <p className="body-2 text-neutral-4">Debes iniciar sesión para buscar hoteles.</p>
+      </div>
+    );
+  }
+
   const [dest, setDest]         = useState(trip?.destination || '');
   const [checkIn, setCheckIn]   = useState(trip?.startDate || '');
   const [checkOut, setCheckOut] = useState(trip?.endDate || '');

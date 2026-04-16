@@ -1,5 +1,5 @@
 import { Star } from 'lucide-react';
-
+// componentes atomicos reutilizables
 export function SectionLabel({ children }) {
   return (
     <p className="body-3 font-bold text-neutral-4 uppercase tracking-widest mb-3">
