@@ -201,3 +201,40 @@ export async function addActivity(tripId, activity) {
 export async function deleteActivity(tripId, activityId) {
   await deleteDoc(doc(db, 'trips', tripId, 'activities', activityId));
 }
+
+export async function addBooking(tripId, booking) {
+  const docRef = await addDoc(collection(db, 'trips', tripId, 'bookings'), {
+    ...booking,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function getBookings(tripId) {
+  const snap = await getDocs(collection(db, 'trips', tripId, 'bookings'));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function deleteBooking(tripId, bookingId) {
+  await deleteDoc(doc(db, 'trips', tripId, 'bookings', bookingId));
+}
+
+export async function sendBookingNotifications(tripId, { bookerUid, bookerName, hotelName, tripName }) {
+  const membersSnap = await getDocs(collection(db, 'trips', tripId, 'members'));
+  const recipients = membersSnap.docs
+    .map((d) => d.data())
+    .filter((m) => m.uid && m.uid !== bookerUid);
+
+  await Promise.all(recipients.map((m) =>
+    addDoc(collection(db, 'notifications'), {
+      recipientUid: m.uid,
+      type: 'hotel_booked',
+      tripId,
+      tripName: tripName || '',
+      hotelName,
+      bookerName: bookerName || 'Un miembro',
+      read: false,
+      createdAt: serverTimestamp(),
+    })
+  ));
+}

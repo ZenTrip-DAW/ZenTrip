@@ -7,7 +7,7 @@ import NotificationItem from './NotificationItem';
 const flightImg = new URL('../../home/img/image 34.png', import.meta.url).href;
 
 export default function NotificationPanel({ onClose }) {
-  const { notifications, acceptedNotifications, clearAcceptedNotifications, markAsSeen } = useNotifications();
+  const { notifications, tripNotifications, acceptedNotifications, clearAcceptedNotifications, markAsSeen, markTripNotificationRead } = useNotifications();
   const navigate = useNavigate();
   const panelRef = useRef(null);
 
@@ -29,7 +29,7 @@ export default function NotificationPanel({ onClose }) {
     };
   }, [onClose]);
 
-  const hasAny = notifications.length > 0 || acceptedNotifications.length > 0;
+  const hasAny = notifications.length > 0 || acceptedNotifications.length > 0 || tripNotifications.length > 0;
 
   return (
     <div
@@ -86,6 +86,33 @@ export default function NotificationPanel({ onClose }) {
                       className="mt-2 body-3 font-semibold text-primary-3 hover:text-primary-4 transition-colors cursor-pointer"
                     >
                       Ver mis viajes →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Notificaciones de reservas */}
+            {tripNotifications.map((n) => (
+              <div
+                key={n.id}
+                className="px-4 py-3 rounded-xl bg-auxiliary-green-1 border border-auxiliary-green-3"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-xl shrink-0 mt-0.5">🏨</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="body-3 font-semibold text-neutral-7 mb-0.5">Nueva reserva de hotel</p>
+                    <p className="body-3 text-neutral-5 leading-snug">
+                      <span className="font-semibold text-auxiliary-green-5">{n.bookerName}</span>
+                      {' '}ha reservado <span className="font-semibold text-neutral-7">"{n.hotelName}"</span>
+                      {n.tripName ? <> en el viaje <span className="font-semibold text-neutral-7">"{n.tripName}"</span></> : ''}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => { markTripNotificationRead(n.id); onClose(); }}
+                      className="mt-2 body-3 font-semibold text-neutral-3 hover:text-neutral-5 transition-colors cursor-pointer"
+                    >
+                      Marcar como leído ✕
                     </button>
                   </div>
                 </div>

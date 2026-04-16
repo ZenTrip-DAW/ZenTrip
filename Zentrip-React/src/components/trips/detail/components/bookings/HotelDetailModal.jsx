@@ -1,31 +1,33 @@
 import { useEffect, useState } from 'react';
 import { X, MapPin, ChevronLeft, ChevronRight, Wifi, Car, Coffee, Dumbbell, Waves, Utensils, ExternalLink } from 'lucide-react';
 import { apiClient } from '../../../../../services/apiClient';
-import { addActivity } from '../../../../../services/tripService';
+import { addActivity, addBooking, getBookings, sendBookingNotifications } from '../../../../../services/tripService';
+import { useAuth } from '../../../../../context/AuthContext';
 import { ScoreBadge, StarRow } from './HotelAtoms';
-
-function InfoRow({ label, value }) {
-  if (!value) return null;
-  return (
-    <div className="flex justify-between items-center py-2 border-b border-neutral-1 last:border-0">
-      <span className="body-3 font-bold text-neutral-5 uppercase tracking-wider">{label}</span>
-      <span className="body-3 text-neutral-7">{value}</span>
-    </div>
-  );
-}
 
 // ─── HotelDetailModal ─────────────────────────────────────────────────────────
 
 export default function HotelDetailModal({ hotel, searchParams, tripId, trip, onClose }) {
   const { checkIn, checkOut, adults, rooms, currency } = searchParams;
+  const { user, profile } = useAuth();
 
   const [details, setDetails]   = useState(null);
   const [photos, setPhotos]     = useState(hotel.photo ? [hotel.photo] : []);
-  const [policies, setPolicies] = useState(null);
+  const [policies, setPolicies] = useState([]);
+  const [roomList, setRoomList] = useState([]);
   const [loadingDetails, setLoadingDetails] = useState(true);
-  const [adding, setAdding]     = useState(false);
-  const [added, setAdded]       = useState(false);
+  const [booking, setBooking]   = useState(false);
+  const [booked, setBooked]     = useState(false);
+  const [duplicate, setDuplicate] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
+
+  const POLICY_LABELS = {
+    POLICY_CHILDREN: 'Niños',
+    POLICY_HOTEL_GROUPS: 'Grupos',
+    POLICY_HOTEL_INTERNET: 'Internet',
+    POLICY_HOTEL_PARKING: 'Aparcamiento',
+    POLICY_HOTEL_PETS: 'Mascotas',
+  };
 
   useEffect(() => {
     if (!hotel.id) return;
@@ -34,10 +36,11 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
     const fetchAll = async () => {
       setLoadingDetails(true);
       try {
-        const [detailsRes, photosRes, policiesRes] = await Promise.allSettled([
+        const [detailsRes, photosRes, policiesRes, roomsRes] = await Promise.allSettled([
           apiClient.get(`/hotels/details?hotelId=${hotel.id}&arrivalDate=${checkIn}&departureDate=${checkOut}&adults=${adults}&roomQty=${rooms}&currencyCode=${currency}`),
           apiClient.get(`/hotels/photos?hotelId=${hotel.id}`),
-          apiClient.get(`/hotels/policies?hotelId=${hotel.id}`),
+          apiClient.get(`/hotels/policies?hotelId=${hotel.id}&languageCode=es`),
+          apiClient.get(`/hotels/rooms?hotelId=${hotel.id}&arrivalDate=${checkIn}&departureDate=${checkOut}&adults=${adults}&roomQty=${rooms}&currencyCode=${currency}&languageCode=es`),
         ]);
 
         if (!cancelled) {
@@ -49,7 +52,35 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
               : [];
             if (urls.length > 0) setPhotos(urls);
           }
-          if (policiesRes.status === 'fulfilled') setPolicies(policiesRes.value);
+          if (policiesRes.status === 'fulfilled') {
+            const raw = policiesRes.value?.data?.policy ?? [];
+            const parsed = raw
+              .map((p) => ({ type: p.type, text: p.content?.[0]?.text }))
+              .filter((p) => p.text);
+            setPolicies(parsed);
+          }
+          if (roomsRes.status === 'fulfilled') {
+            const blocks = roomsRes.value?.data?.block ?? [];
+            const seen = new Set();
+            const parsed = blocks
+              .map((b) => ({
+                name: b.room_name,
+                pricePerNight: b.product_price_breakdown?.gross_amount_per_night?.amount_rounded,
+                currency: b.product_price_breakdown?.gross_amount_per_night?.currency ?? currency,
+                size: b.room_surface_in_m2,
+                maxOccupancy: b.max_occupancy,
+                breakfastIncluded: b.breakfast_included === 1,
+                halfBoard: b.half_board === 1,
+                refundable: b.refundable === 1,
+              }))
+              .filter((r) => {
+                const key = `${r.name}|${r.pricePerNight}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+              });
+            setRoomList(parsed);
+          }
         }
       } finally {
         if (!cancelled) setLoadingDetails(false);
@@ -60,27 +91,61 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
     return () => { cancelled = true; };
   }, [hotel.id, checkIn, checkOut, adults, rooms, currency]);
 
-  const handleAddToItinerary = async () => {
-    if (!tripId || !checkIn) return;
-    setAdding(true);
+  const handleBooked = async () => {
+    if (!tripId) return;
+    setBooking(true);
     try {
-      const nights = Math.round((new Date(checkOut + 'T00:00:00') - new Date(checkIn + 'T00:00:00')) / 86400000);
-      await addActivity(tripId, {
+      const existing = await getBookings(tripId);
+      const isDuplicate = existing.some(
+        (b) => b.hotelId === hotel.id && b.checkIn === checkIn && b.checkOut === checkOut
+      );
+      if (isDuplicate) {
+        setDuplicate(true);
+        return;
+      }
+      const bookingUrl = `https://www.booking.com/searchresults.es.html?dest_id=${hotel.id}&dest_type=hotel&checkin=${checkIn}&checkout=${checkOut}&group_adults=${adults}&no_rooms=${rooms}`;
+      const bookingData = {
+        type: 'hotel',
+        hotelId: hotel.id,
+        hotelName: hotel.name,
+        hotelStars: hotel.stars,
+        hotelScore: hotel.score,
+        checkIn,
+        checkOut,
+        adults,
+        rooms,
+        nights,
+        pricePerNight: hotel.price,
+        totalPrice: hotel.price != null ? hotel.price * nights : null,
+        currency: hotel.currency,
+        status: 'reservado',
+        bookingUrl,
+      };
+      const activityId = await addActivity(tripId, {
         date: checkIn,
         startTime: details?.data?.property?.checkin?.fromTime || '15:00',
         endTime: details?.data?.property?.checkout?.untilTime || '11:00',
         name: hotel.name,
         type: 'hotel',
-        notes: hotel.price != null ? `Desde ${hotel.price} ${hotel.currency}/noche · ${nights} noche${nights !== 1 ? 's' : ''}` : '',
-        status: 'pendiente',
+        notes: hotel.price != null ? `Reservado · ${hotel.price} ${hotel.currency}/noche · ${nights} noche${nights !== 1 ? 's' : ''}` : 'Reservado',
+        status: 'reservado',
       });
-      setAdded(true);
+      await addBooking(tripId, { ...bookingData, activityId });
+      await sendBookingNotifications(tripId, {
+        bookerUid: user.uid,
+        bookerName: profile?.displayName || profile?.firstName || 'Un miembro',
+        hotelName: hotel.name,
+        tripName: trip?.name || '',
+      });
+      setBooked(true);
+      setTimeout(() => window.location.reload(), 1000);
     } catch (err) {
-      console.error('[HotelDetailModal] Error al añadir al itinerario:', err);
+      console.error('[HotelDetailModal] Error al guardar reserva:', err);
     } finally {
-      setAdding(false);
+      setBooking(false);
     }
   };
+
 
   const prop = details?.data?.property ?? details?.property ?? {};
   const description = prop.description?.intro || prop.shortDescription || null;
@@ -182,8 +247,7 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
               {hotel.price != null && (
                 <div className="text-right shrink-0">
                   <p className="body-3 text-neutral-4">desde</p>
-                  <p className="title-h3-desktop text-neutral-7 leading-tight">{hotel.price} {hotel.currency}</p>
-                  <p className="body-3 text-neutral-4">/ noche</p>
+                  <p className="title-h3-desktop text-neutral-7 leading-tight">{hotel.price} {hotel.currency}<span className="body-3 text-neutral-4 font-normal"> /noche</span></p>
                   {nights > 0 && (
                     <p className="body-3 font-bold text-primary-3 mt-0.5">
                       {hotel.price * nights} {hotel.currency} total ({nights} noche{nights !== 1 ? 's' : ''})
@@ -246,23 +310,58 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
               </div>
             )}
 
+            {/* Habitaciones */}
+            {roomList.length > 0 && (
+              <div className="mb-5">
+                <p className="body-3 font-bold text-neutral-5 uppercase tracking-wider mb-3">Habitaciones disponibles</p>
+                <div className="flex flex-col gap-2">
+                  {roomList.map((r, i) => (
+                    <div key={i} className="border border-neutral-1 rounded-xl p-3 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="body-3 font-semibold text-neutral-7 truncate">{r.name}</p>
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {r.size > 0 && (
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-neutral-1 text-neutral-5">{r.size} m²</span>
+                          )}
+                          {r.maxOccupancy > 0 && (
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-neutral-1 text-neutral-5">Máx. {r.maxOccupancy} pers.</span>
+                          )}
+                          {r.breakfastIncluded && (
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-auxiliary-green-1 text-auxiliary-green-5">Desayuno incl.</span>
+                          )}
+                          {r.halfBoard && (
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-auxiliary-green-1 text-auxiliary-green-5">Media pensión</span>
+                          )}
+                          {r.refundable && (
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-secondary-1 text-secondary-4">Cancelación gratis</span>
+                          )}
+                        </div>
+                      </div>
+                      {r.pricePerNight && (
+                        <div className="text-right shrink-0">
+                          <p className="body-2-semibold text-neutral-7">{r.pricePerNight}</p>
+                          <p className="body-3 text-neutral-4">/noche</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Políticas */}
-            {policies && (
+            {policies.length > 0 && (
               <div className="mb-5">
                 <p className="body-3 font-bold text-neutral-5 uppercase tracking-wider mb-3">Políticas</p>
-                <div className="bg-auxiliary-green-1 border border-auxiliary-green-3 rounded-xl p-4">
-                  {(() => {
-                    const policyData = policies?.data ?? policies;
-                    const items = Array.isArray(policyData)
-                      ? policyData
-                      : (policyData?.cancellation ?? policyData?.policies ?? []);
-                    if (items.length === 0) return <p className="body-3 text-neutral-5">Consulta las políticas en el sitio web del hotel.</p>;
-                    return items.slice(0, 3).map((p, i) => (
-                      <p key={i} className="body-3 text-neutral-6 mb-1 last:mb-0">
-                        ✓ {typeof p === 'string' ? p : (p.description || p.title || JSON.stringify(p))}
-                      </p>
-                    ));
-                  })()}
+                <div className="bg-auxiliary-green-1 border border-auxiliary-green-3 rounded-xl p-4 flex flex-col gap-2">
+                  {policies.map((p, i) => (
+                    <div key={i}>
+                      {POLICY_LABELS[p.type] && (
+                        <p className="body-3 font-bold text-neutral-5 mb-0.5">{POLICY_LABELS[p.type]}</p>
+                      )}
+                      <p className="body-3 text-neutral-6">{p.text}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -272,25 +371,29 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
 
         {/* Footer fijo con acciones */}
         <div className="px-5 py-4 border-t border-neutral-1 flex gap-3 shrink-0 bg-white">
-          {added ? (
+          {duplicate ? (
+            <div className="flex-1 h-11 rounded-lg bg-feedback-warning border border-feedback-warning-strong text-feedback-warning-strong flex items-center justify-center gap-2 body-2-semibold">
+              ⚠️ Ya tienes este hotel reservado
+            </div>
+          ) : booked ? (
             <div className="flex-1 h-11 rounded-lg bg-auxiliary-green-2 text-auxiliary-green-5 flex items-center justify-center gap-2 body-2-semibold">
-              ✓ Añadido al itinerario
+              ✓ Reserva guardada
             </div>
           ) : (
             <button
-              onClick={handleAddToItinerary}
-              disabled={adding || !tripId || !checkIn}
+              onClick={handleBooked}
+              disabled={booking || !tripId}
               className={`flex-1 h-11 rounded-lg body-2-semibold text-white flex items-center justify-center gap-2 transition ${
-                adding || !tripId || !checkIn ? 'bg-neutral-2 cursor-not-allowed' : 'bg-primary-3 hover:bg-primary-4'
+                booking || !tripId ? 'bg-neutral-2 cursor-not-allowed' : 'bg-auxiliary-green-4 hover:bg-auxiliary-green-5'
               }`}
             >
-              {adding ? (
-                <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Añadiendo…</>
-              ) : '🗓 Añadir al itinerario'}
+              {booking ? (
+                <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Comprobando…</>
+              ) : '✓ He reservado'}
             </button>
           )}
           <a
-            href={`https://www.booking.com/hotel/${hotel.id}.es.html`}
+            href={`https://www.booking.com/searchresults.es.html?dest_id=${hotel.id}&dest_type=hotel&checkin=${checkIn}&checkout=${checkOut}&group_adults=${adults}&no_rooms=${rooms}`}
             target="_blank"
             rel="noopener noreferrer"
             className="h-11 px-4 rounded-lg border border-secondary-3 text-secondary-3 flex items-center gap-2 body-2-semibold hover:bg-secondary-1 transition"

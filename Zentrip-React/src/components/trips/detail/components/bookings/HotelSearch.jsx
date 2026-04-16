@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { apiClient } from '../../../../../services/apiClient';
 import { mapApiHotel, getNights, TIPS } from './hotelUtils';
 import { SectionLabel, TipCard } from './HotelAtoms';
@@ -6,21 +6,88 @@ import HotelSearchForm from './HotelSearchForm';
 import HotelResults from './HotelResults';
 import HotelDetailModal from './HotelDetailModal';
 import { useAuth } from '../../../../../context/AuthContext';
+import { getBookings, deleteBooking, deleteActivity } from '../../../../../services/tripService';
+
+function CancelBookingModal({ booking, tripId, onConfirm, onClose }) {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleConfirm = async () => {
+    setDeleting(true);
+    try {
+      await deleteBooking(tripId, booking.id);
+      if (booking.activityId) {
+        await deleteActivity(tripId, booking.activityId);
+      }
+      onConfirm();
+      window.location.reload();
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-neutral-7/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-sm mx-4 bg-white rounded-2xl shadow-2xl p-6">
+        <h3 className="title-h3-desktop text-neutral-7 mb-2">¿Cancelar reserva?</h3>
+        <p className="body-2 text-neutral-5 mb-4">
+          Esto eliminará la reserva de ZenTrip, pero <span className="font-bold text-neutral-7">debes cancelarla también en el sitio web</span> donde la hiciste para evitar cargos.
+        </p>
+        {booking.bookingUrl && (
+          <a
+            href={booking.bookingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full h-10 rounded-lg border border-secondary-3 text-secondary-3 body-3 font-bold hover:bg-secondary-1 transition mb-4"
+          >
+            Ir a Booking.com para cancelar
+          </a>
+        )}
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 h-10 rounded-lg border border-neutral-2 body-3 font-bold text-neutral-5 hover:bg-neutral-1 transition"
+          >
+            Volver
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={deleting}
+            className="flex-1 h-10 rounded-lg bg-feedback-error text-white body-3 font-bold hover:opacity-90 transition disabled:opacity-50"
+          >
+            {deleting ? 'Eliminando…' : 'Sí, cancelar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CancelBookingButton({ booking, tripId, onCancelled }) {
+  const [showModal, setShowModal] = useState(false);
+
+  return (
+    <>
+      <button
+        onClick={() => setShowModal(true)}
+        className="h-9 px-3 rounded-lg border border-feedback-error text-feedback-error-strong body-3 font-bold flex items-center justify-center hover:bg-red-50 transition"
+      >
+        Cancelar reserva
+      </button>
+      {showModal && (
+        <CancelBookingModal
+          booking={booking}
+          tripId={tripId}
+          onConfirm={() => { setShowModal(false); onCancelled(); }}
+          onClose={() => setShowModal(false)}
+        />
+      )}
+    </>
+  );
+}
 
 export default function HotelSearch({ trip, members = [], tripId }) {
   const { user } = useAuth();
-
-  if (!user) {
-    return (
-      <div className="text-center py-16">
-        <div className="w-14 h-14 bg-primary-1 rounded-[50%_50%_50%_0] mx-auto mb-4 flex items-center justify-center text-2xl">
-          🔒
-        </div>
-        <h2 className="title-h3-desktop text-neutral-7 mb-2">Acceso restringido</h2>
-        <p className="body-2 text-neutral-4">Debes iniciar sesión para buscar hoteles.</p>
-      </div>
-    );
-  }
 
   const [dest, setDest]         = useState(trip?.destination || '');
   const [checkIn, setCheckIn]   = useState(trip?.startDate || '');
@@ -40,6 +107,26 @@ export default function HotelSearch({ trip, members = [], tripId }) {
   const [page, setPage]       = useState(1);
 
   const [selectedHotel, setSelectedHotel] = useState(null);
+  const [existingBookings, setExistingBookings] = useState([]);
+
+  useEffect(() => {
+    if (!tripId || !user) return;
+    getBookings(tripId)
+      .then((data) => setExistingBookings(data.filter((b) => b.type === 'hotel')))
+      .catch(() => {});
+  }, [tripId, user]);
+
+  if (!user) {
+    return (
+      <div className="text-center py-16">
+        <div className="w-14 h-14 bg-primary-1 rounded-[50%_50%_50%_0] mx-auto mb-4 flex items-center justify-center text-2xl">
+          🔒
+        </div>
+        <h2 className="title-h3-desktop text-neutral-7 mb-2">Acceso restringido</h2>
+        <p className="body-2 text-neutral-4">Debes iniciar sesión para buscar hoteles.</p>
+      </div>
+    );
+  }
 
   const nights = getNights(checkIn, checkOut);
   const canSearch = Boolean(dest.trim() && checkIn && checkOut && nights > 0);
@@ -62,7 +149,7 @@ export default function HotelSearch({ trip, members = [], tripId }) {
       });
       const data = await apiClient.get(`/hotels/search?${params.toString()}`);
       const rawHotels = data?.data?.hotels ?? data?.hotels ?? [];
-      setHotels(rawHotels.map(mapApiHotel));
+      setHotels(rawHotels.map((h) => mapApiHotel(h, nights)));
       setSearchedDest(dest.trim());
       setFilter('all');
       setPage(1);
@@ -87,6 +174,51 @@ export default function HotelSearch({ trip, members = [], tripId }) {
         <h2 className="title-h3-desktop text-neutral-7 mb-1">¿Dónde os alojáis?</h2>
         <p className="body-2 text-neutral-4">Busca hoteles para tu grupo en cualquier destino del mundo</p>
       </div>
+
+      {/* Reservas existentes */}
+      {existingBookings.length > 0 && (
+        <div className="mb-7">
+          <SectionLabel>Alojamiento reservado</SectionLabel>
+          <div className="flex flex-col gap-3">
+            {existingBookings.map((b) => (
+              <div key={b.id} className="bg-auxiliary-green-1 border border-auxiliary-green-3 rounded-xl px-4 py-3">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">🏨</span>
+                    <div>
+                      <p className="body-2-semibold text-neutral-7">{b.hotelName}</p>
+                      <p className="body-3 text-neutral-4">{b.checkIn} → {b.checkOut} · {b.nights} noche{b.nights !== 1 ? 's' : ''}</p>
+                    </div>
+                  </div>
+                  {b.pricePerNight != null && (
+                    <div className="text-right shrink-0">
+                      <p className="body-2-semibold text-auxiliary-green-5">{b.pricePerNight} {b.currency}<span className="body-3 font-normal"> /noche</span></p>
+                      <p className="body-3 text-neutral-4">{b.totalPrice} {b.currency} total</p>
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  {b.bookingUrl && (
+                    <a
+                      href={b.bookingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 h-9 rounded-lg border border-auxiliary-green-4 text-auxiliary-green-5 body-3 font-bold flex items-center justify-center gap-1.5 hover:bg-auxiliary-green-2 transition"
+                    >
+                      Ver en Booking.com
+                    </a>
+                  )}
+                  <CancelBookingButton
+                    booking={b}
+                    tripId={tripId}
+                    onCancelled={() => setExistingBookings((prev) => prev.filter((x) => x.id !== b.id))}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Formulario */}
       <div className="mb-7">
