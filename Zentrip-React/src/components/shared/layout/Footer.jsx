@@ -4,7 +4,7 @@ import { ROUTES } from '../../../config/routes';
 
 const NAV_LINKS = [
   { label: 'Inicio', to: ROUTES.HOME },
-  { label: 'Mis viajes', to: ROUTES.HOME },
+  { label: 'Mis viajes', to: ROUTES.TRIPS.LIST },
   { label: 'Crear viaje', to: ROUTES.TRIPS.CREATE },
   { label: 'Editar perfil', to: ROUTES.PROFILE.EDIT },
 ];
