@@ -8,6 +8,7 @@ const ROLE_LABELS = {
 
 export default function ParticipantsCard({ members, onInvite }) {
   const accepted = members.filter((m) => m.invitationStatus === 'accepted');
+  const pending = members.filter((m) => m.invitationStatus === 'pending' || m.invitationStatus === 'pending_email');
 
   return (
     <div className="bg-white rounded-2xl border border-neutral-1 p-4">
@@ -23,7 +24,7 @@ export default function ParticipantsCard({ members, onInvite }) {
         </button>
       </div>
 
-      {accepted.length === 0 ? (
+      {accepted.length === 0 && pending.length === 0 ? (
         <p className="body-3 text-neutral-3 text-center py-3">Sin participantes aún</p>
       ) : (
         <ul className="flex flex-col gap-3">
@@ -43,6 +44,25 @@ export default function ParticipantsCard({ members, onInvite }) {
                 </span>
                 <span className="body-3 text-neutral-3 text-xs">
                   {ROLE_LABELS[member.role] || 'Miembro'}
+                </span>
+              </div>
+            </li>
+          ))}
+          {pending.map((member) => (
+            <li key={member.uid || member.id} className="flex items-center gap-3 opacity-60">
+              <UserAvatar
+                src={member.avatar || member.profilePhoto || ''}
+                fullName={member.name || member.username || member.email || ''}
+                sizeClass="w-9 h-9"
+                backgroundClass="bg-neutral-1"
+                initialsClass="body-3 text-neutral-4 font-bold"
+              />
+              <div className="flex flex-col min-w-0">
+                <span className="body-3 font-semibold truncate text-neutral-4">
+                  {member.name || member.username || member.email || 'Usuario'}
+                </span>
+                <span className="body-3 text-xs text-primary-3">
+                  Pendiente
                 </span>
               </div>
             </li>
