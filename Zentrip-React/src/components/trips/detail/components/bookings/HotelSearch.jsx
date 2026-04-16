@@ -7,7 +7,6 @@ import HotelResults from './HotelResults';
 import HotelDetailModal from './HotelDetailModal';
 
 export default function HotelSearch({ trip, members = [], tripId }) {
-  // ── Formulario ─────────────────────────────────────────────────────────────
   const [dest, setDest]         = useState(trip?.destination || '');
   const [checkIn, setCheckIn]   = useState(trip?.startDate || '');
   const [checkOut, setCheckOut] = useState(trip?.endDate || '');

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import currency from 'currency.js';
 import Select from 'react-select';
 import Input from '../../../../ui/Input';
@@ -54,22 +55,46 @@ export default function DetailsForm({
   const today = new Date().toISOString().split('T')[0];
   const minEndDate = form.startDate ? addDays(form.startDate, 1) : today;
 
+  const [dateErrors, setDateErrors] = useState({ startDate: '', endDate: '' });
+
+  const handleDateChange = (e) => {
+    const { name, value } = e.target;
+    if (!value) {
+      setDateErrors((prev) => ({ ...prev, [name]: '' }));
+      return onChange(e);
+    }
+    if (name === 'startDate' && value < today) {
+      setDateErrors((prev) => ({ ...prev, startDate: 'No puedes seleccionar una fecha anterior a hoy' }));
+    } else if (name === 'endDate' && value < minEndDate) {
+      setDateErrors((prev) => ({ ...prev, endDate: 'La fecha fin no puede ser anterior a la fecha inicio' }));
+    } else {
+      setDateErrors((prev) => ({ ...prev, [name]: '' }));
+      onChange(e);
+    }
+  };
+
   return (
     <form onSubmit={onNext} noValidate>
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
         <h2 className="title-h3-desktop text-secondary-5 mb-5">Información básica</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <Input
-            variant="light"
-            label="Nombre del viaje"
-            name="name"
-            placeholder="Ej. Roadtrip Costa Oeste"
-            value={form.name}
-            onChange={onChange}
-            error={fieldErrors.name}
-            required
-          />
+          <div>
+            <Input
+              variant="light"
+              label="Nombre del viaje"
+              name="name"
+              placeholder="Ej. Roadtrip Costa Oeste"
+              value={form.name}
+              onChange={onChange}
+              error={fieldErrors.name}
+              maxLength={50}
+              required
+            />
+            {form.name?.length >= 50 && (
+              <p className="mt-1 body-3 text-feedback-error">No puedes poner más de 50 caracteres</p>
+            )}
+          </div>
           <div />
           <CityAutocomplete
             label="Origen"
@@ -91,27 +116,37 @@ export default function DetailsForm({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              variant="light"
-              label="Fecha inicio"
-              name="startDate"
-              type="date"
-              value={form.startDate}
-              onChange={onChange}
-              error={fieldErrors.startDate}
-              min={today}
-            />
-            <Input
-              variant="light"
-              label="Fecha fin"
-              name="endDate"
-              type="date"
-              value={form.endDate}
-              onChange={onChange}
-              error={fieldErrors.endDate}
-              min={minEndDate}
-              disabled={!form.startDate}
-            />
+            <div>
+              <Input
+                variant="light"
+                label="Fecha inicio"
+                name="startDate"
+                type="date"
+                value={form.startDate}
+                onChange={handleDateChange}
+                error={fieldErrors.startDate}
+                min={today}
+              />
+              {dateErrors.startDate && (
+                <p className="mt-1 body-3 text-feedback-error">{dateErrors.startDate}</p>
+              )}
+            </div>
+            <div>
+              <Input
+                variant="light"
+                label="Fecha fin"
+                name="endDate"
+                type="date"
+                value={form.endDate}
+                onChange={handleDateChange}
+                error={fieldErrors.endDate}
+                min={minEndDate}
+                disabled={!form.startDate}
+              />
+              {dateErrors.endDate && (
+                <p className="mt-1 body-3 text-feedback-error">{dateErrors.endDate}</p>
+              )}
+            </div>
           </div>
           <div>
             <label className={labelClass}>
@@ -135,18 +170,24 @@ export default function DetailsForm({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-          <Input
-            variant="light"
-            label="Presupuesto"
-            name="budget"
-            type="number"
-            placeholder="Ej. 1200"
-            value={form.budget}
-            onChange={onChange}
-            error={fieldErrors.budget}
-            min="0"
-            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-          />
+          <div>
+            <Input
+              variant="light"
+              label="Presupuesto"
+              name="budget"
+              type="number"
+              placeholder="Ej. 1200"
+              value={form.budget}
+              onChange={onChange}
+              error={fieldErrors.budget}
+              min="0"
+              max="999999999"
+              className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            {Number(form.budget) > 999999999 && (
+              <p className="mt-1 body-3 text-feedback-error">El presupuesto no puede superar 999.999.999</p>
+            )}
+          </div>
           <div className="flex items-center gap-3 pb-2">
             <span className="body text-slate-600">¿Viajas con Mascota?</span>
             <button

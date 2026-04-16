@@ -25,7 +25,7 @@ export default function TripSummaryCard({ trip, activityCount = 0, budget = 0 })
       <div className="grid grid-cols-2 gap-2">
         <SummaryItem emoji="📅" value={days || '—'} label="días" />
         <SummaryItem emoji="📝" value={activityCount} label="actividades" />
-        <SummaryItem emoji="💸" value={budget ? budget.toLocaleString() : '—'} label="gastos" />
+        <SummaryItem emoji="💸" value={budget ? Intl.NumberFormat('es', { notation: 'compact', maximumFractionDigits: 1 }).format(budget) : '—'} label="gastos" />
         <SummaryItem emoji="🧳" value="—" label="equipaje" />
       </div>
     </div>
