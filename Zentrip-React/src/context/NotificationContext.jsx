@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, updateDoc, doc, where } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
 import { useAuth } from './AuthContext';
 
@@ -8,9 +8,11 @@ const NotificationContext = createContext(null);
 export function NotificationProvider({ children }) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
+  const [tripNotifications, setTripNotifications] = useState([]);
   const [acceptedNotifications, setAcceptedNotifications] = useState([]);
   const [unseenCount, setUnseenCount] = useState(0);
   const knownIdsRef = useRef(new Set());
+  const knownTripNotifsRef = useRef(new Set());
 
   useEffect(() => {
     if (!user?.email) {
@@ -46,6 +48,33 @@ export function NotificationProvider({ children }) {
     return unsubscribe;
   }, [user?.email]);
 
+  useEffect(() => {
+    if (!user?.uid) {
+      setTripNotifications([]);
+      knownTripNotifsRef.current = new Set();
+      return;
+    }
+
+    const q = query(
+      collection(db, 'notifications'),
+      where('recipientUid', '==', user.uid),
+      where('read', '==', false),
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const newIds = new Set(docs.map((d) => d.id));
+      const added = [...newIds].filter((id) => !knownTripNotifsRef.current.has(id));
+      if (added.length > 0) setUnseenCount((prev) => prev + added.length);
+      knownTripNotifsRef.current = newIds;
+      setTripNotifications(docs);
+    }, (err) => {
+      console.warn('Error en listener de notificaciones de viaje:', err);
+    });
+
+    return unsubscribe;
+  }, [user?.uid]);
+
   // Escucha aceptaciones desde el flujo de login/registro por enlace
   useEffect(() => {
     const handleEmailAccepted = (e) => {
@@ -62,6 +91,10 @@ export function NotificationProvider({ children }) {
     setUnseenCount(0);
   }, []);
 
+  const markTripNotificationRead = useCallback(async (notifId) => {
+    await updateDoc(doc(db, 'notifications', notifId), { read: true });
+  }, []);
+
   const addAcceptedNotification = useCallback((data) => {
     setAcceptedNotifications((prev) => [data, ...prev]);
   }, []);
@@ -73,8 +106,10 @@ export function NotificationProvider({ children }) {
   return (
     <NotificationContext.Provider value={{
       notifications,
+      tripNotifications,
       unseenCount,
       markAsSeen,
+      markTripNotificationRead,
       acceptedNotifications,
       addAcceptedNotification,
       clearAcceptedNotifications,

@@ -6,7 +6,7 @@ import HotelSearchForm from './HotelSearchForm';
 import HotelResults from './HotelResults';
 import HotelDetailModal from './HotelDetailModal';
 import { useAuth } from '../../../../../context/AuthContext';
-import { getBookings, deleteBooking } from '../../../../../services/tripService';
+import { getBookings, deleteBooking, deleteActivity } from '../../../../../services/tripService';
 
 function CancelBookingModal({ booking, tripId, onConfirm, onClose }) {
   const [deleting, setDeleting] = useState(false);
@@ -15,7 +15,11 @@ function CancelBookingModal({ booking, tripId, onConfirm, onClose }) {
     setDeleting(true);
     try {
       await deleteBooking(tripId, booking.id);
+      if (booking.activityId) {
+        await deleteActivity(tripId, booking.activityId);
+      }
       onConfirm();
+      window.location.reload();
     } finally {
       setDeleting(false);
     }

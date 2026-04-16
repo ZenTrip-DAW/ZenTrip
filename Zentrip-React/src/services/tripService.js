@@ -216,3 +216,23 @@ export async function getBookings(tripId) {
 export async function deleteBooking(tripId, bookingId) {
   await deleteDoc(doc(db, 'trips', tripId, 'bookings', bookingId));
 }
+
+export async function sendBookingNotifications(tripId, { bookerUid, bookerName, hotelName, tripName }) {
+  const membersSnap = await getDocs(collection(db, 'trips', tripId, 'members'));
+  const recipients = membersSnap.docs
+    .map((d) => d.data())
+    .filter((m) => m.uid && m.uid !== bookerUid);
+
+  await Promise.all(recipients.map((m) =>
+    addDoc(collection(db, 'notifications'), {
+      recipientUid: m.uid,
+      type: 'hotel_booked',
+      tripId,
+      tripName: tripName || '',
+      hotelName,
+      bookerName: bookerName || 'Un miembro',
+      read: false,
+      createdAt: serverTimestamp(),
+    })
+  ));
+}

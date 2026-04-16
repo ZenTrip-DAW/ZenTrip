@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { X, MapPin, ChevronLeft, ChevronRight, Wifi, Car, Coffee, Dumbbell, Waves, Utensils, ExternalLink } from 'lucide-react';
 import { apiClient } from '../../../../../services/apiClient';
-import { addActivity, addBooking, getBookings } from '../../../../../services/tripService';
-// addActivity se usa en handleBooked para añadir al itinerario al reservar
+import { addActivity, addBooking, getBookings, sendBookingNotifications } from '../../../../../services/tripService';
+import { useAuth } from '../../../../../context/AuthContext';
 import { ScoreBadge, StarRow } from './HotelAtoms';
 
 function InfoRow({ label, value }) {
@@ -19,6 +19,7 @@ function InfoRow({ label, value }) {
 
 export default function HotelDetailModal({ hotel, searchParams, tripId, trip, onClose }) {
   const { checkIn, checkOut, adults, rooms, currency } = searchParams;
+  const { user, profile } = useAuth();
 
   const [details, setDetails]   = useState(null);
   const [photos, setPhotos]     = useState(hotel.photo ? [hotel.photo] : []);
@@ -92,8 +93,7 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
         status: 'reservado',
         bookingUrl,
       };
-      await addBooking(tripId, bookingData);
-      await addActivity(tripId, {
+      const activityId = await addActivity(tripId, {
         date: checkIn,
         startTime: details?.data?.property?.checkin?.fromTime || '15:00',
         endTime: details?.data?.property?.checkout?.untilTime || '11:00',
@@ -101,6 +101,13 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
         type: 'hotel',
         notes: hotel.price != null ? `Reservado · ${hotel.price} ${hotel.currency}/noche · ${nights} noche${nights !== 1 ? 's' : ''}` : 'Reservado',
         status: 'reservado',
+      });
+      await addBooking(tripId, { ...bookingData, activityId });
+      await sendBookingNotifications(tripId, {
+        bookerUid: user.uid,
+        bookerName: profile?.displayName || profile?.firstName || 'Un miembro',
+        hotelName: hotel.name,
+        tripName: trip?.name || '',
       });
       setBooked(true);
       setTimeout(() => window.location.reload(), 1000);
