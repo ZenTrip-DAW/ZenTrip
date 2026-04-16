@@ -166,7 +166,9 @@ export async function getTripMembers(tripId) {
 }
 
 export async function removeMemberFromTrip(tripId, memberUid) {
-  await deleteDoc(doc(db, 'trips', tripId, 'members', memberUid));
+  await updateDoc(doc(db, 'trips', tripId, 'members', memberUid), {
+    invitationStatus: 'removed',
+  });
 }
 
 export async function addMemberToTrip(tripId, member) {

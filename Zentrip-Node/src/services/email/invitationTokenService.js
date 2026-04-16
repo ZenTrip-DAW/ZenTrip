@@ -503,12 +503,18 @@ async function acceptTripPublicInvitation(token, userId, userEmail) {
     .doc(userId)
     .get();
 
-  if (memberSnap.exists && memberSnap.data()?.invitationStatus === 'accepted') {
-    return {
-      tripId: invitation.tripId,
-      publicInvitationId: invitation.publicInvitationId,
-      alreadyMember: true,
-    };
+  if (memberSnap.exists) {
+    const status = memberSnap.data()?.invitationStatus;
+    if (status === 'accepted') {
+      return {
+        tripId: invitation.tripId,
+        publicInvitationId: invitation.publicInvitationId,
+        alreadyMember: true,
+      };
+    }
+    if (status === 'removed') {
+      throw new Error('No tienes permiso para unirte a este viaje.');
+    }
   }
 
   await applyAcceptanceToTrip({

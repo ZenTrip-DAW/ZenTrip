@@ -41,7 +41,9 @@ const getTripMembers = async (req, res, next) => {
       .collection('members')
       .get();
 
-    const members = membersSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const members = membersSnap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .filter((m) => m.invitationStatus !== 'removed');
 
     // Enriquecer con datos de perfil de la colección users
     const enriched = await Promise.all(
