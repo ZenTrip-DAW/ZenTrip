@@ -5,16 +5,6 @@ import { addActivity, addBooking, getBookings, sendBookingNotifications } from '
 import { useAuth } from '../../../../../context/AuthContext';
 import { ScoreBadge, StarRow } from './HotelAtoms';
 
-function InfoRow({ label, value }) {
-  if (!value) return null;
-  return (
-    <div className="flex justify-between items-center py-2 border-b border-neutral-1 last:border-0">
-      <span className="body-3 font-bold text-neutral-5 uppercase tracking-wider">{label}</span>
-      <span className="body-3 text-neutral-7">{value}</span>
-    </div>
-  );
-}
-
 // ─── HotelDetailModal ─────────────────────────────────────────────────────────
 
 export default function HotelDetailModal({ hotel, searchParams, tripId, trip, onClose }) {
@@ -23,12 +13,21 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
 
   const [details, setDetails]   = useState(null);
   const [photos, setPhotos]     = useState(hotel.photo ? [hotel.photo] : []);
-  const [policies, setPolicies] = useState(null);
+  const [policies, setPolicies] = useState([]);
+  const [roomList, setRoomList] = useState([]);
   const [loadingDetails, setLoadingDetails] = useState(true);
   const [booking, setBooking]   = useState(false);
   const [booked, setBooked]     = useState(false);
   const [duplicate, setDuplicate] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
+
+  const POLICY_LABELS = {
+    POLICY_CHILDREN: 'Niños',
+    POLICY_HOTEL_GROUPS: 'Grupos',
+    POLICY_HOTEL_INTERNET: 'Internet',
+    POLICY_HOTEL_PARKING: 'Aparcamiento',
+    POLICY_HOTEL_PETS: 'Mascotas',
+  };
 
   useEffect(() => {
     if (!hotel.id) return;
@@ -37,10 +36,11 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
     const fetchAll = async () => {
       setLoadingDetails(true);
       try {
-        const [detailsRes, photosRes, policiesRes] = await Promise.allSettled([
+        const [detailsRes, photosRes, policiesRes, roomsRes] = await Promise.allSettled([
           apiClient.get(`/hotels/details?hotelId=${hotel.id}&arrivalDate=${checkIn}&departureDate=${checkOut}&adults=${adults}&roomQty=${rooms}&currencyCode=${currency}`),
           apiClient.get(`/hotels/photos?hotelId=${hotel.id}`),
-          apiClient.get(`/hotels/policies?hotelId=${hotel.id}`),
+          apiClient.get(`/hotels/policies?hotelId=${hotel.id}&languageCode=es`),
+          apiClient.get(`/hotels/rooms?hotelId=${hotel.id}&arrivalDate=${checkIn}&departureDate=${checkOut}&adults=${adults}&roomQty=${rooms}&currencyCode=${currency}&languageCode=es`),
         ]);
 
         if (!cancelled) {
@@ -52,7 +52,35 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
               : [];
             if (urls.length > 0) setPhotos(urls);
           }
-          if (policiesRes.status === 'fulfilled') setPolicies(policiesRes.value);
+          if (policiesRes.status === 'fulfilled') {
+            const raw = policiesRes.value?.data?.policy ?? [];
+            const parsed = raw
+              .map((p) => ({ type: p.type, text: p.content?.[0]?.text }))
+              .filter((p) => p.text);
+            setPolicies(parsed);
+          }
+          if (roomsRes.status === 'fulfilled') {
+            const blocks = roomsRes.value?.data?.block ?? [];
+            const seen = new Set();
+            const parsed = blocks
+              .map((b) => ({
+                name: b.room_name,
+                pricePerNight: b.product_price_breakdown?.gross_amount_per_night?.amount_rounded,
+                currency: b.product_price_breakdown?.gross_amount_per_night?.currency ?? currency,
+                size: b.room_surface_in_m2,
+                maxOccupancy: b.max_occupancy,
+                breakfastIncluded: b.breakfast_included === 1,
+                halfBoard: b.half_board === 1,
+                refundable: b.refundable === 1,
+              }))
+              .filter((r) => {
+                const key = `${r.name}|${r.pricePerNight}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+              });
+            setRoomList(parsed);
+          }
         }
       } finally {
         if (!cancelled) setLoadingDetails(false);
@@ -282,23 +310,58 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
               </div>
             )}
 
+            {/* Habitaciones */}
+            {roomList.length > 0 && (
+              <div className="mb-5">
+                <p className="body-3 font-bold text-neutral-5 uppercase tracking-wider mb-3">Habitaciones disponibles</p>
+                <div className="flex flex-col gap-2">
+                  {roomList.map((r, i) => (
+                    <div key={i} className="border border-neutral-1 rounded-xl p-3 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="body-3 font-semibold text-neutral-7 truncate">{r.name}</p>
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {r.size > 0 && (
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-neutral-1 text-neutral-5">{r.size} m²</span>
+                          )}
+                          {r.maxOccupancy > 0 && (
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-neutral-1 text-neutral-5">Máx. {r.maxOccupancy} pers.</span>
+                          )}
+                          {r.breakfastIncluded && (
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-auxiliary-green-1 text-auxiliary-green-5">Desayuno incl.</span>
+                          )}
+                          {r.halfBoard && (
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-auxiliary-green-1 text-auxiliary-green-5">Media pensión</span>
+                          )}
+                          {r.refundable && (
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-secondary-1 text-secondary-4">Cancelación gratis</span>
+                          )}
+                        </div>
+                      </div>
+                      {r.pricePerNight && (
+                        <div className="text-right shrink-0">
+                          <p className="body-2-semibold text-neutral-7">{r.pricePerNight}</p>
+                          <p className="body-3 text-neutral-4">/noche</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Políticas */}
-            {policies && (
+            {policies.length > 0 && (
               <div className="mb-5">
                 <p className="body-3 font-bold text-neutral-5 uppercase tracking-wider mb-3">Políticas</p>
-                <div className="bg-auxiliary-green-1 border border-auxiliary-green-3 rounded-xl p-4">
-                  {(() => {
-                    const policyData = policies?.data ?? policies;
-                    const items = Array.isArray(policyData)
-                      ? policyData
-                      : (policyData?.cancellation ?? policyData?.policies ?? []);
-                    if (items.length === 0) return <p className="body-3 text-neutral-5">Consulta las políticas en el sitio web del hotel.</p>;
-                    return items.slice(0, 3).map((p, i) => (
-                      <p key={i} className="body-3 text-neutral-6 mb-1 last:mb-0">
-                        ✓ {typeof p === 'string' ? p : (p.description || p.title || JSON.stringify(p))}
-                      </p>
-                    ));
-                  })()}
+                <div className="bg-auxiliary-green-1 border border-auxiliary-green-3 rounded-xl p-4 flex flex-col gap-2">
+                  {policies.map((p, i) => (
+                    <div key={i}>
+                      {POLICY_LABELS[p.type] && (
+                        <p className="body-3 font-bold text-neutral-5 mb-0.5">{POLICY_LABELS[p.type]}</p>
+                      )}
+                      <p className="body-3 text-neutral-6">{p.text}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
