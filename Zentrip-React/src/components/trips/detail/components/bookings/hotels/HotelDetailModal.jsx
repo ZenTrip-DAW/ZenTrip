@@ -122,6 +122,11 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
         currency: hotel.currency,
         status: 'reservado',
         bookingUrl,
+        createdBy: {
+          uid: user.uid,
+          name: profile?.displayName || profile?.firstName || user.email,
+          photoURL: profile?.photoURL || null,
+        },
       };
       const activityId = await addActivity(tripId, {
         date: checkIn,

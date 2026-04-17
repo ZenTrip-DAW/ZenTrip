@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, ExternalLink, Calendar, Users, BedDouble } from 'lucide-react';
+import { X, ExternalLink, Calendar, Users, BedDouble, UserCircle } from 'lucide-react';
 import { updateBooking } from '../../../../../../services/tripService';
 import BookingReceiptUpload from '../BookingReceiptUpload';
 import { StarRow } from './HotelAtoms';
@@ -74,6 +74,16 @@ export default function BookingDetailModal({ booking, tripId, onClose, onUpdated
               <div className="flex items-center gap-2 body-3 text-neutral-6">
                 <BedDouble className="w-4 h-4 text-neutral-4 shrink-0" />
                 <span>{booking.rooms} habitación{booking.rooms !== 1 ? 'es' : ''}</span>
+              </div>
+            )}
+            {booking.createdBy && (
+              <div className="flex items-center gap-2 body-3 text-neutral-6">
+                {booking.createdBy.photoURL ? (
+                  <img src={booking.createdBy.photoURL} alt="" className="w-4 h-4 rounded-full object-cover shrink-0" />
+                ) : (
+                  <UserCircle className="w-4 h-4 text-neutral-4 shrink-0" />
+                )}
+                <span>Reservado por <span className="font-semibold">{booking.createdBy.name}</span></span>
               </div>
             )}
             {booking.pricePerNight != null && (
