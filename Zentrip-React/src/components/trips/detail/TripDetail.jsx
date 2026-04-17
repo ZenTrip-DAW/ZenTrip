@@ -55,6 +55,21 @@ export default function TripDetail() {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   const handleBook = (subTab) => {
+    if (subTab === 'vuelos') {
+      const acceptedCount = members.filter((m) => m.invitationStatus === 'accepted').length;
+      navigate('/flights', {
+        state: {
+          tripContext: {
+            tripId,
+            tripName: trip.name,
+            origin: trip.origin,
+            destination: trip.destination,
+            memberCount: acceptedCount || 1,
+          },
+        },
+      });
+      return;
+    }
     setReservasSubTab(subTab);
     setActiveTab('reservas');
   };

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getFlightDestinations, getFlights, getFlightsMultiStops } from '../../services/flightService';
+import { resolveToEnglish } from '../../services/geocodingService';
 import { useAuth } from '../../context/AuthContext';
 import { getUserTrips } from '../../services/tripService';
 import { getFlightErrorMessage } from '../../utils/errors/flightErrors';
@@ -213,21 +214,44 @@ const AirportInput = ({ label, displayValue, onSelect, placeholder }) => {
     timerRef.current = setTimeout(async () => {
       setLoading(true);
       try {
+        const lc = (s) => (s ?? '').toLowerCase();
+        const originalCity = val.trim().charAt(0).toUpperCase() + val.trim().slice(1);
         const res = await getFlightDestinations(val);
-        const items = (res?.data ?? []).filter((i) => i.type === 'AIRPORT');
-        setSuggestions(items);
-        setOpen(items.length > 0);
+        let all = (res?.data ?? []).filter((i) => i.type === 'CITY' || i.type === 'AIRPORT');
+        if (all.length === 0) {
+          const english = await resolveToEnglish(val);
+          if (english && lc(english) !== lc(val)) {
+            const res2 = await getFlightDestinations(english);
+            all = (res2?.data ?? [])
+              .filter((i) => i.type === 'CITY' || i.type === 'AIRPORT')
+              .map((i) => ({ ...i, cityName: originalCity }));
+          }
+        } else {
+          all = all.map((i) => {
+            const cn = i.cityName || i.name || '';
+            return lc(cn).startsWith(lc(val.trim())) ? i : { ...i, cityName: originalCity };
+          });
+        }
+        const sorted = [
+          ...all.filter((i) => i.type === 'CITY'),
+          ...all.filter((i) => i.type === 'AIRPORT'),
+        ];
+        setSuggestions(sorted);
+        setOpen(sorted.length > 0);
       } catch { setSuggestions([]); setOpen(false); }
       finally { setLoading(false); }
     }, 350);
   };
 
   const handleSelect = (item) => {
-    const lbl = `${item.cityName} (${item.code})`;
+    const displayName = item.cityName || item.name || item.code;
+    const lbl = item.type === 'CITY'
+      ? `${displayName} (todos los aeropuertos)`
+      : `${displayName} (${item.code})`;
     setQuery(lbl);
     setSuggestions([]);
     setOpen(false);
-    onSelect({ id: item.id, label: lbl, code: item.code, cityName: item.cityName });
+    onSelect({ id: item.id, label: lbl, code: item.code, cityName: displayName, type: item.type });
   };
 
   return (
@@ -246,12 +270,20 @@ const AirportInput = ({ label, displayValue, onSelect, placeholder }) => {
           {suggestions.map((item) => (
             <button key={item.id} onClick={() => handleSelect(item)}
               className="cursor-pointer w-full flex items-center gap-3 px-4 py-3 hover:bg-neutral-1 transition-colors text-left border-b border-neutral-1 last:border-0">
-              <div className="w-9 h-9 rounded-xl bg-secondary-1 flex items-center justify-center shrink-0">
-                <span className="body-3 font-bold text-secondary-4">{item.code}</span>
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${item.type === 'CITY' ? 'bg-primary-1' : 'bg-secondary-1'}`}>
+                {item.type === 'CITY' ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E85D26" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 21h18M3 7v14M21 7v14M6 21V3l6 4 6-4v18M9 21v-4h6v4" />
+                  </svg>
+                ) : (
+                  <span className="body-3 font-bold text-secondary-4">{item.code}</span>
+                )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="body-2-semibold text-neutral-7 truncate">{item.cityName}</p>
-                <p className="body-3 text-neutral-4 truncate">{item.name}</p>
+                <p className="body-2-semibold text-neutral-7 truncate">{item.cityName || item.name || item.code}</p>
+                <p className="body-3 text-neutral-4 truncate">
+                  {item.type === 'CITY' ? 'Todos los aeropuertos' : item.name}
+                </p>
               </div>
             </button>
           ))}
@@ -1148,11 +1180,13 @@ const FilterSheet = ({ aggregation, offers, filters, tripType, onChange, onClose
 };
 
 // ── SaveFlightModal ───────────────────────────────────────────────────────────
-const SaveFlightModal = ({ offer, user, onClose }) => {
+const SaveFlightModal = ({ offer, user, tripContext, onClose }) => {
   const navigate = useNavigate();
   const [trips, setTrips] = useState(null);
-  const [step, setStep] = useState('loading');
-  const [selectedTrip, setSelectedTrip] = useState(null);
+  const [step, setStep] = useState(tripContext ? 'confirm' : 'loading');
+  const [selectedTrip, setSelectedTrip] = useState(
+    tripContext ? { id: tripContext.tripId, name: tripContext.tripName } : null
+  );
   const [creating, setSaving] = useState(false);
 
   const seg0 = offer?.segments[0];
@@ -1161,11 +1195,12 @@ const SaveFlightModal = ({ offer, user, onClose }) => {
   const total = toPrice(offer?.priceBreakdown?.total);
 
   useEffect(() => {
+    if (tripContext) return;
     getUserTrips(user.uid).then((list) => {
       setTrips(list ?? []);
       setStep(list?.length ? 'choose' : 'create');
     }).catch(() => { setTrips([]); setStep('create'); });
-  }, [user.uid]);
+  }, [user.uid, tripContext]);
 
   const handleConfirm = async () => {
     setSaving(true);
@@ -1237,9 +1272,18 @@ const SaveFlightModal = ({ offer, user, onClose }) => {
 
           {step === 'confirm' && selectedTrip && (
             <div className="space-y-4">
-              <p className="body-2 text-neutral-6">
-                ¿Confirmas añadir este vuelo al viaje <span className="font-semibold text-neutral-7">"{selectedTrip.name || 'Sin nombre'}"</span>?
-              </p>
+              {tripContext ? (
+                <div className="flex items-center gap-3 p-3 bg-secondary-1 rounded-2xl">
+                  <IcPlane size={16} color="#016FC1" />
+                  <p className="body-2 text-neutral-6">
+                    Añadiendo al viaje <span className="font-semibold text-neutral-7">"{selectedTrip.name || 'Sin nombre'}"</span>
+                  </p>
+                </div>
+              ) : (
+                <p className="body-2 text-neutral-6">
+                  ¿Confirmas añadir este vuelo al viaje <span className="font-semibold text-neutral-7">"{selectedTrip.name || 'Sin nombre'}"</span>?
+                </p>
+              )}
               <p className="body-3 text-neutral-4">
                 Una vez confirmado aparecerá en el itinerario del viaje.
               </p>
@@ -1266,7 +1310,7 @@ const SaveFlightModal = ({ offer, user, onClose }) => {
             <button onClick={handleConfirm} disabled={creating}
               className="cursor-pointer w-full py-3.5 bg-primary-3 text-white rounded-full body-bold hover:bg-primary-4 transition-all disabled:opacity-70 flex items-center justify-center gap-2">
               {creating ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : null}
-              Confirmar
+              Añadir vuelo
             </button>
           )}
           {step === 'done' && (
@@ -1310,13 +1354,22 @@ const emptyLeg = (date) => ({ from: { id: '', label: '' }, to: { id: '', label: 
 
 export default function FlightsExplorer() {
   const { user } = useAuth();
+  const location = useLocation();
+  const tripContext = location.state?.tripContext ?? null;
+
   const [tripType, setTripType] = useState('ROUND_TRIP');
-  const [from, setFrom] = useState({ id: '', label: '', code: '' });
-  const [to, setTo] = useState({ id: '', label: '', code: '' });
+  const [from, setFrom] = useState(() => {
+    const origin = tripContext?.origin;
+    return origin ? { id: '', label: origin, code: '', cityName: origin } : { id: '', label: '', code: '' };
+  });
+  const [to, setTo] = useState(() => {
+    const destination = tripContext?.destination;
+    return destination ? { id: '', label: destination, code: '', cityName: destination } : { id: '', label: '', code: '' };
+  });
   const [departDate, setDepartDate] = useState(today);
   const [returnDate, setReturnDate] = useState(nextWeek);
   const [legs, setLegs] = useState([emptyLeg(today), emptyLeg(nextWeek)]);
-  const [pax, setPax] = useState({ adults: 1, youth: 0, infants: 0 });
+  const [pax, setPax] = useState({ adults: tripContext?.memberCount ?? 1, youth: 0, infants: 0 });
   const [cabinClass, setCabinClass] = useState('ECONOMY');
   const [showPax, setShowPax] = useState(false);
   const [showCabin, setShowCabin] = useState(false);
@@ -1331,6 +1384,38 @@ export default function FlightsExplorer() {
   const [sort, setSort] = useState('BEST');
   const [showDateBar, setShowDateBar] = useState(false);
   const cabinRef = useRef(null);
+
+  useEffect(() => {
+    if (!tripContext) return;
+    const searchAirports = async (englishQuery, originalName, setter) => {
+      if (!englishQuery) return;
+      try {
+        const res = await getFlightDestinations(englishQuery);
+        const items = (res?.data ?? [])
+          .filter((i) => i.type === 'CITY' || i.type === 'AIRPORT')
+          .map((i) => ({ ...i, cityName: originalName || i.cityName || i.name || i.code }));
+        if (items.length === 0) return;
+        const airports = items.filter((i) => i.type === 'AIRPORT');
+        const city = items.find((i) => i.type === 'CITY');
+        const match = (city && airports.length > 1) ? city : (airports[0] ?? city ?? items[0]);
+        if (match) {
+          const displayName = match.cityName;
+          const lbl = match.type === 'CITY'
+            ? `${displayName} (todos los aeropuertos)`
+            : `${displayName} (${match.code})`;
+          setter({ id: match.id, label: lbl, code: match.code, cityName: displayName, type: match.type });
+        }
+      } catch { /* keep text-only pre-fill */ }
+    };
+    const resolve = async (raw, setter) => {
+      if (!raw) return;
+      const originalName = raw.split(',')[0].trim();
+      const english = await resolveToEnglish(originalName) ?? originalName;
+      await searchAirports(english, originalName, setter);
+    };
+    resolve(tripContext.origin, setFrom);
+    resolve(tripContext.destination, setTo);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const h = (e) => { if (cabinRef.current && !cabinRef.current.contains(e.target)) setShowCabin(false); };
@@ -1720,7 +1805,7 @@ export default function FlightsExplorer() {
       )}
 
       {saveOffer && user && (
-        <SaveFlightModal offer={saveOffer} user={user} onClose={() => setSaveOffer(null)} />
+        <SaveFlightModal offer={saveOffer} user={user} tripContext={tripContext} onClose={() => setSaveOffer(null)} />
       )}
 
       {purchaseOffer && (
