@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../../../../../../services/apiClient';
-import { mapApiHotel, getNights, TIPS } from './hotelUtils';
+import { mapApiHotel, getNights, fmtDate, TIPS } from './hotelUtils';
 import { SectionLabel, TipCard } from './HotelAtoms';
 import HotelSearchForm from './HotelSearchForm';
 import HotelResults from './HotelResults';
@@ -194,7 +194,7 @@ export default function HotelSearch({ trip, members = [], tripId }) {
                     <span className="text-xl">🏨</span>
                     <div>
                       <p className="body-2-semibold text-neutral-7">{b.hotelName}</p>
-                      <p className="body-3 text-neutral-4">{b.checkIn} → {b.checkOut} · {b.nights} noche{b.nights !== 1 ? 's' : ''}</p>
+                      <p className="body-3 text-neutral-4">{fmtDate(b.checkIn)} → {fmtDate(b.checkOut)} · {b.nights} noche{b.nights !== 1 ? 's' : ''}</p>
                     </div>
                   </div>
                   {b.pricePerNight != null && (

@@ -57,6 +57,12 @@ export function mapApiHotel(raw, nights = 1) {
 /**
  * Devuelve el número de noches entre dos fechas YYYY-MM-DD, o 0 si no es válido.
  */
+export function fmtDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}-${m}-${y}`;
+}
+
 export function getNights(checkIn, checkOut) {
   if (!checkIn || !checkOut) return 0;
   const n = Math.round(

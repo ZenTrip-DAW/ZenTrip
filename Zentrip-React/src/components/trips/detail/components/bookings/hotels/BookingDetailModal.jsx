@@ -3,6 +3,7 @@ import { X, ExternalLink, Calendar, Users, BedDouble } from 'lucide-react';
 import { updateBooking } from '../../../../../../services/tripService';
 import BookingReceiptUpload from '../BookingReceiptUpload';
 import { StarRow } from './HotelAtoms';
+import { fmtDate } from './hotelUtils';
 
 function initUrls(booking) {
   if (Array.isArray(booking.receiptUrls) && booking.receiptUrls.length > 0) return booking.receiptUrls;
@@ -55,9 +56,9 @@ export default function BookingDetailModal({ booking, tripId, onClose, onUpdated
             <div className="flex items-center gap-2 body-3 text-neutral-6">
               <Calendar className="w-4 h-4 text-neutral-4 shrink-0" />
               <span>
-                <span className="font-semibold">{booking.checkIn}</span>
+                <span className="font-semibold">{fmtDate(booking.checkIn)}</span>
                 {' → '}
-                <span className="font-semibold">{booking.checkOut}</span>
+                <span className="font-semibold">{fmtDate(booking.checkOut)}</span>
                 {booking.nights > 0 && (
                   <span className="text-neutral-4"> · {booking.nights} noche{booking.nights !== 1 ? 's' : ''}</span>
                 )}
