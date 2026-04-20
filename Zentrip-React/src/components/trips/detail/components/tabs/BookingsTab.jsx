@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Hotel, Plane, Car, Train, Compass, Map, Utensils } from 'lucide-react';
 import HotelSearch from '../bookings/hotels/HotelSearch';
+import CarSearch from '../bookings/cars/CarSearch';
 import FlightSearch from '../bookings/flights/FlightSearch';
 import PlaceholderTab from './PlaceholderTab';
 
 const SUBTABS = [
   { key: 'hoteles',      label: 'Hoteles',       Icon: Hotel,   available: true  },
   { key: 'vuelos',       label: 'Vuelos',        Icon: Plane,   available: true  },
-  { key: 'coches',       label: 'Coches',        Icon: Car,     available: false },
+  { key: 'coches',       label: 'Coches',        Icon: Car,     available: true  },
   { key: 'trenes',       label: 'Trenes',        Icon: Train,   available: false },
   { key: 'actividades',  label: 'Actividades',   Icon: Compass, available: false },
   { key: 'rutas',        label: 'Rutas',         Icon: Map,     available: false },
@@ -20,6 +21,9 @@ export default function ReservasTab({ trip, members, tripId, initialSubTab = 'ho
   const renderContent = () => {
     if (activeSubTab === 'hoteles') {
       return <HotelSearch trip={trip} members={members} tripId={tripId} />;
+    }
+    if (activeSubTab === 'coches') {
+      return <CarSearch trip={trip} members={members} tripId={tripId} />;
     }
     if (activeSubTab === 'vuelos') {
       return <FlightSearch trip={trip} members={members} tripId={tripId} />;

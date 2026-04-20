@@ -19,6 +19,8 @@ export default function CategoryBar() {
       navigate(ROUTES.FLIGHTS);
     } else if (categoryKey === 'hoteles') {
       navigate(ROUTES.HOTELS);
+    } else if (categoryKey === 'alquiler') {
+      navigate(ROUTES.CARS);
     }
   };
 
