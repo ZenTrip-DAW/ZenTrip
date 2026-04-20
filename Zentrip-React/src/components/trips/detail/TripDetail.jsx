@@ -70,18 +70,6 @@ export default function TripDetail() {
       });
       return;
     }
-    if (subTab === 'coches') {
-      navigate('/cars', {
-        state: {
-          tripContext: {
-            tripId,
-            tripName: trip.name,
-            destination: trip.destination,
-          },
-        },
-      });
-      return;
-    }
     setReservasSubTab(subTab);
     setActiveTab('reservas');
   };
