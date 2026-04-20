@@ -1,4 +1,4 @@
-import { Plus, MapPin, CalendarDays, Droplets, Wind, CloudSun } from 'lucide-react';
+import { Plus, MapPin, CalendarDays, Droplets, Wind, CloudSun, Users } from 'lucide-react';
 
 const MONTHS_LONG = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const DAY_NAMES_LONG = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
@@ -66,6 +66,18 @@ function ActivityCard({ activity }) {
         </div>
         {activity.notes && (
           <p className="body-3 text-neutral-4 mt-1">{activity.notes}</p>
+        )}
+        {activity.type === 'vuelo' && activity.passengers && (
+          <div className="flex items-center gap-1 mt-1.5 body-3 text-neutral-4">
+            <Users className="w-3 h-3 shrink-0" />
+            <span>
+              {activity.passengers === 'all'
+                ? 'Todos'
+                : Array.isArray(activity.passengers)
+                  ? `${activity.passengers.length} pasajero${activity.passengers.length !== 1 ? 's' : ''}`
+                  : activity.passengers}
+            </span>
+          </div>
         )}
       </div>
     </div>

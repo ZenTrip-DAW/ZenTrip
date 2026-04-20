@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import currency from 'currency.js';
 import Select from 'react-select';
 import Input from '../../../../ui/Input';
 import Button from '../../../../ui/Button';
 import CityAutocomplete from '../../../../ui/CityAutocomplete';
+import TripLegsEditor from '../../../../trips/shared/TripLegsEditor';
 import { DIVISAS } from '../../../../../utils/divisas';
 
 const selectStyles = {
@@ -57,6 +58,13 @@ export default function DetailsForm({
 
   const [dateErrors, setDateErrors] = useState({ startDate: '', endDate: '' });
 
+  const destStopId = useRef(crypto.randomUUID()).current;
+  const stopsForEditor = useMemo(() => {
+    if (form.stops?.length > 0) return form.stops;
+    if (form.destination) return [{ id: destStopId, name: form.destination, order: 1, startDate: '', endDate: '' }];
+    return [];
+  }, [form.stops, form.destination, destStopId]);
+
   const handleDateChange = (e) => {
     const { name, value } = e.target;
     if (!value) {
@@ -70,6 +78,14 @@ export default function DetailsForm({
     } else {
       setDateErrors((prev) => ({ ...prev, [name]: '' }));
       onChange(e);
+      if (name === 'endDate' && form.stops?.length > 0) {
+        const updated = form.stops.map((s, i) =>
+          i === form.stops.length - 1 && !s.endDate ? { ...s, endDate: value } : s
+        );
+        if (JSON.stringify(updated) !== JSON.stringify(form.stops)) {
+          onChange({ target: { name: 'stops', value: updated } });
+        }
+      }
     }
   };
 
@@ -104,14 +120,21 @@ export default function DetailsForm({
             onChange={onChange}
             error={fieldErrors.origin}
           />
-          <CityAutocomplete
-            label="Destino"
-            name="destination"
-            placeholder="Ej. París, Francia"
-            value={form.destination}
-            onChange={onChange}
-            error={fieldErrors.destination}
+          <div />
+        </div>
+
+        <div className="mb-4">
+          <TripLegsEditor
+            stops={stopsForEditor}
+            onChange={(stops) => {
+              onChange({ target: { name: 'stops', value: stops } });
+              const last = stops[stops.length - 1];
+              onChange({ target: { name: 'destination', value: last?.name || '' } });
+            }}
           />
+          {fieldErrors.destination && (
+            <p className="mt-1 body-3 text-feedback-error">{fieldErrors.destination}</p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">

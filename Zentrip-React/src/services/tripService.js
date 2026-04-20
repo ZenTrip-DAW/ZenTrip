@@ -4,11 +4,13 @@ import { apiClient } from './apiClient';
 
 export async function createTrip(uid, form) {
   const { members, ...tripData } = form;
+  const rawStops = Array.isArray(tripData.stops) ? tripData.stops : [];
   const tripPayload = {
     uid,
     name: tripData.name || '',
     origin: tripData.origin || '',
     destination: tripData.destination || '',
+    stops: rawStops,
     startDate: tripData.startDate || '',
     endDate: tripData.endDate || '',
     currency: tripData.currency || '',
@@ -91,10 +93,21 @@ export async function updateTripCover(tripId, imageUrl) {
 
 export async function updateTrip(tripId, form) {
   const { members, ...tripData } = form;
+  const rawStops = Array.isArray(tripData.stops) ? tripData.stops : [];
+  const sorted = [...rawStops].sort((a, b) => {
+    const aDate = a.startDate || '';
+    const bDate = b.startDate || '';
+    if (aDate && bDate) return aDate.localeCompare(bDate);
+    if (aDate) return -1;
+    if (bDate) return 1;
+    return (a.order ?? 0) - (b.order ?? 0);
+  }).map((s, i) => ({ ...s, order: i + 1 }));
+  const destination = sorted.length > 0 ? sorted[sorted.length - 1].name : (tripData.destination || '');
   await updateDoc(doc(db, 'trips', tripId), {
     name: tripData.name || '',
     origin: tripData.origin || '',
-    destination: tripData.destination || '',
+    destination,
+    stops: sorted,
     startDate: tripData.startDate || '',
     endDate: tripData.endDate || '',
     currency: tripData.currency || '',
@@ -236,6 +249,72 @@ export async function sendBookingNotifications(tripId, { bookerUid, bookerName, 
       tripId,
       tripName: tripName || '',
       hotelName,
+      bookerName: bookerName || 'Un miembro',
+      read: false,
+      createdAt: serverTimestamp(),
+    })
+  ));
+}
+
+// ── Paradas del viaje ────────────────────────────────────────────────────────
+
+export async function getStops(tripId) {
+  const snap = await getDoc(doc(db, 'trips', tripId));
+  if (!snap.exists()) return [];
+  return snap.data().stops || [];
+}
+
+export async function updateStops(tripId, stops) {
+  // Si tienen fecha se ordenan por fecha; sin fecha, por order manual. El último = destino.
+  const sorted = [...stops].sort((a, b) => {
+    const aDate = a.startDate || '';
+    const bDate = b.startDate || '';
+    if (aDate && bDate) return aDate.localeCompare(bDate);
+    if (aDate) return -1;
+    if (bDate) return 1;
+    return (a.order ?? 0) - (b.order ?? 0);
+  }).map((s, i) => ({ ...s, order: i + 1 }));
+  const destination = sorted.length > 0 ? sorted[sorted.length - 1].name : '';
+  await updateDoc(doc(db, 'trips', tripId), {
+    stops: sorted,
+    destination,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+// insertBeforeLast=true → inserta como parada intermedia sin cambiar el destino del viaje
+export async function addStop(tripId, stop, { insertBeforeLast = false } = {}) {
+  const existing = await getStops(tripId);
+  const sorted = [...existing].sort((a, b) => a.order - b.order);
+  const maxOrder = sorted.length > 0 ? sorted[sorted.length - 1].order : 0;
+
+  if (insertBeforeLast && sorted.length > 0) {
+    const shifted = sorted.map((s, i) =>
+      i === sorted.length - 1 ? { ...s, order: s.order + 1 } : s
+    );
+    const newStop = { id: crypto.randomUUID(), name: stop.name || '', order: maxOrder, startDate: stop.startDate || '', endDate: stop.endDate || '' };
+    await updateStops(tripId, [...shifted, newStop]);
+    return newStop;
+  }
+
+  const newStop = { id: crypto.randomUUID(), name: stop.name || '', order: stop.order ?? maxOrder + 1, startDate: stop.startDate || '', endDate: stop.endDate || '' };
+  await updateStops(tripId, [...existing, newStop]);
+  return newStop;
+}
+
+export async function sendFlightBookingNotifications(tripId, { bookerUid, bookerName, flightLabel, tripName }) {
+  const membersSnap = await getDocs(collection(db, 'trips', tripId, 'members'));
+  const recipients = membersSnap.docs
+    .map((d) => d.data())
+    .filter((m) => m.uid && m.uid !== bookerUid);
+
+  await Promise.all(recipients.map((m) =>
+    addDoc(collection(db, 'notifications'), {
+      recipientUid: m.uid,
+      type: 'flight_booked',
+      tripId,
+      tripName: tripName || '',
+      flightLabel,
       bookerName: bookerName || 'Un miembro',
       read: false,
       createdAt: serverTimestamp(),

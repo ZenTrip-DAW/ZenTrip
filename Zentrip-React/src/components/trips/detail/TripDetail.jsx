@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useTripDetail } from './hooks/useTripDetail';
@@ -49,30 +49,10 @@ const TAB_PLACEHOLDERS = {
 export default function TripDetail() {
   const { tripId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('itinerario');
-  const [reservasSubTab, setReservasSubTab] = useState('hoteles');
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab ?? 'itinerario');
   const [showLeaveModal, setShowLeaveModal] = useState(false);
-
-  const handleBook = (subTab) => {
-    if (subTab === 'vuelos') {
-      const acceptedCount = members.filter((m) => m.invitationStatus === 'accepted').length;
-      navigate('/flights', {
-        state: {
-          tripContext: {
-            tripId,
-            tripName: trip.name,
-            origin: trip.origin,
-            destination: trip.destination,
-            memberCount: acceptedCount || 1,
-          },
-        },
-      });
-      return;
-    }
-    setReservasSubTab(subTab);
-    setActiveTab('reservas');
-  };
 
   const {
     trip,
@@ -128,9 +108,9 @@ export default function TripDetail() {
           activities={activities}
           activitiesByDate={activitiesByDate}
           tripDays={tripDays}
+          tripId={tripId}
           onAddActivity={handleAddActivity}
           onInvite={isCreator ? () => setActiveTab('invitaciones') : null}
-          onBook={handleBook}
         />
       );
     }
@@ -152,7 +132,6 @@ export default function TripDetail() {
           trip={trip}
           members={members}
           tripId={tripId}
-          initialSubTab={reservasSubTab}
         />
       );
     }

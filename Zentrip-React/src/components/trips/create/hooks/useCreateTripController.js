@@ -152,7 +152,11 @@ export function useCreateTripController() {
         try { await deleteTrip(draftIdRef.current); } catch (e) { console.warn('Could not delete draft:', e); }
       }
 
-      navigate(ROUTES.TRIPS.LIST);
+      if (sessionStorage.getItem('zt_pending_flight')) {
+        navigate('/flights');
+      } else {
+        navigate(ROUTES.TRIPS.LIST);
+      }
     } catch (error) {
       console.error('Could not create trip:', error);
       if (!tripCreated) setTripCreationLocked(false);

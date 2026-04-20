@@ -93,31 +93,39 @@ export default function NotificationPanel({ onClose }) {
             ))}
 
             {/* Notificaciones de reservas */}
-            {tripNotifications.map((n) => (
-              <div
-                key={n.id}
-                className="px-4 py-3 rounded-xl bg-auxiliary-green-1 border border-auxiliary-green-3"
-              >
-                <div className="flex items-start gap-3">
-                  <span className="text-xl shrink-0 mt-0.5">🏨</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="body-3 font-semibold text-neutral-7 mb-0.5">Nueva reserva de hotel</p>
-                    <p className="body-3 text-neutral-5 leading-snug">
-                      <span className="font-semibold text-auxiliary-green-5">{n.bookerName}</span>
-                      {' '}ha reservado <span className="font-semibold text-neutral-7">"{n.hotelName}"</span>
-                      {n.tripName ? <> en el viaje <span className="font-semibold text-neutral-7">"{n.tripName}"</span></> : ''}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => { markTripNotificationRead(n.id); onClose(); }}
-                      className="mt-2 body-3 font-semibold text-neutral-3 hover:text-neutral-5 transition-colors cursor-pointer"
-                    >
-                      Marcar como leído ✕
-                    </button>
+            {tripNotifications.map((n) => {
+              const isFlight = n.type === 'flight_booked';
+              return (
+                <div
+                  key={n.id}
+                  className={`px-4 py-3 rounded-xl border ${isFlight ? 'bg-secondary-1 border-secondary-2' : 'bg-auxiliary-green-1 border-auxiliary-green-3'}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl shrink-0 mt-0.5">{isFlight ? '✈️' : '🏨'}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="body-3 font-semibold text-neutral-7 mb-0.5">
+                        {isFlight ? 'Nuevo vuelo reservado' : 'Nueva reserva de hotel'}
+                      </p>
+                      <p className="body-3 text-neutral-5 leading-snug">
+                        <span className={`font-semibold ${isFlight ? 'text-secondary-4' : 'text-auxiliary-green-5'}`}>{n.bookerName}</span>
+                        {' '}ha reservado{' '}
+                        <span className="font-semibold text-neutral-7">
+                          "{isFlight ? n.flightLabel : n.hotelName}"
+                        </span>
+                        {n.tripName ? <> en <span className="font-semibold text-neutral-7">"{n.tripName}"</span></> : ''}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => { markTripNotificationRead(n.id); onClose(); }}
+                        className="mt-2 body-3 font-semibold text-neutral-3 hover:text-neutral-5 transition-colors cursor-pointer"
+                      >
+                        Marcar como leído ✕
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {/* Invitaciones pendientes */}
             {notifications.map((notification) => (

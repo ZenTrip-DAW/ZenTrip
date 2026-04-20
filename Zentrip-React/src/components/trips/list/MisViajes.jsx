@@ -74,6 +74,7 @@ export default function MisViajes() {
       name: trip.name || '',
       origin: trip.origin || '',
       destination: trip.destination || '',
+      stops: trip.stops || [],
       startDate: trip.startDate || '',
       endDate: trip.endDate || '',
       currency: trip.currency || '',

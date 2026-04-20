@@ -8,6 +8,7 @@ const INITIAL_FORM = {
   name: '',
   origin: '',
   destination: '',
+  stops: [],
   startDate: '',
   endDate: '',
   currency: '',
