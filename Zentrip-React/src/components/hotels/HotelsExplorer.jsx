@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { apiClient } from '../../services/apiClient';
 import { mapApiHotel, getNights, TIPS } from '../trips/detail/components/bookings/hotels/hotelUtils';
 import { SectionLabel, TipCard } from '../trips/detail/components/bookings/hotels/HotelAtoms';
@@ -7,14 +8,17 @@ import HotelResults from '../trips/detail/components/bookings/hotels/HotelResult
 import HotelDetailModal from '../trips/detail/components/bookings/hotels/HotelDetailModal';
 
 export default function HotelsExplorer() {
+  const { state } = useLocation();
+  const tripContext = state?.tripContext ?? {};
+
   const today = new Date().toISOString().split('T')[0];
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
-  const [dest, setDest]         = useState('');
-  const [checkIn, setCheckIn]   = useState(today);
-  const [checkOut, setCheckOut] = useState(tomorrow);
+  const [dest, setDest]         = useState(tripContext.destination || '');
+  const [checkIn, setCheckIn]   = useState(tripContext.startDate || today);
+  const [checkOut, setCheckOut] = useState(tripContext.endDate || tomorrow);
   const [rooms, setRooms]       = useState(1);
-  const [adults, setAdults]     = useState(2);
+  const [adults, setAdults]     = useState(tripContext.memberCount || 2);
   const [children, setChildren] = useState(0);
 
   const [hotels, setHotels]         = useState([]);
@@ -46,7 +50,7 @@ export default function HotelsExplorer() {
         adults: String(adults),
         roomQty: String(rooms),
         languageCode: 'es',
-        currencyCode: 'EUR',
+        currencyCode: tripContext.currency || 'EUR',
       });
       const data = await apiClient.get(`/hotels/search?${params.toString()}`);
       const rawHotels = data?.data?.hotels ?? data?.hotels ?? [];
@@ -130,9 +134,9 @@ export default function HotelsExplorer() {
       {selectedHotel && (
         <HotelDetailModal
           hotel={selectedHotel}
-          searchParams={{ checkIn, checkOut, adults, rooms, currency: 'EUR' }}
-          tripId={null}
-          trip={null}
+          searchParams={{ checkIn, checkOut, adults, rooms, currency: tripContext.currency || 'EUR' }}
+          tripId={tripContext.tripId ?? null}
+          trip={tripContext.tripId ? { name: tripContext.tripName, currency: tripContext.currency } : null}
           onClose={() => setSelectedHotel(null)}
         />
       )}

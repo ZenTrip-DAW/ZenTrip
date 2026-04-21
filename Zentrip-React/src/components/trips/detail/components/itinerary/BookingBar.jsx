@@ -13,7 +13,7 @@ const BOOKING_TYPES = [
 export default function BookingBar({ onBook, activeKey }) {
   return (
     <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1">
-      <span className="body-3 text-neutral-5 shrink-0 font-bold">Reservar:</span>
+      <span className="body-3 text-neutral-5 shrink-0 font-bold bold"><strong>Reservar:</strong></span>
       {BOOKING_TYPES.map(({ key, label, Icon }) => {
         const isActive = key === activeKey;
         return (

@@ -22,11 +22,17 @@ export default function ItinerarioTab({
   tripId,
   onAddActivity,
   onInvite,
+  initialActiveBooking = null,
+  onBookingOpened,
 }) {
   const [selectedDay, setSelectedDay] = useState(tripDays[0] ?? null);
-  const [activeBooking, setActiveBooking] = useState(null);
+  const [activeBooking, setActiveBooking] = useState(initialActiveBooking);
 
-  const handleBookingSelect = (key) => setActiveBooking((prev) => (prev === key ? null : key));
+  const handleBookingSelect = (key) => {
+    const opening = activeBooking !== key;
+    setActiveBooking((prev) => (prev === key ? null : key));
+    if (opening) onBookingOpened?.();
+  };
 
   const renderBookingContent = () => {
     if (activeBooking === 'hoteles') return <HotelSearch trip={trip} members={members} tripId={tripId} />;

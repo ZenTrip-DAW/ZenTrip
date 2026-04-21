@@ -62,18 +62,36 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
             setPolicies(parsed);
           }
           if (roomsRes.status === 'fulfilled') {
-            const blocks = roomsRes.value?.data?.block ?? [];
+            const payload = roomsRes.value ?? {};
+            const data = payload?.data ?? payload;
+            const blocks =
+              (Array.isArray(data?.available) && data.available) ||
+              (Array.isArray(data?.block) && data.block) ||
+              (Array.isArray(data?.blocks) && data.blocks) ||
+              (Array.isArray(data?.rooms) && data.rooms) ||
+              (Array.isArray(payload?.available) && payload.available) ||
+              (Array.isArray(payload?.block) && payload.block) ||
+              [];
             const seen = new Set();
             const parsed = blocks
               .map((b) => ({
-                name: b.room_name,
-                pricePerNight: b.product_price_breakdown?.gross_amount_per_night?.amount_rounded,
-                currency: b.product_price_breakdown?.gross_amount_per_night?.currency ?? currency,
-                size: b.room_surface_in_m2,
-                maxOccupancy: b.max_occupancy,
-                breakfastIncluded: b.breakfast_included === 1,
-                halfBoard: b.half_board === 1,
-                refundable: b.refundable === 1,
+                name: b.room_name ?? b.name ?? b.roomName ?? 'Habitación',
+                pricePerNight:
+                  b.product_price_breakdown?.gross_amount_per_night?.amount_rounded ??
+                  b.product_price_breakdown?.gross_amount_per_night?.amount ??
+                  b.price ??
+                  b.min_price ??
+                  null,
+                currency:
+                  b.product_price_breakdown?.gross_amount_per_night?.currency ??
+                  b.currency ??
+                  b.currency_code ??
+                  currency,
+                size: b.room_surface_in_m2 ?? b.room_size ?? null,
+                maxOccupancy: b.max_occupancy ?? b.maxOccupancy ?? b.max_persons ?? null,
+                breakfastIncluded: [1, true, '1', 'true'].includes(b.breakfast_included ?? b.breakfastIncluded),
+                halfBoard: [1, true, '1', 'true'].includes(b.half_board ?? b.halfBoard),
+                refundable: [1, true, '1', 'true'].includes(b.refundable ?? b.free_cancellation ?? b.refundability),
               }))
               .filter((r) => {
                 const key = `${r.name}|${r.pricePerNight}`;
@@ -82,6 +100,8 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
                 return true;
               });
             setRoomList(parsed);
+          } else {
+            console.warn('[HotelDetailModal] No se pudieron cargar habitaciones:', roomsRes.reason);
           }
         }
       } finally {
