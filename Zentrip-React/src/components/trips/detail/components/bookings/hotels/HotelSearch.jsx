@@ -1,15 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { apiClient } from '../../../../../../services/apiClient';
-import { mapApiHotel, getNights, TIPS } from './hotelUtils';
-import { SectionLabel, TipCard } from './HotelAtoms';
+import { mapApiHotel, getNights } from './hotelUtils';
+import { SectionLabel } from './HotelAtoms';
 import HotelSearchForm from './HotelSearchForm';
 import HotelResults from './HotelResults';
 import HotelDetailModal from './HotelDetailModal';
-import BookingDetailModal from './BookingDetailModal';
-import HotelBookingCard from './HotelBookingCard';
 import BookingBanner from '../BookingBanner';
 import { useAuth } from '../../../../../../context/AuthContext';
-import { getBookings } from '../../../../../../services/tripService';
 
 export default function HotelSearch({ trip, members = [], tripId }) {
   const { user } = useAuth();
@@ -32,15 +29,6 @@ export default function HotelSearch({ trip, members = [], tripId }) {
   const [page, setPage]       = useState(1);
 
   const [selectedHotel, setSelectedHotel] = useState(null);
-  const [selectedBooking, setSelectedBooking] = useState(null);
-  const [existingBookings, setExistingBookings] = useState([]);
-
-  useEffect(() => {
-    if (!tripId || !user) return;
-    getBookings(tripId)
-      .then((data) => setExistingBookings(data.filter((b) => b.type === 'hotel')))
-      .catch(() => {});
-  }, [tripId, user]);
 
   if (!user) {
     return (
@@ -100,8 +88,6 @@ export default function HotelSearch({ trip, members = [], tripId }) {
       />
 
       <div className="p-4 sm:p-6">
-     
-
         <div className="mb-7">
           <HotelSearchForm
             dest={dest}           onDestChange={setDest}
@@ -155,21 +141,7 @@ export default function HotelSearch({ trip, members = [], tripId }) {
             </button>
           </div>
         )}
-
-  
       </div>
-
-      {selectedBooking && (
-        <BookingDetailModal
-          booking={selectedBooking}
-          tripId={tripId}
-          onClose={() => setSelectedBooking(null)}
-          onUpdated={(updated) => {
-            setExistingBookings((prev) => prev.map((b) => b.id === updated.id ? updated : b));
-            setSelectedBooking(updated);
-          }}
-        />
-      )}
 
       {selectedHotel && (
         <HotelDetailModal

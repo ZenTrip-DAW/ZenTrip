@@ -26,7 +26,7 @@ export default function ReservasTab({ trip, members, tripId, initialSubTab = 'ho
       return <CarSearch trip={trip} members={members} tripId={tripId} />;
     }
     if (activeSubTab === 'vuelos') {
-      return <FlightSearch tripId={tripId} onGoBook={onGoBook} />;
+      return <FlightSearch members={members} tripId={tripId} onGoBook={setActiveSubTab} />;
     }
     const tab = SUBTABS.find((t) => t.key === activeSubTab);
     return <PlaceholderTab label={tab?.label ?? 'Próximamente'} emoji="🚧" />;

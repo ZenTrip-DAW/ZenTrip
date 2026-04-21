@@ -76,8 +76,8 @@ export const addDays = (dateStr, n) => {
   return d.toISOString().split('T')[0];
 };
 
-export const todayStr = new Date().toISOString().split('T')[0];
 export const today = new Date().toISOString().split('T')[0];
+export const todayStr = today;
 export const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
 
 // ── Constructor de URL para Booking.com ───────────────────────────────────────
