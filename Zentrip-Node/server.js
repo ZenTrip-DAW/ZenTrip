@@ -11,6 +11,7 @@ const hotelRouters = require('./src/routes/hotelRouters');
 const flightRouters = require('./src/routes/flightRouters');
 const carRouters = require('./src/routes/carRouters');
 const tripRouters = require('./src/routes/tripRouters');
+const restaurantRouters = require('./src/routes/restaurantRouters');
 const errorHandler = require('./src/middlewares/errorHandler');
 
 const app = express();
@@ -59,6 +60,7 @@ app.use('/api/hotels', hotelRouters);
 app.use('/api/flights', flightRouters);
 app.use('/api/trips', tripRouters);
 app.use('/api/cars', carRouters);
+app.use('/api/restaurants', restaurantRouters);
 app.use('/api/flights', flightRouters);
 
 app.use(errorHandler);
