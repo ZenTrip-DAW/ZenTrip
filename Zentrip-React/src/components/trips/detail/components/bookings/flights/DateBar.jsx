@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { getFlights } from '../../../services/flightService';
+import { getFlights } from '../../../../../../services/flightService';
 import { toPrice, fmt, addDays, todayStr } from './flightUtils';
 import { IcChevLeft, IcChevRight } from './flightIcons';
 
-export default function DateBar({ baseDate, fromId, toId, cabinClass, activeDateStr, onSelectDate, currencyCode = 'EUR' }) {
+export default function DateBar({ baseDate, fromId, toId, cabinClass, activeDateStr, onSelectDate, currencyCode = 'EUR', adults = 1, children, returnDate, tripType }) {
   const [prices, setPrices] = useState({});
   const [offset, setOffset] = useState(0);
   const priceCacheRef = useRef(new Map());
@@ -24,7 +24,7 @@ export default function DateBar({ baseDate, fromId, toId, cabinClass, activeDate
     if (!fromId || !toId || validDays.length === 0) return;
 
     let cancelled = false;
-    const routeKey = `${fromId}|${toId}|${cabinClass}`;
+    const routeKey = `${fromId}|${toId}|${cabinClass}|${adults}|${children ?? ''}|${tripType ?? ''}|${returnDate ?? ''}`;
 
     // Primero muestra lo que ya está en caché
     const cachedSnapshot = {};
@@ -43,16 +43,19 @@ export default function DateBar({ baseDate, fromId, toId, cabinClass, activeDate
 
       const results = await Promise.allSettled(
         unfetched.map(async (d) => {
-          const res = await getFlights({
+          const params = {
             fromId,
             toId,
             departDate: d,
-            adults: 1,
+            adults,
             sort: 'CHEAPEST',
             cabinClass,
             currencyCode,
             pageNo: 1,
-          });
+          };
+          if (children) params.children = children;
+          if (tripType === 'ROUND_TRIP' && returnDate) params.returnDate = returnDate;
+          const res = await getFlights(params);
           const firstOffer = res?.data?.flightOffers?.[0];
           const p = firstOffer?.priceBreakdown?.total;
           return { date: d, price: p ? toPrice(p) : null };
@@ -75,7 +78,7 @@ export default function DateBar({ baseDate, fromId, toId, cabinClass, activeDate
 
     fetchPrices();
     return () => { cancelled = true; };
-  }, [fromId, toId, cabinClass, offset, baseDate]);
+  }, [fromId, toId, cabinClass, offset, baseDate, adults, children, tripType, returnDate]);
 
   // Al cambiar ruta o cabina, recentra la barra para mostrar precios útiles antes
   useEffect(() => {
@@ -133,7 +136,7 @@ export default function DateBar({ baseDate, fromId, toId, cabinClass, activeDate
                     ? <div className={`w-7 h-1.5 rounded animate-pulse ${isActive ? 'bg-white/30' : 'bg-neutral-2'}`} />
                     : price === null
                       ? <span style={{ fontSize: 8 }} className={isActive ? 'text-white/50' : 'text-neutral-3'}>–</span>
-                      : <span className="font-bold" style={{ fontSize: 10 }}>{fmt(price, 'EUR')}</span>
+                      : <span className="font-bold" style={{ fontSize: 10 }}>{fmt(price, currencyCode)}</span>
                   }
                 </div>
               </button>

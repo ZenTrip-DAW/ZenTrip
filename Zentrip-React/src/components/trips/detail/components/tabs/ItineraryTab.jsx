@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ChevronLeft } from 'lucide-react';
 import BookingBar from '../itinerary/BookingBar';
 import TripSummaryCard from '../itinerary/TripSummaryCard';
 import ParticipantsCard from '../itinerary/ParticipantsCard';
@@ -64,8 +65,17 @@ export default function ItinerarioTab({
       </div>
 
       {activeBooking ? (
-        /* Booking seleccionado — reemplaza todo el contenido del itinerario */
-        renderBookingContent()
+        <>
+          <button
+            type="button"
+            onClick={() => setActiveBooking(null)}
+            className="flex items-center gap-1.5 body-3 text-neutral-4 hover:text-neutral-6 w-fit transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Volver al itinerario
+          </button>
+          {renderBookingContent()}
+        </>
       ) : (
         <>
           {/* Contenido principal: sidebar + calendario/actividades */}
