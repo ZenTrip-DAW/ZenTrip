@@ -3,6 +3,7 @@ import { Hotel } from 'lucide-react';
 import { SectionLabel } from './HotelAtoms';
 import HotelBookingCard from './HotelBookingCard';
 import BookingDetailModal from './BookingDetailModal';
+import BookingBanner from '../BookingBanner';
 import { useAuth } from '../../../../../../context/AuthContext';
 import { getBookings } from '../../../../../../services/tripService';
 
@@ -28,6 +29,13 @@ export default function HotelBookings({ tripId, onGoBook }) {
 
   return (
     <>
+      <BookingBanner
+        src="/img/background/bookings/hotel.jpg"
+        alt="Hoteles"
+        title="Alojamiento"
+        subtitle="Gestiona los hoteles reservados para el viaje"
+      />
+      <div className="p-4 sm:p-6">
       {bookings.length > 0 ? (
         <div className="mb-7">
           <SectionLabel>Alojamiento reservado</SectionLabel>
@@ -75,6 +83,7 @@ export default function HotelBookings({ tripId, onGoBook }) {
           }}
         />
       )}
+      </div>
     </>
   );
 }

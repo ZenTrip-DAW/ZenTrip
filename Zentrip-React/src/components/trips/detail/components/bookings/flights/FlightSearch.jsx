@@ -3,6 +3,7 @@ import { Plane } from 'lucide-react';
 import { getBookings } from '../../../../../../services/tripService';
 import { useAuth } from '../../../../../../context/AuthContext';
 import FlightBookingCard from './FlightBookingCard';
+import BookingBanner from '../BookingBanner';
 import { SectionLabel, TipCard } from './FlightAtoms';
 import { todayStr, getFirstDep, TIPS } from './flightBookingUtils';
 
@@ -30,24 +31,22 @@ export default function FlightSearch({ members = [], tripId, onGoBook }) {
   if (!user) {
     return (
       <div className="text-center py-16">
-        <p className="body-2 text-neutral-4">Debes iniciar sesión para buscar vuelos.</p>
+        <p className="body-2 text-neutral-4">Debes iniciar sesión para ver las reservas.</p>
       </div>
     );
   }
 
   return (
     <>
-      {/* Hero */}
-      <div className="text-center mb-7">
-        <div className="w-14 h-14 bg-secondary-1 rounded-[50%_50%_50%_0] mx-auto mb-3 flex items-center justify-center text-2xl">
-          ✈️
-        </div>
-        <h2 className="title-h3-desktop text-neutral-7 mb-1">Vuelos del viaje</h2>
-        <p className="body-2 text-neutral-4">Busca y guarda los vuelos de tu grupo en un solo lugar</p>
-      </div>
-
+      <BookingBanner
+        src="/img/background/bookings/plane.jpg"
+        alt="Vuelos"
+        title="Vuelos"
+        subtitle="Gestiona los vuelos reservados para el viaje"
+      />
+      <div className="p-4 sm:p-6">
       {/* Vuelos próximos */}
-      {upcoming.length > 0 && (
+      {upcoming.length > 0 ? (
         <div className="mb-7">
           <SectionLabel>Vuelos reservados</SectionLabel>
           <div className="flex flex-col gap-3">
@@ -63,18 +62,24 @@ export default function FlightSearch({ members = [], tripId, onGoBook }) {
             ))}
           </div>
         </div>
+      ) : (
+        <div className="text-center py-10 mb-7">
+          <span className="text-4xl block mb-3">✈️</span>
+          <p className="body-2-semibold text-neutral-6 mb-1">Sin vuelos reservados</p>
+          <p className="body-3 text-neutral-4">Usa el itinerario para buscar y guardar vuelos</p>
+        </div>
       )}
 
       {/* CTA buscar */}
       <button
         onClick={() => onGoBook?.('vuelos')}
-        className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl border-2 border-dashed border-secondary-2 hover:border-secondary-3 hover:bg-secondary-1 transition group"
+        className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-dashed border-primary-2 hover:border-primary-3 hover:bg-primary-1 transition group"
       >
-        <div className="w-10 h-10 rounded-full bg-secondary-1 group-hover:bg-secondary-2 flex items-center justify-center transition shrink-0">
-          <Plane className="w-5 h-5 text-secondary-4" />
+        <div className="w-9 h-9 rounded-full bg-primary-1 group-hover:bg-primary-2 flex items-center justify-center transition shrink-0">
+          <Plane className="w-4 h-4 text-primary-4" />
         </div>
         <div className="text-left">
-          <p className="body-semibold text-secondary-4">Buscar vuelos</p>
+          <p className="body-3 font-bold text-primary-4">Buscar vuelos</p>
           <p className="body-3 text-neutral-4">Ir al buscador de vuelos del viaje</p>
         </div>
       </button>
@@ -106,6 +111,7 @@ export default function FlightSearch({ members = [], tripId, onGoBook }) {
           </div>
         </div>
       )}
+      </div>
     </>
   );
 }

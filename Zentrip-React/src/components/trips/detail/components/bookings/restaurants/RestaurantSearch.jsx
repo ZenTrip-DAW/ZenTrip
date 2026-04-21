@@ -1,29 +1,45 @@
 import { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import { Search, MapPin, Calendar, Users } from 'lucide-react';
 import { searchRestaurants } from '../../../../../../services/restaurantService';
 import { SectionLabel } from '../hotels/HotelAtoms';
+import BookingBanner from '../BookingBanner';
 import RestaurantCard from './RestaurantCard';
 import RestaurantDetailModal from './RestaurantDetailModal';
 import { useAuth } from '../../../../../../context/AuthContext';
 
-export default function RestaurantSearch({ trip, tripId }) {
+function FormField({ label, icon: Icon, children }) {
+  return (
+    <div>
+      <label className="flex items-center gap-1 body-3 font-bold text-neutral-5 uppercase tracking-wider mb-1.5">
+        {Icon && <Icon className="w-3 h-3" />}
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+export default function RestaurantSearch({ trip, tripId, members = [] }) {
   const { user } = useAuth();
   const [query, setQuery] = useState('');
+  const [date, setDate] = useState(trip?.startDate || '');
+  const [people, setPeople] = useState(2);
   const [results, setResults] = useState([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
 
+  const today = new Date().toISOString().split('T')[0];
+
   useEffect(() => {
-    if (trip?.destination) {
-      setQuery(trip.destination.split(',')[0].trim());
-    }
-  }, [trip?.destination]);
+    if (trip?.destination) setQuery(trip.destination.split(',')[0].trim());
+    if (trip?.startDate) setDate(trip.startDate);
+  }, [trip?.destination, trip?.startDate]);
 
   if (!user) {
     return (
-      <div className="text-center py-16">
+      <div className="bg-white rounded-2xl border border-neutral-1 text-center py-16">
         <div className="w-14 h-14 bg-primary-1 rounded-[50%_50%_50%_0] mx-auto mb-4 flex items-center justify-center text-2xl">🔒</div>
         <h2 className="title-h3-desktop text-neutral-7 mb-2">Acceso restringido</h2>
         <p className="body-2 text-neutral-4">Debes iniciar sesión para buscar restaurantes.</p>
@@ -31,8 +47,10 @@ export default function RestaurantSearch({ trip, tripId }) {
     );
   }
 
+  const canSearch = query.trim().length >= 2;
+
   const handleSearch = async () => {
-    if (!query.trim() || query.trim().length < 2) return;
+    if (!canSearch) return;
     setLoading(true);
     setError(null);
     setResults([]);
@@ -48,95 +66,140 @@ export default function RestaurantSearch({ trip, tripId }) {
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') handleSearch();
-  };
-
   return (
-    <>
-      {/* Hero */}
-      <div className="text-center mb-7">
-        <div className="w-14 h-14 bg-primary-1 rounded-[50%_50%_50%_0] mx-auto mb-3 flex items-center justify-center text-2xl">🍽️</div>
-        <h2 className="title-h3-desktop text-neutral-7 mb-1">¿Dónde coméis?</h2>
-        <p className="body-2 text-neutral-4">Busca los mejores restaurantes para tu grupo</p>
-      </div>
+    <div className="bg-white rounded-2xl border border-neutral-1 overflow-hidden">
+      <BookingBanner
+        src="/img/background/bookings/restaurant.jpg"
+        objectPosition="center 70%"
+        alt="Restaurantes"
+        title="¿Dónde coméis?"
+        subtitle="Busca los mejores restaurantes para tu grupo"
+      />
 
-      {/* Buscador */}
-      <div className="mb-7">
-        <SectionLabel>Buscar restaurantes</SectionLabel>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ciudad o zona (ej. Barcelona)"
-            className="flex-1 h-11 px-4 rounded-xl border border-neutral-2 body-3 text-neutral-7 placeholder:text-neutral-3 focus:outline-none focus:border-primary-3"
-          />
+      <div className="p-4 sm:p-6">
+
+        {/* Formulario */}
+        <div className="bg-white border border-neutral-1 rounded-2xl p-4 sm:p-6 shadow-sm mb-7">
+          <SectionLabel>Buscar restaurantes</SectionLabel>
+
+          {/* Destino */}
+          <div className="mb-4">
+            <FormField label="Ciudad o zona" icon={MapPin}>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-3 pointer-events-none" />
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  placeholder="Barcelona, Madrid, Roma…"
+                  className="w-full h-12 pl-9 pr-3 border-2 border-neutral-2 rounded-lg body-2 text-neutral-7 bg-white outline-none focus:border-primary-3 focus:ring-2 focus:ring-primary-3/10 transition placeholder:text-neutral-3"
+                />
+              </div>
+            </FormField>
+          </div>
+
+          {/* Fecha y personas */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <FormField label="Fecha" icon={Calendar}>
+              <input
+                type="date"
+                value={date}
+                min={today}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full h-10 px-3 border border-neutral-2 rounded-lg body-2 text-neutral-7 bg-white outline-none focus:border-secondary-3 focus:ring-2 focus:ring-secondary-3/20 transition"
+              />
+            </FormField>
+            <FormField label="Personas" icon={Users}>
+              <input
+                type="number"
+                min={1}
+                max={20}
+                value={people}
+                onChange={(e) => setPeople(Math.max(1, Math.min(20, Number(e.target.value))))}
+                className="w-full h-10 px-3 border border-neutral-2 rounded-lg body-2 text-neutral-7 bg-white outline-none focus:border-secondary-3 focus:ring-2 focus:ring-secondary-3/20 transition"
+              />
+            </FormField>
+          </div>
+
+          <div className="border-t border-neutral-1 mb-6" />
+
           <button
             onClick={handleSearch}
-            disabled={loading || query.trim().length < 2}
-            className="h-11 px-5 rounded-xl bg-primary-3 text-white body-3 font-bold hover:bg-primary-4 transition disabled:opacity-50 flex items-center gap-2"
+            disabled={!canSearch || loading}
+            className={`w-full h-12 rounded-lg font-titles font-bold text-white flex items-center justify-center gap-2 transition ${
+              canSearch && !loading ? 'bg-primary-3 hover:bg-primary-4' : 'bg-neutral-2 cursor-not-allowed'
+            }`}
           >
             {loading ? (
-              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <>
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Buscando…
+              </>
             ) : (
-              <Search className="w-4 h-4" />
+              <><Search className="w-4 h-4" /> Buscar restaurantes</>
             )}
-            Buscar
           </button>
         </div>
-      </div>
 
-      {/* Error */}
-      {error && (
-        <div className="bg-feedback-error/10 border border-feedback-error/30 rounded-xl px-4 py-3 mb-5 body-3 text-feedback-error-strong flex items-center gap-2">
-          ⚠️ {error}
-        </div>
-      )}
-
-      {/* Resultados */}
-      {searched && (
-        <div>
-          <SectionLabel>
-            {results.length > 0 ? `${results.length} restaurantes encontrados` : 'Sin resultados'}
-          </SectionLabel>
-          {results.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {results.map((r) => (
-                <RestaurantCard key={r.placeId} restaurant={r} onView={setSelectedRestaurant} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-neutral-4 body-3">
-              No se encontraron restaurantes para esta búsqueda.
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Sin búsqueda aún */}
-      {!searched && !loading && trip?.destination && (
-        <div className="mb-6">
-          <SectionLabel>Destino del viaje</SectionLabel>
-          <div className="flex items-center gap-3 bg-white border border-neutral-1 rounded-xl px-4 py-3">
-            <span className="text-2xl">🍽️</span>
-            <div>
-              <p className="body-2-semibold text-neutral-7">{trip.destination}</p>
-              {trip.origin && <p className="body-3 text-neutral-4">Desde {trip.origin}</p>}
-            </div>
+        {/* Error */}
+        {error && (
+          <div className="bg-feedback-error/10 border border-feedback-error/30 rounded-xl px-4 py-3 mb-5 body-3 text-feedback-error-strong flex items-center gap-2">
+            ⚠️ {error}
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Resultados */}
+        {searched && (
+          <div className="mb-6">
+            <div className="border-t border-neutral-1 mb-5" />
+            <div className="flex justify-between items-center mb-4">
+              <p className="body-3 text-neutral-4">
+                <span className="font-bold text-neutral-7">{results.length} restaurantes</span>
+                {query && ` · ${query}`}
+                {people > 0 && ` · ${people} persona${people !== 1 ? 's' : ''}`}
+              </p>
+            </div>
+            {results.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {results.map((r) => (
+                  <RestaurantCard key={r.placeId} restaurant={r} onView={setSelectedRestaurant} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-center py-10 body-2 text-neutral-4">No se encontraron restaurantes en esta zona.</p>
+            )}
+          </div>
+        )}
+
+        {/* Destino del viaje */}
+        {trip?.destination && !searched && (
+          <div className="mb-6">
+            <SectionLabel>Destino del viaje</SectionLabel>
+            <button
+              onClick={() => setQuery(trip.destination.split(',')[0].trim())}
+              className="flex items-center gap-3 bg-white border border-neutral-1 rounded-xl px-4 py-3 hover:border-primary-2 hover:bg-primary-1 transition w-full text-left"
+            >
+              <span className="text-2xl">🍽️</span>
+              <div>
+                <p className="body-2-semibold text-neutral-7">{trip.destination}</p>
+                {trip.origin && <p className="body-3 text-neutral-4">Desde {trip.origin}</p>}
+              </div>
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Modal detalle */}
       {selectedRestaurant && (
         <RestaurantDetailModal
           restaurant={selectedRestaurant}
           tripId={tripId}
+          bookingParams={{ date, people }}
+          members={members}
           onClose={() => setSelectedRestaurant(null)}
         />
       )}
-    </>
+    </div>
   );
 }

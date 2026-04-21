@@ -1,6 +1,21 @@
 import { useState, useRef } from 'react';
-import { MapPin, Calendar, Clock, User } from 'lucide-react';
+import { Search, MapPin, Calendar, Clock, User } from 'lucide-react';
 import { getCarLocations } from '../../../../../../services/carService';
+import { SectionLabel } from '../hotels/HotelAtoms';
+
+function FormField({ label, icon: Icon, children }) {
+  return (
+    <div>
+      <label className="flex items-center gap-1 body-3 font-bold text-neutral-5 uppercase tracking-wider mb-1.5">
+        {Icon && <Icon className="w-3 h-3" />}
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+const inputCls = 'w-full h-10 px-3 border border-neutral-2 rounded-lg body-2 text-neutral-7 bg-white outline-none focus:border-secondary-3 focus:ring-2 focus:ring-secondary-3/20 transition';
 
 export default function CarSearchForm({
   pickUpLocation, onPickUpLocationChange,
@@ -21,15 +36,14 @@ export default function CarSearchForm({
   const [dropOffOpen, setDropOffOpen] = useState(false);
   const pickUpTimer  = useRef(null);
   const dropOffTimer = useRef(null);
+  const today = new Date().toISOString().split('T')[0];
 
   const fetchSugg = async (query, setter) => {
     if (!query || query.length < 2) { setter([]); return; }
     try {
       const data = await getCarLocations(query);
       setter(data?.data ?? data ?? []);
-    } catch {
-      setter([]);
-    }
+    } catch { setter([]); }
   };
 
   const handlePickUpInput = (val) => {
@@ -61,18 +75,18 @@ export default function CarSearchForm({
   };
 
   const selectDropOff = (loc) => {
-    const label = locLabel(loc);
     onDropOffLocationChange(loc);
-    onDropOffQueryChange?.(label);
+    onDropOffQueryChange?.(locLabel(loc));
     setDropOffSugg([]);
     setDropOffOpen(false);
   };
 
   return (
-    <div className="bg-white border border-neutral-1 rounded-2xl p-4 flex flex-col gap-4">
+    <div className="bg-white border border-neutral-1 rounded-2xl p-4 sm:p-6 shadow-sm">
+      <SectionLabel>Buscar alquiler de coche</SectionLabel>
 
       {/* Toggle misma ubicación */}
-      <label className="flex items-center gap-2 cursor-pointer body-3 text-neutral-5">
+      <label className="flex items-center gap-2 cursor-pointer body-3 text-neutral-5 mb-4">
         <input
           type="checkbox"
           checked={sameLocation}
@@ -89,149 +103,110 @@ export default function CarSearchForm({
       </label>
 
       {/* Lugar de recogida */}
-      <div className="relative">
-        <label className="block body-3 font-bold text-neutral-5 mb-1">
-          <MapPin className="inline w-3 h-3 mr-1" />Lugar de recogida
-        </label>
-        <input
-          type="text"
-          value={pickUpQuery ?? ''}
-          onChange={(e) => handlePickUpInput(e.target.value)}
-          onFocus={() => setPickUpOpen(true)}
-          onBlur={() => setTimeout(() => setPickUpOpen(false), 200)}
-          placeholder="Ciudad, aeropuerto..."
-          className="w-full h-10 px-3 border border-neutral-2 rounded-lg body-3 text-neutral-7 outline-none focus:border-primary-3 transition"
-        />
-        {pickUpOpen && pickUpSugg.length > 0 && (
-          <ul className="absolute z-20 left-0 right-0 mt-1 bg-white border border-neutral-2 rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
-            {pickUpSugg.map((loc, i) => (
-              <li
-                key={i}
-                onMouseDown={() => selectPickUp(loc)}
-                className="px-3 py-2 cursor-pointer hover:bg-neutral-1 body-3 text-neutral-6"
-              >
-                <span className="font-semibold">{loc.name}</span>
-                {(loc.city || loc.country) && (
-                  <span className="text-neutral-4"> · {[loc.city, loc.country].filter(Boolean).join(', ')}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+      <div className="mb-4">
+        <FormField label="Lugar de recogida" icon={MapPin}>
+          <div className="relative">
+            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-3 pointer-events-none" />
+            <input
+              type="text"
+              value={pickUpQuery ?? ''}
+              onChange={(e) => handlePickUpInput(e.target.value)}
+              onFocus={() => setPickUpOpen(true)}
+              onBlur={() => setTimeout(() => setPickUpOpen(false), 200)}
+              placeholder="Ciudad, aeropuerto…"
+              className="w-full h-12 pl-9 pr-3 border-2 border-neutral-2 rounded-lg body-2 text-neutral-7 bg-white outline-none focus:border-primary-3 focus:ring-2 focus:ring-primary-3/10 transition placeholder:text-neutral-3"
+            />
+            {pickUpOpen && pickUpSugg.length > 0 && (
+              <ul className="absolute z-20 left-0 right-0 mt-1 bg-white border border-neutral-2 rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+                {pickUpSugg.map((loc, i) => (
+                  <li key={i} onMouseDown={() => selectPickUp(loc)} className="px-3 py-2 cursor-pointer hover:bg-neutral-1 body-3 text-neutral-6">
+                    <span className="font-semibold">{loc.name}</span>
+                    {(loc.city || loc.country) && <span className="text-neutral-4"> · {[loc.city, loc.country].filter(Boolean).join(', ')}</span>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </FormField>
       </div>
 
-      {/* Lugar de devolución (si no es el mismo) */}
+      {/* Lugar de devolución */}
       {!sameLocation && (
-        <div className="relative">
-          <label className="block body-3 font-bold text-neutral-5 mb-1">
-            <MapPin className="inline w-3 h-3 mr-1" />Lugar de devolución
-          </label>
-          <input
-            type="text"
-            value={dropOffQuery ?? ''}
-            onChange={(e) => handleDropOffInput(e.target.value)}
-            onFocus={() => setDropOffOpen(true)}
-            onBlur={() => setTimeout(() => setDropOffOpen(false), 200)}
-            placeholder="Ciudad, aeropuerto..."
-            className="w-full h-10 px-3 border border-neutral-2 rounded-lg body-3 text-neutral-7 outline-none focus:border-primary-3 transition"
-          />
-          {dropOffOpen && dropOffSugg.length > 0 && (
-            <ul className="absolute z-20 left-0 right-0 mt-1 bg-white border border-neutral-2 rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
-              {dropOffSugg.map((loc, i) => (
-                <li
-                  key={i}
-                  onMouseDown={() => selectDropOff(loc)}
-                  className="px-3 py-2 cursor-pointer hover:bg-neutral-1 body-3 text-neutral-6"
-                >
-                  <span className="font-semibold">{loc.name}</span>
-                  {(loc.city || loc.country) && (
-                    <span className="text-neutral-4"> · {[loc.city, loc.country].filter(Boolean).join(', ')}</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
+        <div className="mb-4">
+          <FormField label="Lugar de devolución" icon={MapPin}>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-3 pointer-events-none" />
+              <input
+                type="text"
+                value={dropOffQuery ?? ''}
+                onChange={(e) => handleDropOffInput(e.target.value)}
+                onFocus={() => setDropOffOpen(true)}
+                onBlur={() => setTimeout(() => setDropOffOpen(false), 200)}
+                placeholder="Ciudad, aeropuerto…"
+                className="w-full h-12 pl-9 pr-3 border-2 border-neutral-2 rounded-lg body-2 text-neutral-7 bg-white outline-none focus:border-primary-3 focus:ring-2 focus:ring-primary-3/10 transition placeholder:text-neutral-3"
+              />
+              {dropOffOpen && dropOffSugg.length > 0 && (
+                <ul className="absolute z-20 left-0 right-0 mt-1 bg-white border border-neutral-2 rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+                  {dropOffSugg.map((loc, i) => (
+                    <li key={i} onMouseDown={() => selectDropOff(loc)} className="px-3 py-2 cursor-pointer hover:bg-neutral-1 body-3 text-neutral-6">
+                      <span className="font-semibold">{loc.name}</span>
+                      {(loc.city || loc.country) && <span className="text-neutral-4"> · {[loc.city, loc.country].filter(Boolean).join(', ')}</span>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </FormField>
         </div>
       )}
 
       {/* Fechas y horas */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block body-3 font-bold text-neutral-5 mb-1">
-            <Calendar className="inline w-3 h-3 mr-1" />Recogida
-          </label>
-          <input
-            type="date"
-            value={pickUpDate}
-            min={new Date().toISOString().split('T')[0]}
-            onChange={(e) => onPickUpDateChange(e.target.value)}
-            className="w-full h-10 px-3 border border-neutral-2 rounded-lg body-3 text-neutral-7 outline-none focus:border-primary-3 transition"
-          />
-        </div>
-        <div>
-          <label className="block body-3 font-bold text-neutral-5 mb-1">
-            <Clock className="inline w-3 h-3 mr-1" />Hora
-          </label>
-          <input
-            type="time"
-            value={pickUpTime}
-            onChange={(e) => onPickUpTimeChange(e.target.value)}
-            className="w-full h-10 px-3 border border-neutral-2 rounded-lg body-3 text-neutral-7 outline-none focus:border-primary-3 transition"
-          />
-        </div>
-        <div>
-          <label className="block body-3 font-bold text-neutral-5 mb-1">
-            <Calendar className="inline w-3 h-3 mr-1" />Devolución
-          </label>
-          <input
-            type="date"
-            value={dropOffDate}
-            min={pickUpDate || new Date().toISOString().split('T')[0]}
-            onChange={(e) => onDropOffDateChange(e.target.value)}
-            className="w-full h-10 px-3 border border-neutral-2 rounded-lg body-3 text-neutral-7 outline-none focus:border-primary-3 transition"
-          />
-        </div>
-        <div>
-          <label className="block body-3 font-bold text-neutral-5 mb-1">
-            <Clock className="inline w-3 h-3 mr-1" />Hora
-          </label>
-          <input
-            type="time"
-            value={dropOffTime}
-            onChange={(e) => onDropOffTimeChange(e.target.value)}
-            className="w-full h-10 px-3 border border-neutral-2 rounded-lg body-3 text-neutral-7 outline-none focus:border-primary-3 transition"
-          />
-        </div>
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <FormField label="Recogida" icon={Calendar}>
+          <input type="date" value={pickUpDate} min={today} onChange={(e) => onPickUpDateChange(e.target.value)} className={inputCls} />
+        </FormField>
+        <FormField label="Hora recogida" icon={Clock}>
+          <input type="time" value={pickUpTime} onChange={(e) => onPickUpTimeChange(e.target.value)} className={inputCls} />
+        </FormField>
+        <FormField label="Devolución" icon={Calendar}>
+          <input type="date" value={dropOffDate} min={pickUpDate || today} onChange={(e) => onDropOffDateChange(e.target.value)} className={inputCls} />
+        </FormField>
+        <FormField label="Hora devolución" icon={Clock}>
+          <input type="time" value={dropOffTime} onChange={(e) => onDropOffTimeChange(e.target.value)} className={inputCls} />
+        </FormField>
       </div>
 
-      {/* Edad del conductor */}
-      <div>
-        <label className="block body-3 font-bold text-neutral-5 mb-1">
-          <User className="inline w-3 h-3 mr-1" />Edad del conductor principal
-        </label>
-        <input
-          type="number"
-          min={18}
-          max={99}
-          value={driverAge}
-          onChange={(e) => onDriverAgeChange(Number(e.target.value))}
-          className="w-full h-10 px-3 border border-neutral-2 rounded-lg body-3 text-neutral-7 outline-none focus:border-primary-3 transition"
-        />
+      {/* Edad conductor */}
+      <div className="mb-6">
+        <FormField label="Edad del conductor" icon={User}>
+          <input
+            type="number"
+            min={18}
+            max={99}
+            value={driverAge}
+            onChange={(e) => onDriverAgeChange(Number(e.target.value))}
+            className={inputCls}
+          />
+        </FormField>
       </div>
 
-      {/* Botón buscar */}
+      <div className="border-t border-neutral-1 mb-6" />
+
       <button
         onClick={onSearch}
         disabled={!canSearch || loading}
-        className={`w-full h-11 rounded-xl body-2-semibold text-white flex items-center justify-center gap-2 transition ${
-          !canSearch || loading
-            ? 'bg-neutral-2 text-neutral-4 cursor-not-allowed'
-            : 'bg-primary-3 hover:bg-primary-4'
+        className={`w-full h-12 rounded-lg font-titles font-bold text-white flex items-center justify-center gap-2 transition ${
+          canSearch && !loading ? 'bg-primary-3 hover:bg-primary-4' : 'bg-neutral-2 cursor-not-allowed'
         }`}
       >
         {loading ? (
-          <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Buscando…</>
-        ) : '🚗 Buscar coches'}
+          <>
+            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            Buscando…
+          </>
+        ) : (
+          <><Search className="w-4 h-4" /> Buscar coches</>
+        )}
       </button>
     </div>
   );

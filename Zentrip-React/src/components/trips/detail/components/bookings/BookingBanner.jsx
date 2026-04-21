@@ -1,9 +1,9 @@
-export default function BookingBanner({ src, alt = '', title, subtitle, fallbackColor = 'from-secondary-3 to-secondary-4' }) {
+export default function BookingBanner({ src, alt = '', title, subtitle, fallbackColor = 'from-secondary-3 to-secondary-4', objectPosition = 'center' }) {
   const hasText = title || subtitle;
   return (
     <div className="relative h-44 sm:h-52 w-full overflow-hidden rounded-t-2xl">
       {src ? (
-        <img src={src} alt={alt} className="w-full h-full object-cover" />
+        <img src={src} alt={alt} className="w-full h-full object-cover" style={{ objectPosition }} />
       ) : (
         <div className={`w-full h-full bg-gradient-to-br ${fallbackColor}`} />
       )}

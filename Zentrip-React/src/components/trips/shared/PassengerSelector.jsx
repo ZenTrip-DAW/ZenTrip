@@ -4,7 +4,7 @@ import { Users, UserCheck, UserMinus } from 'lucide-react';
 // members: [{ uid, name, username, avatar, invitationStatus }]
 // value: 'all' | uid[]   (UIDs de los que SÍ van)
 // onChange('all' | uid[])
-export default function PassengerSelector({ members = [], value = 'all', onChange }) {
+export default function PassengerSelector({ members = [], value = 'all', onChange, label = '¿Para quién es el vuelo?' }) {
   const accepted = members.filter((m) => m.invitationStatus === 'accepted');
   const count = accepted.length;
 
@@ -59,7 +59,7 @@ export default function PassengerSelector({ members = [], value = 'all', onChang
     <div className="flex flex-col gap-3">
       <p className="body-3 font-bold text-neutral-5 uppercase tracking-wider flex items-center gap-1.5">
         <Users className="w-3.5 h-3.5 text-secondary-3" />
-        ¿Para quién es el vuelo?
+        {label}
       </p>
 
       {/* Selector de modo */}

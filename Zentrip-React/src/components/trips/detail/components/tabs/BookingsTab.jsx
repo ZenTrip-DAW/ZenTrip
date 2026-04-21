@@ -65,7 +65,7 @@ export default function ReservasTab({ trip, members, tripId, initialSubTab = 'ho
       </div>
 
       {/* Contenido del sub-tab activo */}
-      <div className="bg-white rounded-2xl border border-neutral-1 p-4 sm:p-6">
+      <div className="bg-white rounded-2xl border border-neutral-1 overflow-hidden">
         {renderContent()}
       </div>
     </div>

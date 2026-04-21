@@ -3,6 +3,12 @@ import { deleteBooking, deleteActivity } from '../../../../../../services/tripSe
 
 const PRICE_LABELS = { 1: '€', 2: '€€', 3: '€€€', 4: '€€€€' };
 
+function fmtDate(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(`${dateStr}T00:00:00`);
+  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 function CancelBookingModal({ booking, tripId, onConfirm, onClose }) {
   const [deleting, setDeleting] = useState(false);
 
@@ -55,12 +61,18 @@ export default function RestaurantBookingCard({ booking, tripId, onCancelled }) 
             <div>
               <p className="body-2-semibold text-neutral-7">{booking.restaurantName}</p>
               {booking.address && <p className="body-3 text-neutral-4 line-clamp-1">{booking.address}</p>}
-              <div className="flex items-center gap-2 mt-0.5">
+              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                 {booking.rating != null && (
                   <span className="text-[11px] font-bold text-auxiliary-yellow-5">★ {booking.rating}</span>
                 )}
                 {booking.priceLevel != null && (
                   <span className="text-[11px] text-neutral-4">{PRICE_LABELS[booking.priceLevel]}</span>
+                )}
+                {booking.date && (
+                  <span className="text-[11px] text-neutral-4">{fmtDate(booking.date)}</span>
+                )}
+                {booking.people != null && (
+                  <span className="text-[11px] text-neutral-4">{booking.people} pers.</span>
                 )}
               </div>
             </div>
