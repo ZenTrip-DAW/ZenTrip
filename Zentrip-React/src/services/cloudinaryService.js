@@ -18,6 +18,11 @@ export function validateImageFile(file) {
 }
 
 export async function uploadImage(file) {
+  const result = await uploadImageWithOptions(file);
+  return result.secureUrl;
+}
+
+export async function uploadImageWithOptions(file, { folder } = {}) {
   if (!CLOUDINARY_CLOUD || !CLOUDINARY_PRESET) {
     throw new Error('Cloudinary config is missing. Check VITE_CLOUDINARY_CLOUD and VITE_CLOUDINARY_PRESET.');
   }
@@ -30,6 +35,7 @@ export async function uploadImage(file) {
   const data = new FormData();
   data.append('file', file);
   data.append('upload_preset', CLOUDINARY_PRESET);
+  if (folder) data.append('folder', folder);
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
@@ -68,5 +74,13 @@ export async function uploadImage(file) {
     throw new Error('La respuesta del servicio de imágenes no es válida.');
   }
 
-  return json.secure_url;
+  return {
+    secureUrl: json.secure_url,
+    publicId: json.public_id || '',
+    originalFilename: json.original_filename || file?.name || '',
+    bytes: json.bytes || file?.size || 0,
+    width: json.width || null,
+    height: json.height || null,
+    format: json.format || '',
+  };
 }

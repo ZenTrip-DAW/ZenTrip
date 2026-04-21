@@ -10,6 +10,7 @@ import TripDetailTabs from './components/TripDetailTabs';
 import ItineraryTab from './components/tabs/ItineraryTab';
 import BookingsTab from './components/tabs/BookingsTab';
 import InvitationsTab from './components/tabs/InvitationsTab';
+import GalleryTab from './components/tabs/GalleryTab';
 import PlaceholderTab from './components/tabs/PlaceholderTab';
 
 
@@ -42,7 +43,6 @@ const TAB_PLACEHOLDERS = {
   votaciones:  <PlaceholderTab label="Votaciones"  emoji="🗳️" />,
   presupuesto: <PlaceholderTab label="Presupuesto" emoji="💰" />,
   equipaje:    <PlaceholderTab label="Equipaje"    emoji="🧳" />,
-  galeria:     <PlaceholderTab label="Galería"     emoji="🖼️" />,
   chat:        <PlaceholderTab label="Chat"        emoji="💬" />,
 };
 
@@ -143,6 +143,9 @@ export default function TripDetail() {
           onGoBook={handleGoBook}
         />
       );
+    }
+    if (activeTab === 'galeria') {
+      return <GalleryTab tripId={tripId} />;
     }
     return TAB_PLACEHOLDERS[activeTab] ?? null;
   };

@@ -321,3 +321,63 @@ export async function sendFlightBookingNotifications(tripId, { bookerUid, booker
     })
   ));
 }
+
+// Trip gallery
+
+export async function getGalleryFolders(tripId) {
+  const snap = await getDocs(collection(db, 'trips', tripId, 'galleryFolders'));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => {
+      const aTs = a?.createdAt?.seconds ?? 0;
+      const bTs = b?.createdAt?.seconds ?? 0;
+      return aTs - bTs;
+    });
+}
+
+export async function createGalleryFolder(tripId, folderName, createdBy) {
+  const trimmed = String(folderName || '').trim();
+  if (!trimmed) throw new Error('Folder name is required.');
+
+  const existing = await getGalleryFolders(tripId);
+  const duplicate = existing.find((f) => String(f.name || '').toLowerCase() === trimmed.toLowerCase());
+  if (duplicate) return duplicate;
+
+  const docRef = await addDoc(collection(db, 'trips', tripId, 'galleryFolders'), {
+    name: trimmed,
+    createdByUid: createdBy?.uid || '',
+    createdByName: createdBy?.name || createdBy?.email || 'Unknown user',
+    createdAt: serverTimestamp(),
+  });
+
+  return {
+    id: docRef.id,
+    name: trimmed,
+    createdByUid: createdBy?.uid || '',
+    createdByName: createdBy?.name || createdBy?.email || 'Unknown user',
+  };
+}
+
+export async function deleteGalleryFolder(tripId, folderId) {
+  if (!tripId || !folderId) throw new Error('Trip id and folder id are required.');
+  await deleteDoc(doc(db, 'trips', tripId, 'galleryFolders', folderId));
+}
+
+export async function getGalleryPhotos(tripId) {
+  const snap = await getDocs(collection(db, 'trips', tripId, 'galleryPhotos'));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => {
+      const aTs = a?.createdAt?.seconds ?? 0;
+      const bTs = b?.createdAt?.seconds ?? 0;
+      return bTs - aTs;
+    });
+}
+
+export async function addGalleryPhoto(tripId, photoData) {
+  const docRef = await addDoc(collection(db, 'trips', tripId, 'galleryPhotos'), {
+    ...photoData,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
