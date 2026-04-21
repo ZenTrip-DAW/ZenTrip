@@ -8,16 +8,16 @@ import TripContextBanner from '../trips/shared/TripContextBanner';
 import { getFlightErrorMessage } from '../../utils/errors/flightErrors';
 import FlightSaveModal from './FlightSaveModal';
 import { ROUTES } from '../../config/routes';
-import FlightSearchForm from './components/FlightSearchForm';
-import FlightResults from './components/FlightResults';
-import DateBar from './components/DateBar';
-import FlightDetailDrawer from './components/FlightDetailDrawer';
-import PurchaseModal from './components/PurchaseModal';
+import FlightSearchForm from '../trips/detail/components/bookings/flights/FlightSearchForm';
+import FlightResults from '../trips/detail/components/bookings/flights/FlightResults';
+import DateBar from '../trips/detail/components/bookings/flights/DateBar';
+import FlightDetailDrawer from '../trips/detail/components/bookings/flights/FlightDetailDrawer';
+import PurchaseModal from '../trips/detail/components/bookings/flights/PurchaseModal';
 import {
   DEFAULT_FILTERS, today, nextWeek, todayStr,
   paxToApiChildren, emptyLeg, matchesFilters, addDays,
-} from './components/flightUtils';
-import { IcChevLeft } from './components/flightIcons';
+} from '../trips/detail/components/bookings/flights/flightUtils';
+import { IcChevLeft } from '../trips/detail/components/bookings/flights/flightIcons';
 
 export default function FlightsExplorer({ tripContext: tripContextProp, embedded = false }) {
   const { user, profile } = useAuth();
@@ -264,6 +264,10 @@ export default function FlightsExplorer({ tripContext: tripContextProp, embedded
             activeDateStr={departDate}
             onSelectDate={handleDateBarSelect}
             currencyCode={currencyCode}
+            adults={pax.adults}
+            children={paxToApiChildren(pax) || undefined}
+            tripType={tripType}
+            returnDate={tripType === 'ROUND_TRIP' ? returnDate : undefined}
           />
         )}
 

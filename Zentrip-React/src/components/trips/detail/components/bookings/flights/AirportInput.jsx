@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { getFlightDestinations } from '../../../services/flightService';
-import { resolveToEnglish } from '../../../services/geocodingService';
+import { getFlightDestinations } from '../../../../../../services/flightService';
+import { resolveToEnglish } from '../../../../../../services/geocodingService';
 import { IcPlaneFly } from './flightIcons';
 
 export default function AirportInput({ label, displayValue, onSelect, placeholder }) {

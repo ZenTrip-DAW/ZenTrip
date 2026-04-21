@@ -11,28 +11,16 @@ import {
 } from '../../services/tripService';
 import BookingReceiptUpload from '../trips/detail/components/bookings/BookingReceiptUpload';
 import PassengerSelector from '../trips/shared/PassengerSelector';
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const toPrice = (p) => (p?.units ?? 0) + (p?.nanos ?? 0) / 1e9;
-const fmt = (amount, currency = 'EUR') => {
-  try {
-    return new Intl.NumberFormat('es-ES', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount);
-  } catch {
-    return `${amount} ${currency}`;
-  }
-};
-const fmtDate = (dt) => {
-  if (!dt) return '';
-  return new Date(dt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-};
-const fmtTime = (dt) => dt?.slice(11, 16) ?? '--:--';
+import { toPrice, fmt, fmtDate, fmtTime } from '../trips/detail/components/bookings/flights/flightUtils';
+import { fmtAirport } from '../trips/detail/components/bookings/flights/flightBookingUtils';
 
 function buildFlightLabel(offer) {
-  const seg0 = offer?.segments?.[0];
-  const segR = offer?.segments?.length > 1 ? offer.segments[offer.segments.length - 1] : null;
-  const out = `${seg0?.departureAirport?.code ?? '?'} → ${seg0?.arrivalAirport?.code ?? '?'}`;
-  if (!segR) return out;
-  return `${out} / ${segR.departureAirport?.code ?? '?'} → ${segR.arrivalAirport?.code ?? '?'}`;
+  const segs = offer?.segments ?? [];
+  if (segs.length === 0) return '?';
+  if (segs.length === 2) {
+    return `${fmtAirport(segs[0].departureAirport)} ⇄ ${fmtAirport(segs[0].arrivalAirport)}`;
+  }
+  return segs.map((s) => `${fmtAirport(s.departureAirport)} → ${fmtAirport(s.arrivalAirport)}`).join(' / ');
 }
 
 function buildPassengerLabel(passengers, members) {
@@ -48,9 +36,11 @@ function buildPassengerLabel(passengers, members) {
 }
 
 // ── TripRow ───────────────────────────────────────────────────────────────────
+const normalize = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
 function TripRow({ trip, flightDest, onClick }) {
   const destMatch = trip.destination && flightDest &&
-    trip.destination.toLowerCase().includes(flightDest.toLowerCase());
+    normalize(trip.destination).includes(normalize(flightDest));
   const noDestino = !trip.destination;
 
   return (
@@ -119,16 +109,18 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
 
   // Destinos que aún no están entre las paradas del viaje ni en la ciudad de origen
   const resolvedStops = tripContext?.stops ?? selectedTrip?.stops ?? [];
-  const tripStopNames = resolvedStops.map((s) => s.name.toLowerCase());
-  const tripOriginName = (tripContext?.origin ?? selectedTrip?.origin ?? '').toLowerCase();
+  const tripStopNames = resolvedStops.map((s) => normalize(s.name));
+  const tripOriginName = normalize(tripContext?.origin ?? selectedTrip?.origin ?? '');
+  const tripDestinationName = normalize(tripContext?.destination ?? selectedTrip?.destination ?? '');
   const isAlreadyKnown = (city) => {
-    const c = city.toLowerCase();
+    const c = normalize(city);
     const matchesCity = (known) => {
       const part = known.split(',')[0].trim();
       return known.includes(c) || c.includes(part);
     };
-    if (flightOriginCity && matchesCity(flightOriginCity)) return true;
+    if (flightOriginCity && matchesCity(normalize(flightOriginCity))) return true;
     if (tripOriginName && matchesCity(tripOriginName)) return true;
+    if (tripDestinationName && matchesCity(tripDestinationName)) return true;
     return tripStopNames.some((n) => matchesCity(n));
   };
   const newDestCities = segDestCities.filter((city) => !isAlreadyKnown(city));
@@ -147,7 +139,29 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
     setLoadingTrip(true);
     getTripMembers(selectedTrip.id)
       .catch(() => [])
-      .then((membersData) => setMembers(Array.isArray(membersData) ? membersData : []))
+      .then((membersData) => {
+        const list = Array.isArray(membersData) ? membersData : [];
+        // Garantiza que el usuario actual aparezca con nombre visible
+        const enriched = list.map((m) => {
+          if (m.uid !== user?.uid || (m.name || m.username)) return m;
+          return {
+            ...m,
+            name: user.displayName || user.email || m.name || '',
+            avatar: user.photoURL || m.avatar || '',
+          };
+        });
+        // Si el usuario actual no está en la lista, añadirlo
+        if (user?.uid && !enriched.some((m) => m.uid === user.uid)) {
+          enriched.unshift({
+            uid: user.uid,
+            name: user.displayName || user.email || '',
+            avatar: user.photoURL || '',
+            invitationStatus: 'accepted',
+            role: 'coordinator',
+          });
+        }
+        setMembers(enriched);
+      })
       .finally(() => setLoadingTrip(false));
   }, [selectedTrip?.id]);
 
@@ -186,6 +200,29 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
       });
 
       // Construye el objeto de reserva
+      const segmentsData = (offer?.segments ?? []).map((seg) => {
+        const carriers = [...new Map(
+          (seg.legs ?? []).flatMap((l) => l.carriersData ?? [])
+            .filter((c) => c?.name)
+            .map((c) => [c.name, { name: c.name, logo: c.logo ?? '' }])
+        ).values()];
+        const flightNumbers = (seg.legs ?? [])
+          .map((l) => {
+            const code = l.carriersData?.[0]?.code ?? '';
+            const num = l.flightInfo?.flightNumber ?? '';
+            return code && num ? `${code}${num}` : null;
+          })
+          .filter(Boolean);
+        return {
+          departureAirport: { code: seg.departureAirport?.code ?? '', cityName: seg.departureAirport?.cityName ?? '', name: seg.departureAirport?.name ?? '' },
+          arrivalAirport: { code: seg.arrivalAirport?.code ?? '', cityName: seg.arrivalAirport?.cityName ?? '', name: seg.arrivalAirport?.name ?? '' },
+          departureTime: seg.departureTime ?? '',
+          arrivalTime: seg.arrivalTime ?? '',
+          carriers,
+          flightNumbers,
+        };
+      });
+
       const bookingData = {
         type: 'vuelo',
         flightLabel,
@@ -198,6 +235,7 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
         carrier: seg0?.legs?.[0]?.carriersData?.[0]?.name ?? '',
         carrierLogo: seg0?.legs?.[0]?.carriersData?.[0]?.logo ?? '',
         isRoundTrip: (offer?.segments?.length ?? 1) > 1,
+        segments: segmentsData,
         totalPrice: Math.round(total * 100) / 100,
         currency,
         status: 'reservado',
@@ -214,12 +252,12 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
 
       await addBooking(selectedTrip.id, bookingData);
 
-      await sendFlightBookingNotifications(selectedTrip.id, {
+      sendFlightBookingNotifications(selectedTrip.id, {
         bookerUid: user.uid,
         bookerName: user.displayName || user.email || '',
         flightLabel,
         tripName: selectedTrip.name || '',
-      });
+      }).catch(() => {});
 
       setDone(true);
     } catch (err) {
@@ -309,18 +347,6 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
               </div>
             )}
 
-            {trips?.map((trip) => (
-              <TripRow
-                key={trip.id}
-                trip={trip}
-                flightDest={flightDest}
-                onClick={() => {
-                  setSelectedTrip(trip);
-                  setShowTripPicker(false);
-                }}
-              />
-            ))}
-
             <button
               type="button"
               onClick={() => {
@@ -335,6 +361,18 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
               </div>
               <span className="body-semibold text-secondary-4">Crear nuevo viaje</span>
             </button>
+
+            {trips?.map((trip) => (
+              <TripRow
+                key={trip.id}
+                trip={trip}
+                flightDest={flightDest}
+                onClick={() => {
+                  setSelectedTrip(trip);
+                  setShowTripPicker(false);
+                }}
+              />
+            ))}
           </div>
         )}
 

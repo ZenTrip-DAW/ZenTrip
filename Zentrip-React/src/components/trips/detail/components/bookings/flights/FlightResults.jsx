@@ -2,7 +2,7 @@ import FlightCard from './FlightCard';
 import FilterSheet from './FilterSheet';
 import { toPrice, fmt, PAGE_SIZE } from './flightUtils';
 import { IcPlaneFly, IcFilter } from './flightIcons';
-import Pagination from '../../ui/Pagination';
+import Pagination from '../../../../../../components/ui/Pagination';
 
 export default function FlightResults({
   response,

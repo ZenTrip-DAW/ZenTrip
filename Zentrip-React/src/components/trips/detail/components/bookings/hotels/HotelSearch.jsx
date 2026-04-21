@@ -54,7 +54,7 @@ function CancelBookingModal({ booking, tripId, onConfirm, onClose }) {
           <button
             onClick={handleConfirm}
             disabled={deleting}
-            className="flex-1 h-10 rounded-lg bg-feedback-error text-white body-3 font-bold hover:opacity-90 transition disabled:opacity-50"
+            className="flex-1 h-10 rounded-lg bg-red-600 text-white body-3 font-bold hover:bg-red-700 transition disabled:opacity-50"
           >
             {deleting ? 'Eliminando…' : 'Sí, cancelar'}
           </button>
