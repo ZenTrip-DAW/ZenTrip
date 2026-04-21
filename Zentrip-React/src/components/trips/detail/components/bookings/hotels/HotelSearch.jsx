@@ -156,12 +156,7 @@ export default function HotelSearch({ trip, members = [], tripId }) {
           </div>
         )}
 
-        <div>
-          <SectionLabel>Consejos para tu búsqueda</SectionLabel>
-          <div className="grid grid-cols-2 gap-3">
-            {TIPS.map((t) => <TipCard key={t.title} {...t} />)}
-          </div>
-        </div>
+  
       </div>
 
       {selectedBooking && (
