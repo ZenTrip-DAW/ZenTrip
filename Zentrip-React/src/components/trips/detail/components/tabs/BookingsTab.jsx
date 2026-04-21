@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Hotel, Plane, Car, Train, Compass, Map, Utensils } from 'lucide-react';
 import HotelBookings from '../bookings/hotels/HotelBookings';
-import CarSearch from '../bookings/cars/CarSearch';
+import CarBookings from '../bookings/cars/CarBookings';
 import FlightSearch from '../bookings/flights/FlightSearch';
+import RestaurantBookings from '../bookings/restaurants/RestaurantBookings';
 import PlaceholderTab from './PlaceholderTab';
 
 const SUBTABS = [
@@ -12,7 +13,7 @@ const SUBTABS = [
   { key: 'trenes',       label: 'Trenes',        Icon: Train,   available: false },
   { key: 'actividades',  label: 'Actividades',   Icon: Compass, available: false },
   { key: 'rutas',        label: 'Rutas',         Icon: Map,     available: false },
-  { key: 'restaurantes', label: 'Restaurantes',  Icon: Utensils,available: false },
+  { key: 'restaurantes', label: 'Restaurantes',  Icon: Utensils,available: true  },
 ];
 
 export default function ReservasTab({ trip, members, tripId, initialSubTab = 'hoteles', onGoBook }) {
@@ -23,10 +24,13 @@ export default function ReservasTab({ trip, members, tripId, initialSubTab = 'ho
       return <HotelBookings trip={trip} members={members} tripId={tripId} onGoBook={onGoBook} />;
     }
     if (activeSubTab === 'coches') {
-      return <CarSearch trip={trip} members={members} tripId={tripId} />;
+      return <CarBookings tripId={tripId} onGoBook={onGoBook} />;
     }
     if (activeSubTab === 'vuelos') {
       return <FlightSearch members={members} tripId={tripId} onGoBook={setActiveSubTab} />;
+    }
+    if (activeSubTab === 'restaurantes') {
+      return <RestaurantBookings tripId={tripId} onGoBook={onGoBook} />;
     }
     const tab = SUBTABS.find((t) => t.key === activeSubTab);
     return <PlaceholderTab label={tab?.label ?? 'Próximamente'} emoji="🚧" />;

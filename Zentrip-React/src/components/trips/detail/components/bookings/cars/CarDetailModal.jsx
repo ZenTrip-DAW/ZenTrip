@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react';
 import { X, ExternalLink } from 'lucide-react';
 import { getCarDetails } from '../../../../../../services/carService';
+import { addActivity, addBooking, getBookings } from '../../../../../../services/tripService';
+import { useAuth } from '../../../../../../context/AuthContext';
 import { fmtDate } from './carUtils';
 
-export default function CarDetailModal({ car, searchParams, onClose }) {
+export default function CarDetailModal({ car, searchParams, tripId, onClose }) {
   const { pickUpDate, dropOffDate, pickUpTime, dropOffTime, currencyCode } = searchParams;
+  const { user, profile } = useAuth();
+  const [booking, setBooking] = useState(false);
+  const [booked, setBooked] = useState(false);
+  const [duplicate, setDuplicate] = useState(false);
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -56,6 +62,58 @@ export default function CarDetailModal({ car, searchParams, onClose }) {
   const supplierImg    = supplier.imageUrl     ?? car.supplier?.imageUrl ?? null;
   const supplierRating = supplier.rating?.average ?? car.supplier?.rating ?? null;
   const supplierTitle  = supplier.rating?.title   ?? car.supplier?.ratingTitle ?? '';
+
+  const handleBooked = async () => {
+    if (!tripId || !user) return;
+    setBooking(true);
+    try {
+      const existing = await getBookings(tripId);
+      const isDuplicate = existing.some(
+        (b) => b.type === 'car' && b.carId === car.id && b.pickUpDate === pickUpDate && b.dropOffDate === dropOffDate
+      );
+      if (isDuplicate) { setDuplicate(true); return; }
+
+      const activityId = await addActivity(tripId, {
+        date: pickUpDate,
+        startTime: pickUpTime || '10:00',
+        endTime: dropOffTime || '10:00',
+        name: car.name,
+        type: 'car',
+        notes: car.pricePerDay != null ? `Reservado · ${car.pricePerDay} ${car.currency}/día · ${car.days} día${car.days !== 1 ? 's' : ''}` : 'Reservado',
+        status: 'reservado',
+      });
+
+      await addBooking(tripId, {
+        type: 'car',
+        carId: car.id,
+        carName: car.name,
+        carClass: car.carClass ?? null,
+        supplierName,
+        pickUpDate,
+        dropOffDate,
+        pickUpTime: pickUpTime ?? null,
+        dropOffTime: dropOffTime ?? null,
+        days: car.days ?? null,
+        pricePerDay: car.pricePerDay ?? null,
+        totalPrice: car.price ?? null,
+        currency: car.currency ?? currencyCode ?? 'EUR',
+        status: 'reservado',
+        bookingUrl: 'https://cars.booking.com',
+        activityId,
+        createdBy: {
+          uid: user.uid,
+          name: profile?.displayName || profile?.firstName || user.email,
+          photoURL: profile?.photoURL || null,
+        },
+      });
+
+      setBooked(true);
+    } catch (err) {
+      console.error('[CarDetailModal] Error al guardar reserva:', err);
+    } finally {
+      setBooking(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -206,14 +264,48 @@ export default function CarDetailModal({ car, searchParams, onClose }) {
 
         {/* Footer */}
         <div className="px-5 py-4 border-t border-neutral-1 shrink-0 bg-white">
-          <a
-            href="https://cars.booking.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full h-11 rounded-lg border border-secondary-3 text-secondary-3 flex items-center justify-center gap-2 body-2-semibold hover:bg-secondary-1 transition"
-          >
-            <ExternalLink className="w-4 h-4" /> Ver en Booking.com
-          </a>
+          {duplicate ? (
+            <div className="h-11 rounded-lg bg-feedback-warning border border-feedback-warning-strong text-feedback-warning-strong flex items-center justify-center gap-2 body-2-semibold">
+              ⚠️ Ya tienes este coche reservado
+            </div>
+          ) : booked ? (
+            <>
+              <div className="h-11 rounded-lg bg-auxiliary-green-2 text-auxiliary-green-5 flex items-center justify-center gap-2 body-2-semibold mb-3">
+                ✓ Reserva guardada
+              </div>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="w-full h-10 rounded-lg border border-neutral-2 body-3 text-neutral-5 hover:bg-neutral-1 transition"
+              >
+                Continuar
+              </button>
+            </>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-3">
+              {tripId && (
+                <button
+                  onClick={handleBooked}
+                  disabled={booking}
+                  className={`flex-1 h-11 rounded-lg body-2-semibold text-white flex items-center justify-center gap-2 transition ${
+                    booking ? 'bg-neutral-2 cursor-not-allowed' : 'bg-auxiliary-green-4 hover:bg-auxiliary-green-5'
+                  }`}
+                >
+                  {booking ? (
+                    <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Procesando…</>
+                  ) : '✓ He reservado'}
+                </button>
+              )}
+              <a
+                href="https://cars.booking.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-11 px-4 rounded-lg border border-secondary-3 text-secondary-3 flex items-center justify-center gap-2 body-2-semibold hover:bg-secondary-1 transition"
+              >
+                <ExternalLink className="w-4 h-4" /> Booking.com
+              </a>
+            </div>
+          )}
         </div>
 
       </div>

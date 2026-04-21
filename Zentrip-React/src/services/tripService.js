@@ -84,6 +84,13 @@ export async function saveTripDraft(uid, form, existingDraftId = null) {
 }
 
 export async function deleteTrip(tripId) {
+  const subcollections = ['members', 'activities', 'bookings', 'galleryFolders', 'galleryPhotos'];
+  await Promise.all(
+    subcollections.map(async (sub) => {
+      const snap = await getDocs(collection(db, 'trips', tripId, sub));
+      await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
+    })
+  );
   await deleteDoc(doc(db, 'trips', tripId));
 }
 

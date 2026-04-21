@@ -7,7 +7,7 @@ import CarResults from './CarResults';
 import CarDetailModal from './CarDetailModal';
 import { useAuth } from '../../../../../../context/AuthContext';
 
-export default function CarSearch({ trip, members = [], tripId }) {
+export default function CarSearch({ trip, members = [], tripId, onGoBook }) {
   const { user } = useAuth();
 
   const [pickUpLocation,  setPickUpLocation]  = useState(null);
@@ -203,6 +203,7 @@ export default function CarSearch({ trip, members = [], tripId }) {
         <CarDetailModal
           car={selectedCar}
           searchParams={{ pickUpDate, dropOffDate, pickUpTime, dropOffTime, currencyCode: trip?.currency || 'EUR' }}
+          tripId={tripId}
           onClose={() => setSelectedCar(null)}
         />
       )}
