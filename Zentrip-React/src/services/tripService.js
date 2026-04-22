@@ -1,6 +1,7 @@
 import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 import { db, auth } from '../config/firebaseConfig';
 import { apiClient } from './apiClient';
+import { deleteCloudinaryPhoto } from './cloudinaryService';
 
 export async function createTrip(uid, form) {
   const { members, ...tripData } = form;
@@ -407,4 +408,12 @@ export async function addGalleryPhoto(tripId, photoData) {
     createdAt: serverTimestamp(),
   });
   return docRef.id;
+}
+
+export async function deleteGalleryPhoto(tripId, photoId, publicId) {
+  if (!tripId || !photoId) throw new Error('Trip id and photo id are required.');
+  await deleteDoc(doc(db, 'trips', tripId, 'galleryPhotos', photoId));
+  if (publicId) {
+    await deleteCloudinaryPhoto(publicId).catch(() => {});
+  }
 }

@@ -1,6 +1,8 @@
+import { apiClient } from './apiClient';
+
 const CLOUDINARY_CLOUD = import.meta.env.VITE_CLOUDINARY_CLOUD;
 const CLOUDINARY_PRESET = import.meta.env.VITE_CLOUDINARY_PRESET;
-const MAX_UPLOAD_MB = 5;
+const MAX_UPLOAD_MB = 8;
 const UPLOAD_TIMEOUT_MS = 30000;
 
 export function validateImageFile(file) {
@@ -83,4 +85,9 @@ export async function uploadImageWithOptions(file, { folder } = {}) {
     height: json.height || null,
     format: json.format || '',
   };
+}
+
+export async function deleteCloudinaryPhoto(publicId) {
+  if (!publicId) return;
+  await apiClient.delete('/trips/gallery/image', { body: JSON.stringify({ publicId }) });
 }

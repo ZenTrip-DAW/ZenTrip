@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const admin = require('../config/firebase');
 const { AppError } = require('../errors');
 
@@ -170,4 +171,51 @@ const addHotelBookingToTrip = async (req, res, next) => {
   }
 };
 
-module.exports = { getTripMembers, getUserTrips, addHotelBookingToTrip };
+/**
+ * DELETE /api/trips/gallery/image
+ * Elimina una imagen de Cloudinary usando la API firmada con el secret del servidor.
+ */
+const deleteCloudinaryImage = async (req, res, next) => {
+  const { publicId } = req.body;
+  if (!publicId) return next(new AppError('publicId requerido', 400, 'VALIDATION_ERROR'));
+
+  const cloudName = process.env.CLOUDINARY_CLOUD;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+  if (!cloudName || !apiKey || !apiSecret) {
+    return next(new AppError('Cloudinary no configurado en el servidor', 500, 'CONFIG_ERROR'));
+  }
+
+  try {
+    const timestamp = Math.round(Date.now() / 1000);
+    const signature = crypto
+      .createHash('sha1')
+      .update(`public_id=${publicId}&timestamp=${timestamp}${apiSecret}`)
+      .digest('hex');
+
+    const formData = new URLSearchParams();
+    formData.append('public_id', publicId);
+    formData.append('api_key', apiKey);
+    formData.append('timestamp', String(timestamp));
+    formData.append('signature', signature);
+
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`,
+      { method: 'POST', body: formData }
+    );
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      return next(new AppError(data?.error?.message || 'Error al eliminar imagen de Cloudinary', 502));
+    }
+
+    res.json({ result: data.result });
+  } catch (error) {
+    console.error('[deleteCloudinaryImage] Error:', error);
+    return next(error);
+  }
+};
+
+module.exports = { getTripMembers, getUserTrips, addHotelBookingToTrip, deleteCloudinaryImage };
