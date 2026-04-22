@@ -11,11 +11,11 @@ import RestaurantSearch from '../bookings/restaurants/RestaurantSearch';
 import ActivitySearch from '../bookings/activities/ActivitySearch';
 import FlightsExplorer from '../../../../flights/FlightsExplorer';
 import BookingBanner from '../bookings/BookingBanner';
+import RouteExplorer from '../bookings/routes/RouteExplorer';
 import PlaceholderTab from './PlaceholderTab';
 
 const BOOKING_LABELS = {
   trenes: 'Trenes',
-  rutas: 'Rutas',
 };
 
 export default function ItinerarioTab({
@@ -44,6 +44,15 @@ export default function ItinerarioTab({
     if (activeBooking === 'coches') return <CarSearch trip={trip} members={members} tripId={tripId} />;
     if (activeBooking === 'restaurantes') return <RestaurantSearch trip={trip} tripId={tripId} members={members} />;
     if (activeBooking === 'actividades') return <ActivitySearch trip={trip} tripId={tripId} members={members} />;
+    if (activeBooking === 'rutas') {
+      return (
+        <RouteExplorer
+          trip={trip}
+          tripDays={tripDays}
+          activitiesByDate={activitiesByDate}
+        />
+      );
+    }
     if (activeBooking === 'vuelos') {
       const acceptedCount = members.filter((m) => m.invitationStatus === 'accepted').length;
       return (

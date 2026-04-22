@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-google-maps/api": "^2.20.8",
     "country-list": "^2.4.1",
     "currency.js": "^2.0.4",
     "firebase": "^12.9.0",
