@@ -10,7 +10,7 @@ const rapidApiHeaders = {
   'x-rapidapi-host': RAPIDAPI_HOST,
 };
 
-async function searchAttractionLocation({ query, languageCode = 'en-us' }) {
+async function searchAttractionLocation({ query, languageCode = 'es' }) {
   const res = await axios.get(`${BASE_URL}/attraction/searchLocation`, {
     headers: rapidApiHeaders,
     params: { query, languagecode: languageCode },
@@ -64,7 +64,7 @@ async function getAttractionDetails({ slug, currencyCode = 'EUR' }) {
 
   const res = await axios.get(`${BASE_URL}/attraction/getAttractionDetails`, {
     headers: rapidApiHeaders,
-    params: { slug, currency_code: currencyCode },
+    params: { slug, currency_code: currencyCode, languagecode: 'es' },
   });
   const d = res.data?.data ?? res.data ?? {};
   return { status: true, data: mapDetails(d) };
@@ -77,7 +77,7 @@ function mapProduct(p) {
     name: p.name ?? p.title ?? '',
     photo: p.primaryPhoto?.medium ?? p.primaryPhoto?.small ?? p.primaryPhoto?.large ?? null,
     rating: p.reviewsStats?.combinedNumericStats?.average ?? null,
-    reviewCount: p.reviewsStats?.allReviewsCount ?? null,
+    reviewCount: p.reviewsStats?.combinedNumericStats?.total ?? p.reviewsStats?.allReviewsCount ?? null,
     price: p.representativePrice?.chargeAmount ?? null,
     currency: p.representativePrice?.currency ?? 'EUR',
     shortDescription: p.shortDescription ?? null,
@@ -110,12 +110,11 @@ function mapDetails(d) {
     address: d.location?.address ?? d.address ?? null,
     freeCancellation: d.cancellationPolicy?.hasFreeCancellation ?? false,
     whatsIncluded: (d.whatsIncluded ?? []).slice(0, 6).map((i) => i.item ?? i.name ?? String(i)),
-    reviews: (Array.isArray(d.reviewsStats?.reviewData?.combinedReviews) ? d.reviewsStats.reviewData.combinedReviews
-      : Array.isArray(d.reviews) ? d.reviews : []).slice(0, 5).map((r) => ({
-      author: r.author?.name ?? r.reviewer?.name ?? 'Anónimo',
-      rating: r.rating ?? r.score ?? null,
-      text: r.review ?? r.text ?? r.body ?? '',
-      date: r.date ?? r.creationDate ?? '',
+    reviews: (Array.isArray(d.reviews?.reviews) ? d.reviews.reviews : []).slice(0, 5).map((r) => ({
+      author: r.user?.name ?? 'Anónimo',
+      rating: r.numericRating ?? null,
+      text: r.content ?? '',
+      date: r.epochMs ? new Date(r.epochMs).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
     })),
   };
 }

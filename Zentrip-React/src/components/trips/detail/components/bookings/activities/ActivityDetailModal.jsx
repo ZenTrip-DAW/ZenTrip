@@ -53,6 +53,10 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(info.name)}`
       : null;
 
+  const bookingUrl = activity.slug
+    ? `https://www.booking.com/attractions/prod/${activity.slug}.html`
+    : null;
+
   const acceptedMembers = members.filter((m) => m.invitationStatus === 'accepted');
 
   const canSave = receiptUrls.length > 0 &&
@@ -201,15 +205,6 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
                 <p className="body-semibold text-neutral-7">Actividad guardada en el viaje</p>
                 <p className="body-3 text-neutral-4 mt-1">{info.name}</p>
               </div>
-              {bookingId && receiptUrls.length === 0 && (
-                <div className="w-full mt-2">
-                  <BookingReceiptUpload
-                    onUpdate={async (urls) => {
-                      await updateBooking(tripId, bookingId, { receiptUrls: urls });
-                    }}
-                  />
-                </div>
-              )}
             </div>
 
           ) : (
@@ -297,11 +292,14 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
                 )}
 
                 {/* Reseñas */}
-                {details?.reviews?.length > 0 && (
+                {details?.reviews?.filter((r) => r.text).length > 0 && (
                   <div className="mb-5">
-                    <p className="body-3 font-bold text-neutral-5 uppercase tracking-wider mb-3">Reseñas</p>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="body-3 font-bold text-neutral-5 uppercase tracking-wider">Reseñas</p>
+                      <span className="text-[11px] text-neutral-3 italic">en el idioma original</span>
+                    </div>
                     <div className="flex flex-col gap-3">
-                      {details.reviews.map((rev, i) => (
+                      {details.reviews.filter((r) => r.text).map((rev, i) => (
                         <div key={i} className="border border-neutral-1 rounded-xl p-3">
                           <div className="flex items-center justify-between mb-1">
                             <p className="body-3 font-semibold text-neutral-7">{rev.author}</p>
@@ -328,9 +326,19 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
               ⚠️ Ya tienes esta actividad anotada
             </div>
           ) : step === 'booked' ? (
-            <button type="button" onClick={onClose} className="h-11 rounded-lg bg-primary-3 text-white body-2-semibold hover:bg-primary-4 transition">
-              Listo
-            </button>
+            <>
+              <div className="h-11 rounded-lg bg-auxiliary-green-2 text-auxiliary-green-5 flex items-center justify-center gap-2 body-2-semibold">
+                ✓ Actividad guardada en el viaje
+              </div>
+              {bookingId && receiptUrls.length === 0 && (
+                <BookingReceiptUpload
+                  onUpdate={async (urls) => { await updateBooking(tripId, bookingId, { receiptUrls: urls }); }}
+                />
+              )}
+              <button type="button" onClick={onClose} className="h-10 rounded-lg border border-neutral-2 body-3 text-neutral-5 hover:bg-neutral-1 transition">
+                Cerrar
+              </button>
+            </>
           ) : step === 'confirm' ? (
             <button
               onClick={handleSave}
@@ -342,26 +350,38 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
                 : '✓ Guardar en el itinerario'}
             </button>
           ) : (
-            <div className="flex flex-col sm:flex-row gap-3">
-              {tripId && (
-                <button
-                  onClick={() => setStep('confirm')}
-                  className="flex-1 h-11 rounded-lg body-2-semibold text-white bg-auxiliary-green-4 hover:bg-auxiliary-green-5 flex items-center justify-center gap-2 transition"
-                >
-                  ✓ Añadir al viaje
-                </button>
-              )}
-              {mapsUrl && (
+            <>
+              <div className="flex gap-3">
+                {tripId && (
+                  <button
+                    onClick={() => setStep('confirm')}
+                    className="flex-1 h-11 rounded-lg body-2-semibold text-white bg-auxiliary-green-4 hover:bg-auxiliary-green-5 flex items-center justify-center gap-2 transition"
+                  >
+                    ✓ Añadir al viaje
+                  </button>
+                )}
+                {mapsUrl && (
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-11 px-4 rounded-lg border border-primary-3 text-primary-3 flex items-center justify-center gap-2 body-2-semibold hover:bg-primary-1 transition"
+                  >
+                    <ExternalLink className="w-4 h-4" /> Google Maps
+                  </a>
+                )}
+              </div>
+              {bookingUrl && (
                 <a
-                  href={mapsUrl}
+                  href={bookingUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="h-11 px-4 rounded-lg border border-secondary-3 text-secondary-3 flex items-center justify-center gap-2 body-2-semibold hover:bg-secondary-1 transition"
+                  className="w-full h-11 rounded-lg border border-secondary-3 text-secondary-3 flex items-center justify-center gap-2 body-2-semibold hover:bg-secondary-1 transition"
                 >
-                  <ExternalLink className="w-4 h-4" /> Google Maps
+                  <ExternalLink className="w-3.5 h-3.5" /> Reservar en Booking.com
                 </a>
               )}
-            </div>
+            </>
           )}
         </div>
 

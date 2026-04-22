@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Search, MapPin, Calendar } from 'lucide-react';
 import { searchAttractions } from '../../../../../../services/attractionService';
 import { SectionLabel } from '../hotels/HotelAtoms';
@@ -6,6 +6,18 @@ import BookingBanner from '../BookingBanner';
 import ActivityCard from './ActivityCard';
 import ActivityDetailModal from './ActivityDetailModal';
 import { useAuth } from '../../../../../../context/AuthContext';
+
+const FILTERS = [
+  { key: 'all', label: 'Todas' },
+  { key: 'free_cancel', label: 'Cancelación gratis' },
+  { key: 'popular', label: 'Más reservadas' },
+];
+
+const SORT_OPTIONS = [
+  { value: 'rating', label: 'Mejor valoradas' },
+  { value: 'price-asc', label: 'Precio: menor primero' },
+  { value: 'price-desc', label: 'Precio: mayor primero' },
+];
 
 function FormField({ label, icon: Icon, children }) {
   return (
@@ -28,6 +40,8 @@ export default function ActivitySearch({ trip, tripId, members = [] }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedActivity, setSelectedActivity] = useState(null);
+  const [filter, setFilter] = useState('all');
+  const [sortKey, setSortKey] = useState('rating');
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -46,7 +60,7 @@ export default function ActivitySearch({ trip, tripId, members = [] }) {
     );
   }
 
-  const canSearch = query.trim().length >= 2;
+  const canSearch = query.trim().length >= 2 && !!date;
 
   const handleSearch = async () => {
     if (!canSearch) return;
@@ -58,12 +72,27 @@ export default function ActivitySearch({ trip, tripId, members = [] }) {
       const data = await searchAttractions({ query: query.trim() });
       setResults(data?.data ?? []);
       setSearched(true);
+      setFilter('all');
+      setSortKey('rating');
     } catch (err) {
       setError(err.message || 'No se pudo realizar la búsqueda. Inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
   };
+
+  const displayResults = useMemo(() => {
+    let list = [...results];
+    if (filter === 'free_cancel') list = list.filter((a) => a.freeCancellation);
+    if (filter === 'popular') {
+      list.sort((a, b) => (b.reviewCount ?? 0) - (a.reviewCount ?? 0));
+    } else {
+      if (sortKey === 'rating') list.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+      if (sortKey === 'price-asc') list.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
+      if (sortKey === 'price-desc') list.sort((a, b) => (b.price ?? -Infinity) - (a.price ?? -Infinity));
+    }
+    return list;
+  }, [results, filter, sortKey]);
 
   return (
     <div className="bg-white rounded-2xl border border-neutral-1 overflow-hidden">
@@ -138,20 +167,45 @@ export default function ActivitySearch({ trip, tripId, members = [] }) {
         {searched && (
           <div className="mb-6">
             <div className="border-t border-neutral-1 mb-5" />
-            <div className="flex justify-between items-center mb-4">
+
+            {/* Filtros */}
+            <div className="flex gap-2 flex-wrap mb-4">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() => setFilter(f.key)}
+                  className={`h-8 px-3 rounded-full body-3 border transition ${
+                    filter === f.key
+                      ? 'border-primary-3 bg-primary-1 text-primary-4 font-bold'
+                      : 'border-neutral-2 bg-white text-neutral-5 hover:border-primary-3 hover:text-primary-3'
+                  }`}
+                >{f.label}</button>
+              ))}
+            </div>
+
+            {/* Meta + ordenar */}
+            <div className="flex justify-between items-center mb-4 flex-wrap gap-3">
               <p className="body-3 text-neutral-4">
-                <span className="font-bold text-neutral-7">{results.length} actividades</span>
+                <span className="font-bold text-neutral-7">{displayResults.length} actividades</span>
                 {query && ` · ${query}`}
               </p>
+              <select
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value)}
+                className="h-8 px-3 rounded-lg border border-neutral-2 body-3 text-neutral-5 bg-white outline-none"
+              >
+                {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
             </div>
-            {results.length > 0 ? (
+
+            {displayResults.length > 0 ? (
               <div className="flex flex-col gap-3">
-                {results.map((a) => (
+                {displayResults.map((a) => (
                   <ActivityCard key={a.id ?? a.slug} activity={a} onView={setSelectedActivity} />
                 ))}
               </div>
             ) : (
-              <p className="text-center py-10 body-2 text-neutral-4">No se encontraron actividades en esta zona.</p>
+              <p className="text-center py-10 body-2 text-neutral-4">No se encontraron actividades con estos filtros.</p>
             )}
           </div>
         )}
