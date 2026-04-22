@@ -86,6 +86,19 @@ function IconPencil() {
 }
 
 
+function deriveDatesFromTrip(trip) {
+  let startDate = trip.startDate || '';
+  let endDate   = trip.endDate   || '';
+  if (!startDate || !endDate) {
+    const stops = Array.isArray(trip.stops) ? trip.stops : [];
+    const withStart = stops.filter((s) => s.startDate);
+    const withEnd   = stops.filter((s) => s.endDate);
+    if (!startDate && withStart.length > 0) startDate = withStart.map((s) => s.startDate).sort()[0];
+    if (!endDate   && withEnd.length   > 0) endDate   = withEnd.map((s) => s.endDate).sort().reverse()[0];
+  }
+  return { startDate, endDate };
+}
+
 export default function TripCard({ trip, isDraft, memberCount, onClick, onDelete, onEdit, onImageUpload }) {
   const [confirming, setConfirming] = useState(false);
   const [nameConfirm, setNameConfirm] = useState(false);
@@ -95,8 +108,7 @@ export default function TripCard({ trip, isDraft, memberCount, onClick, onDelete
   const name        = trip.name        || 'Viaje sin nombre';
   const origin      = trip.origin      || '';
   const destination = trip.destination || '';
-  const startDate   = trip.startDate   || '';
-  const endDate     = trip.endDate     || '';
+  const { startDate, endDate } = deriveDatesFromTrip(trip);
   const status      = isDraft ? 'borrador' : (trip.status || 'proximo');
 
   const gradient  = getGradient(destination || name);

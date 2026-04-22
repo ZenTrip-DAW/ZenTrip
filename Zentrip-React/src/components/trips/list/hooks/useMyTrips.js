@@ -34,10 +34,14 @@ export function useMyTrips() {
   }, [user?.uid]);
 
   const borradores = trips.filter((t) => t.isDraft);
-  const reales     = trips.filter((t) => !t.isDraft).map((t) => ({
-    ...t,
-    status: getTripStatus(t.startDate, t.endDate),
-  }));
+  const reales     = trips.filter((t) => !t.isDraft).map((t) => {
+    const stops = Array.isArray(t.stops) ? t.stops : [];
+    let startDate = t.startDate || '';
+    let endDate   = t.endDate   || '';
+    if (!startDate) { const w = stops.filter((s) => s.startDate); if (w.length) startDate = w.map((s) => s.startDate).sort()[0]; }
+    if (!endDate)   { const w = stops.filter((s) => s.endDate);   if (w.length) endDate   = w.map((s) => s.endDate).sort().reverse()[0]; }
+    return { ...t, status: getTripStatus(startDate, endDate) };
+  });
 
   const handleDeleteTrip = async (tripId) => {
     const trip = trips.find((t) => t.id === tripId);
