@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../config/routes';
 import { STORAGE_KEY } from '../create/hooks/useTripDraft';
+import { getTripById } from '../../../services/tripService';
 import Button from '../../ui/Button';
 import TripCard from './components/TripCard';
 import { useMyTrips } from './hooks/useMyTrips';
@@ -69,21 +70,23 @@ export default function MisViajes() {
   const navigate = useNavigate();
   const { borradores, enCurso, proximos, pasados, loading, userId, handleDeleteTrip, handleUpdateTripCover } = useMyTrips();
 
-  const handleEditTrip = (trip) => {
+  const handleEditTrip = async (trip) => {
+    // Cargar datos frescos del viaje desde la base de datos
+    const freshTrip = await getTripById(trip.id);
     const tripForm = {
-      name: trip.name || '',
-      origin: trip.origin || '',
-      destination: trip.destination || '',
-      stops: trip.stops || [],
-      startDate: trip.startDate || '',
-      endDate: trip.endDate || '',
-      currency: trip.currency || '',
-      budget: trip.budget || '',
-      hasPet: Boolean(trip.hasPet),
+      name: freshTrip?.name || '',
+      origin: freshTrip?.origin || '',
+      destination: freshTrip?.destination || '',
+      stops: freshTrip?.stops || [],
+      startDate: freshTrip?.startDate || '',
+      endDate: freshTrip?.endDate || '',
+      currency: freshTrip?.currency || '',
+      budget: freshTrip?.budget || '',
+      hasPet: Boolean(freshTrip?.hasPet),
       members: [],
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ step: 0, form: tripForm }));
-    navigate(ROUTES.TRIPS.CREATE, { state: { editTripId: trip.id } });
+    navigate(ROUTES.TRIPS.CREATE, { state: { editTripId: trip.id, prefill: tripForm } });
   };
 
   const hasDraft    = borradores.length > 0;

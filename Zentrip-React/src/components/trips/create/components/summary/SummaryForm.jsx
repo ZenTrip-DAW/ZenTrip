@@ -96,6 +96,10 @@ export default function SummaryForm({
   const nights = calcNights(form.startDate, form.endDate);
   const hasBudget = form.budget && Number(form.budget) > 0;
 
+  const routeText = form.hasMultipleStops && form.stops?.length > 0
+    ? [form.origin, ...form.stops.map((s) => s.name)].filter(Boolean).join(' → ')
+    : [form.origin, form.destination].filter(Boolean).join(' → ');
+
   return (
     <div>
       <div className="flex flex-col md:flex-row gap-5 md:items-stretch">
@@ -107,9 +111,7 @@ export default function SummaryForm({
           </SectionRow>
 
           <SectionRow label="Ruta">
-            {(form.origin || form.destination)
-              ? <p className="body text-secondary-5">{form.origin && form.destination ? `${form.origin} → ${form.destination}` : form.origin || form.destination}</p>
-              : <EmptyLine />}
+            {routeText ? <p className="body text-secondary-5">{routeText}</p> : <EmptyLine />}
           </SectionRow>
 
           <SectionRow label="Fechas">

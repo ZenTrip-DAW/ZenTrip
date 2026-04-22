@@ -9,7 +9,31 @@ import { useRecentMembers } from './useRecentMembers';
 export function useCreateTripController() {
   const { user } = useAuth();
   const location = useLocation();
-  const prefill = location.state?.prefill ?? null;
+  // Pre-relleno con vuelo pendiente
+  let prefill = location.state?.prefill ?? null;
+  if (!prefill && typeof window !== 'undefined') {
+    const pendingFlightRaw = sessionStorage.getItem('zt_pending_flight');
+    if (pendingFlightRaw) {
+      try {
+        const pendingFlight = JSON.parse(pendingFlightRaw);
+        // Estructura básica para pre-rellenar el formulario
+        prefill = {
+          origin: pendingFlight?.segments?.[0]?.departureAirport?.cityName || '',
+          destination: pendingFlight?.segments?.[pendingFlight.segments.length - 1]?.arrivalAirport?.cityName || '',
+          startDate: pendingFlight?.segments?.[0]?.departureTime?.slice(0, 10) || '',
+          endDate: pendingFlight?.segments?.[pendingFlight.segments.length - 1]?.arrivalTime?.slice(0, 10) || '',
+          stops: pendingFlight?.segments?.length > 2
+            ? pendingFlight.segments.slice(1, -1).map(seg => ({
+                name: seg.arrivalAirport?.cityName || '',
+                startDate: seg.arrivalTime?.slice(0, 10) || '',
+                endDate: seg.arrivalTime?.slice(0, 10) || '',
+              }))
+            : [],
+          hasMultipleStops: (pendingFlight?.segments?.length ?? 0) > 2,
+        };
+      } catch {}
+    }
+  }
   const { step, form, setForm, fieldErrors, handleChange, handleNext, handleBack, handleGoToStep, handleCancel, navigate } = useTripDraft(prefill);
   const { recientes, addToRecentMembers } = useRecentMembers(user);
 

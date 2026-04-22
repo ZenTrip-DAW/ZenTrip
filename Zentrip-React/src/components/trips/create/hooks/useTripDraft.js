@@ -9,6 +9,7 @@ const INITIAL_FORM = {
   origin: '',
   destination: '',
   stops: [],
+  hasMultipleStops: false,
   startDate: '',
   endDate: '',
   currency: '',
@@ -42,7 +43,8 @@ export function useTripDraft(prefill = null) {
   const [form, setForm] = useState(() => {
     if (prefill) {
       localStorage.removeItem(STORAGE_KEY);
-      return { ...INITIAL_FORM, ...prefill };
+      const hasMultipleStops = Array.isArray(prefill.stops) && prefill.stops.length > 0;
+      return { ...INITIAL_FORM, ...prefill, hasMultipleStops };
     }
     const saved = loadDraft();
     return saved?.form ? { ...INITIAL_FORM, ...saved.form } : INITIAL_FORM;

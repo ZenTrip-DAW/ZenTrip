@@ -296,6 +296,16 @@ export async function addStop(tripId, stop, { insertBeforeLast = false } = {}) {
   const sorted = [...existing].sort((a, b) => a.order - b.order);
   const maxOrder = sorted.length > 0 ? sorted[sorted.length - 1].order : 0;
 
+  // Si solo hay un destino (ninguna parada), al añadir la primera parada, preserva el destino original
+  if (sorted.length === 1) {
+    const destinoOriginal = sorted[0];
+    const newStop = { id: crypto.randomUUID(), name: stop.name || '', order: 1, startDate: stop.startDate || '', endDate: stop.endDate || '' };
+    // El destino original pasa a ser el segundo tramo
+    const destinoFinal = { ...destinoOriginal, order: 2 };
+    await updateStops(tripId, [newStop, destinoFinal]);
+    return newStop;
+  }
+
   if (insertBeforeLast && sorted.length > 0) {
     const shifted = sorted.map((s, i) =>
       i === sorted.length - 1 ? { ...s, order: s.order + 1 } : s

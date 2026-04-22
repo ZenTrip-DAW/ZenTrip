@@ -9,6 +9,7 @@ import {
   addActivity,
   sendFlightBookingNotifications,
 } from '../../services/tripService';
+import { resolveToEnglish, resolveToSpanish } from '../../services/geocodingService';
 import BookingReceiptUpload from '../trips/detail/components/bookings/BookingReceiptUpload';
 import PassengerSelector from '../trips/shared/PassengerSelector';
 import { toPrice, fmt, fmtDate, fmtTime } from '../trips/detail/components/bookings/flights/flightUtils';
@@ -89,6 +90,9 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
   const [done, setDone] = useState(false);
   const [error, setError] = useState(null);
 
+  // null = resolviendo | { autoSave: [{original,display}], userChoice: [{original,display}] }
+  const [resolvedNewDests, setResolvedNewDests] = useState(null);
+
   const seg0 = offer?.segments?.[0];
   const currency = offer?.priceBreakdown?.total?.currencyCode ?? 'EUR';
   const total = toPrice(offer?.priceBreakdown?.total);
@@ -107,23 +111,79 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
   )];
   const flightDest = segDestCities[0] ?? '';
 
-  // Destinos que aún no están entre las paradas del viaje ni en la ciudad de origen
-  const resolvedStops = tripContext?.stops ?? selectedTrip?.stops ?? [];
-  const tripStopNames = resolvedStops.map((s) => normalize(s.name));
-  const tripOriginName = normalize(tripContext?.origin ?? selectedTrip?.origin ?? '');
-  const tripDestinationName = normalize(tripContext?.destination ?? selectedTrip?.destination ?? '');
-  const isAlreadyKnown = (city) => {
-    const c = normalize(city);
-    const matchesCity = (known) => {
-      const part = known.split(',')[0].trim();
-      return known.includes(c) || c.includes(part);
-    };
-    if (flightOriginCity && matchesCity(normalize(flightOriginCity))) return true;
-    if (tripOriginName && matchesCity(tripOriginName)) return true;
-    if (tripDestinationName && matchesCity(tripDestinationName)) return true;
-    return tripStopNames.some((n) => matchesCity(n));
-  };
-  const newDestCities = segDestCities.filter((city) => !isAlreadyKnown(city));
+  // Clasifica los destinos del vuelo en dos categorías:
+  // - autoSave: coincide con destino/parada existente sin fechas → guardar fechas automáticamente
+  // - userChoice: ciudad nueva → checkbox para el usuario
+  useEffect(() => {
+    let active = true;
+    setResolvedNewDests(null);
+
+    const segs = offer?.segments ?? [];
+    const originCode = segs[0]?.departureAirport?.code ?? '';
+    const outbound = segs.filter((s) => s.arrivalAirport?.code !== originCode);
+    const flightCities = [...new Set(outbound.map((s) => s.arrivalAirport?.cityName ?? s.arrivalAirport?.code ?? '').filter(Boolean))];
+
+    if (flightCities.length === 0) { setResolvedNewDests({ autoSave: [], userChoice: [] }); return; }
+
+    const tripOriginRaw = (tripContext?.origin ?? selectedTrip?.origin ?? '').split(',')[0].trim();
+    const tripDestRaw = (tripContext?.destination ?? selectedTrip?.destination ?? '').split(',')[0].trim();
+    const existingStops = tripContext?.stops ?? selectedTrip?.stops ?? [];
+    const stopNamesRaw = existingStops.map((s) => (s.name || '').split(',')[0].trim()).filter(Boolean);
+
+    async function resolve() {
+      const [originEn, destEn, ...stopsEn] = await Promise.all([
+        tripOriginRaw ? resolveToEnglish(tripOriginRaw) : Promise.resolve(null),
+        tripDestRaw ? resolveToEnglish(tripDestRaw) : Promise.resolve(null),
+        ...stopNamesRaw.map((n) => resolveToEnglish(n)),
+      ]);
+
+      const matchCity = (a, b) => {
+        if (!a || !b) return false;
+        const na = normalize(a.split(',')[0].trim());
+        const nb = normalize(b.split(',')[0].trim());
+        return na.length > 2 && nb.length > 2 && (na.includes(nb) || nb.includes(na));
+      };
+
+      const isFlightOrigin = (city) =>
+        matchCity(city, flightOriginCity) || matchCity(city, originEn || tripOriginRaw) || matchCity(city, tripOriginRaw);
+
+      const matchesTripDest = (city) =>
+        matchCity(city, tripDestRaw) || matchCity(city, destEn || tripDestRaw);
+
+      const alreadyInStops = (city) =>
+        existingStops.some((s, i) =>
+          matchCity(city, s.name) || (stopsEn[i] && matchCity(city, stopsEn[i]))
+        );
+
+      const alreadyInStopsWithDates = (city) =>
+        existingStops.some((s, i) =>
+          s.startDate && (matchCity(city, s.name) || (stopsEn[i] && matchCity(city, stopsEn[i])))
+        );
+
+      const autoSave = [];
+      const userChoice = [];
+
+      for (const city of flightCities) {
+        if (isFlightOrigin(city)) continue;
+        if (alreadyInStopsWithDates(city)) continue;
+
+        const display = (await resolveToSpanish(city)) || city;
+
+        if (matchesTripDest(city) && !alreadyInStops(city)) {
+          // Destino existente sin fechas → guardar automáticamente
+          autoSave.push({ original: city, display });
+        } else if (!alreadyInStops(city) && !matchesTripDest(city)) {
+          // Ciudad nueva → el usuario decide
+          userChoice.push({ original: city, display });
+        }
+      }
+
+      if (active) setResolvedNewDests({ autoSave, userChoice });
+    }
+
+    resolve();
+    return () => { active = false; };
+  }, [offer, tripContext, selectedTrip?.origin, selectedTrip?.destination, selectedTrip?.stops]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Carga los viajes del usuario si no hay tripContext
   useEffect(() => {
@@ -172,15 +232,41 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
     setSaving(true);
     setError(null);
     try {
-      if (addDestToTrip && newDestCities.length > 0) {
-        const segs = offer?.segments ?? [];
-        for (const city of newDestCities) {
-          const arrSeg = segs.find((s) => (s.arrivalAirport?.cityName ?? s.arrivalAirport?.code ?? '').toLowerCase() === city.toLowerCase());
-          const depSeg = segs.find((s) => (s.departureAirport?.cityName ?? s.departureAirport?.code ?? '').toLowerCase() === city.toLowerCase());
-          const startDate = arrSeg?.arrivalTime?.slice(0, 10) || '';
-          const endDate = depSeg?.departureTime?.slice(0, 10) || '';
-          await addStop(selectedTrip.id, { name: city, startDate, endDate: endDate || startDate });
+      const segs = offer?.segments ?? [];
+      const tripOrigin = (tripContext?.origin ?? selectedTrip?.origin ?? '').split(',')[0].trim();
+      const tripDest = (tripContext?.destination ?? selectedTrip?.destination ?? '').split(',')[0].trim();
+
+      const saveStop = async ({ original, display }) => {
+        const arrSeg = segs.find((s) => normalize(s.arrivalAirport?.cityName ?? s.arrivalAirport?.code ?? '') === normalize(original));
+        const depSeg = segs.find((s) => normalize(s.departureAirport?.cityName ?? s.departureAirport?.code ?? '') === normalize(original));
+        const startDate = arrSeg?.arrivalTime?.slice(0, 10) || '';
+        const endDate = depSeg?.departureTime?.slice(0, 10) || '';
+
+        // Ordenación inteligente:
+        // Si el vuelo sale del origen del viaje, insertar antes del destino actual
+        // Si el vuelo sale del destino, añadir al final
+        // Si no, añadir al final
+        const flightDepCity = depSeg?.departureAirport?.cityName ?? depSeg?.departureAirport?.code ?? '';
+        const flightDepNorm = normalize(flightDepCity);
+        const tripOriginNorm = normalize(tripOrigin);
+        const tripDestNorm = normalize(tripDest);
+
+        let insertBeforeLast = false;
+        if (flightDepNorm && tripOriginNorm && flightDepNorm.includes(tripOriginNorm)) {
+          insertBeforeLast = true;
         }
+        // Si el vuelo sale del destino, insertBeforeLast = false (añadir al final)
+        // Si no coincide con origen ni destino, por defecto al final
+
+        await addStop(selectedTrip.id, { name: display, startDate, endDate: endDate || startDate }, { insertBeforeLast });
+      };
+
+      // Destinos existentes sin fechas → siempre guardar
+      for (const dest of (resolvedNewDests?.autoSave ?? [])) await saveStop(dest);
+
+      // Ciudades nuevas → solo si el usuario marcó el checkbox
+      if (addDestToTrip) {
+        for (const dest of (resolvedNewDests?.userChoice ?? [])) await saveStop(dest);
       }
 
       const passengerLabel = buildPassengerLabel(passengers, members);
@@ -406,7 +492,24 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
 
               {!loadingTrip && (
                 <>
-                  {newDestCities.length > 0 && (
+                  {resolvedNewDests === null && (
+                    <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-neutral-1 bg-white">
+                      <div className="w-4 h-4 border-2 border-primary-3 border-t-transparent rounded-full animate-spin shrink-0" />
+                      <p className="body-3 text-neutral-4">Comprobando destinos...</p>
+                    </div>
+                  )}
+                  {resolvedNewDests?.autoSave?.length > 0 && (
+                    <div className="flex items-start gap-3 px-4 py-3 rounded-xl border border-auxiliary-green-2 bg-auxiliary-green-1">
+                      <CheckCircle2 className="w-4 h-4 text-auxiliary-green-5 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="body-3 font-semibold text-auxiliary-green-6">
+                          Fechas guardadas para <span className="font-bold">{resolvedNewDests.autoSave.map((d) => d.display).join(', ')}</span>
+                        </p>
+                        <p className="body-3 text-auxiliary-green-5 text-[11px]">Tu destino ya estaba en el viaje — se actualizan las fechas automáticamente</p>
+                      </div>
+                    </div>
+                  )}
+                  {resolvedNewDests?.userChoice?.length > 0 && (
                     <button
                       type="button"
                       onClick={() => setAddDestToTrip((v) => !v)}
@@ -421,7 +524,7 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className={`body-3 font-semibold ${addDestToTrip ? 'text-primary-4' : 'text-neutral-6'}`}>
-                          Añadir <span className="font-bold">{newDestCities.join(', ')}</span> como parada{newDestCities.length > 1 ? 's' : ''} del viaje
+                          Añadir <span className="font-bold">{resolvedNewDests.userChoice.map((d) => d.display).join(', ')}</span> como parada{resolvedNewDests.userChoice.length > 1 ? 's' : ''} del viaje
                         </p>
                         <p className="body-3 text-neutral-3 text-[11px]">
                           Se ordenará automáticamente por fecha de llegada

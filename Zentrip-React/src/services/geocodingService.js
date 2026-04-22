@@ -1,9 +1,9 @@
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 
-export async function resolveToEnglish(cityName) {
+async function resolveCityName(cityName, lang = 'en') {
   if (!cityName?.trim()) return null;
   try {
-    const params = new URLSearchParams({ q: cityName, format: 'json', limit: '1', 'accept-language': 'en' });
+    const params = new URLSearchParams({ q: cityName, format: 'json', limit: '1', 'accept-language': lang });
     const res = await fetch(`${NOMINATIM_URL}?${params}`, {
       headers: { 'User-Agent': 'ZenTrip/1.0 (zentrip3@gmail.com)' },
     });
@@ -14,3 +14,6 @@ export async function resolveToEnglish(cityName) {
     return null;
   }
 }
+
+export const resolveToEnglish = (city) => resolveCityName(city, 'en');
+export const resolveToSpanish = (city) => resolveCityName(city, 'es');
