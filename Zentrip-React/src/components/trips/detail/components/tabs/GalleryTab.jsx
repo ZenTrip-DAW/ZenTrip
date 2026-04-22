@@ -27,7 +27,15 @@ function formatDate(value) {
   return d.toLocaleString('es-ES');
 }
 
+function isSafariBrowser() {
+  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent) || /iPad|iPhone|iPod/.test(navigator.userAgent);
+}
+
 async function downloadImage(url, fileName) {
+  if (isSafariBrowser()) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+    return;
+  }
   const response = await fetch(url);
   if (!response.ok) throw new Error('Could not download file');
   const blob = await response.blob();
