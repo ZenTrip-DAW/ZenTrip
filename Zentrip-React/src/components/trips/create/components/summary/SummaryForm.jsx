@@ -92,13 +92,31 @@ export default function SummaryForm({
   tripCreationLocked = false,
   isEditing = false,
 }) {
+
   const disableCreate = isCreatingTrip || tripCreationLocked;
-  const nights = calcNights(form.startDate, form.endDate);
   const hasBudget = form.budget && Number(form.budget) > 0;
 
   const routeText = form.hasMultipleStops && form.stops?.length > 0
     ? [form.origin, ...form.stops.map((s) => s.name)].filter(Boolean).join(' → ')
     : [form.origin, form.destination].filter(Boolean).join(' → ');
+
+  // Calcular fechas de inicio y fin SOLO usando paradas si existen, si no, usar startDate/endDate
+  let tripStart = form.startDate;
+  let tripEnd = form.endDate;
+  if (form.stops && form.stops.length > 0) {
+    // Buscar la primera parada con startDate y la última con endDate
+    const stopsWithStart = form.stops.filter(s => s.startDate);
+    const stopsWithEnd = form.stops.filter(s => s.endDate);
+    if (stopsWithStart.length > 0) {
+      // Tomar la fecha más temprana
+      tripStart = stopsWithStart.map(s => s.startDate).sort()[0];
+    }
+    if (stopsWithEnd.length > 0) {
+      // Tomar la fecha más tardía
+      tripEnd = stopsWithEnd.map(s => s.endDate).sort().reverse()[0];
+    }
+  }
+  const nights = calcNights(tripStart, tripEnd);
 
   return (
     <div>
@@ -115,8 +133,8 @@ export default function SummaryForm({
           </SectionRow>
 
           <SectionRow label="Fechas">
-            {(form.startDate || form.endDate)
-              ? <p className="body text-secondary-5">{form.startDate && form.endDate ? `${form.startDate} → ${form.endDate}${nights ? ` (${nights} ${nights === 1 ? 'noche' : 'noches'})` : ''}` : form.startDate || form.endDate}</p>
+            {(tripStart || tripEnd)
+              ? <p className="body text-secondary-5">{tripStart && tripEnd ? `${tripStart} → ${tripEnd}${nights ? ` (${nights} ${nights === 1 ? 'noche' : 'noches'})` : ''}` : tripStart || tripEnd}</p>
               : <EmptyLine />}
           </SectionRow>
 

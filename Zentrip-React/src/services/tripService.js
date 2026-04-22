@@ -3,17 +3,30 @@ import { db, auth } from '../config/firebaseConfig';
 import { apiClient } from './apiClient';
 import { deleteCloudinaryPhoto } from './cloudinaryService';
 
+function deriveDatesFromStops(stops, fallbackStart, fallbackEnd) {
+  let startDate = fallbackStart || '';
+  let endDate = fallbackEnd || '';
+  if (stops.length > 0) {
+    const withStart = stops.filter((s) => s.startDate);
+    const withEnd = stops.filter((s) => s.endDate);
+    if (withStart.length > 0) startDate = withStart.map((s) => s.startDate).sort()[0];
+    if (withEnd.length > 0) endDate = withEnd.map((s) => s.endDate).sort().reverse()[0];
+  }
+  return { startDate, endDate };
+}
+
 export async function createTrip(uid, form) {
   const { members, ...tripData } = form;
   const rawStops = Array.isArray(tripData.stops) ? tripData.stops : [];
+  const { startDate, endDate } = deriveDatesFromStops(rawStops, tripData.startDate, tripData.endDate);
   const tripPayload = {
     uid,
     name: tripData.name || '',
     origin: tripData.origin || '',
     destination: tripData.destination || '',
     stops: rawStops,
-    startDate: tripData.startDate || '',
-    endDate: tripData.endDate || '',
+    startDate,
+    endDate,
     currency: tripData.currency || '',
     budget: tripData.budget || '',
     hasPet: Boolean(tripData.hasPet),
@@ -111,13 +124,14 @@ export async function updateTrip(tripId, form) {
     return (a.order ?? 0) - (b.order ?? 0);
   }).map((s, i) => ({ ...s, order: i + 1 }));
   const destination = sorted.length > 0 ? sorted[sorted.length - 1].name : (tripData.destination || '');
+  const { startDate, endDate } = deriveDatesFromStops(sorted, tripData.startDate, tripData.endDate);
   await updateDoc(doc(db, 'trips', tripId), {
     name: tripData.name || '',
     origin: tripData.origin || '',
     destination,
     stops: sorted,
-    startDate: tripData.startDate || '',
-    endDate: tripData.endDate || '',
+    startDate,
+    endDate,
     currency: tripData.currency || '',
     budget: tripData.budget || '',
     hasPet: Boolean(tripData.hasPet),
