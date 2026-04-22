@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { X, ExternalLink, Phone, Globe, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getRestaurantDetails } from '../../../../../../services/restaurantService';
-import { addActivity, addBooking, getBookings, updateBooking } from '../../../../../../services/tripService';
+import { addActivity, addBooking, getBookings, updateBooking, sendRestaurantBookingNotifications } from '../../../../../../services/tripService';
 import { useAuth } from '../../../../../../context/AuthContext';
 import BookingReceiptUpload from '../BookingReceiptUpload';
 import PassengerSelector from '../../../../shared/PassengerSelector';
@@ -14,7 +14,7 @@ function fmtDate(dateStr) {
   return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-export default function RestaurantDetailModal({ restaurant, tripId, bookingParams = {}, members = [], onClose }) {
+export default function RestaurantDetailModal({ restaurant, tripId, trip, bookingParams = {}, members = [], onClose }) {
   const { user, profile } = useAuth();
   const { date, people } = bookingParams;
 
@@ -97,6 +97,13 @@ export default function RestaurantDetailModal({ restaurant, tripId, bookingParam
 
       setBookingId(newBookingId);
       setStep('booked');
+
+      sendRestaurantBookingNotifications(tripId, {
+        bookerUid: user.uid,
+        bookerName: profile?.displayName || profile?.firstName || user.email,
+        restaurantName: info.name,
+        tripName: trip?.name || '',
+      }).catch(() => {});
     } catch (err) {
       console.error('[RestaurantDetailModal] Error al guardar:', err);
     } finally {

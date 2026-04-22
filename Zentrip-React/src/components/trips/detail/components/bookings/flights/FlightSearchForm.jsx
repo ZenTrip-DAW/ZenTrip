@@ -174,7 +174,7 @@ export default function FlightSearchForm({
             </button>
           </div>
 
-          <div ref={cabinRef} className="relative min-w-[140px]">
+          <div ref={cabinRef} className="relative min-w-35">
             <label className="absolute -top-2 left-3 bg-white px-1 body-3 text-neutral-4 z-10">Clase</label>
             <button
               onClick={() => setShowCabin(!showCabin)}

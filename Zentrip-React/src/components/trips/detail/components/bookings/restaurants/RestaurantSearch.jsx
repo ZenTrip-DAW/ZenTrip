@@ -195,6 +195,7 @@ export default function RestaurantSearch({ trip, tripId, members = [] }) {
         <RestaurantDetailModal
           restaurant={selectedRestaurant}
           tripId={tripId}
+          trip={trip}
           bookingParams={{ date, people }}
           members={members}
           onClose={() => setSelectedRestaurant(null)}

@@ -95,23 +95,26 @@ export default function NotificationPanel({ onClose }) {
             {/* Notificaciones de reservas */}
             {tripNotifications.map((n) => {
               const isFlight = n.type === 'flight_booked';
+              const isRestaurant = n.type === 'restaurant_booked';
+              const emoji = isFlight ? '✈️' : isRestaurant ? '🍽️' : '🏨';
+              const title = isFlight ? 'Nuevo vuelo reservado' : isRestaurant ? 'Nuevo restaurante anotado' : 'Nueva reserva de hotel';
+              const itemName = isFlight ? n.flightLabel : isRestaurant ? n.restaurantName : n.hotelName;
+              const nameColor = isFlight ? 'text-secondary-4' : isRestaurant ? 'text-primary-3' : 'text-auxiliary-green-5';
+              const cardClass = isFlight
+                ? 'bg-secondary-1 border-secondary-2'
+                : isRestaurant
+                  ? 'bg-primary-1 border-primary-2'
+                  : 'bg-auxiliary-green-1 border-auxiliary-green-3';
               return (
-                <div
-                  key={n.id}
-                  className={`px-4 py-3 rounded-xl border ${isFlight ? 'bg-secondary-1 border-secondary-2' : 'bg-auxiliary-green-1 border-auxiliary-green-3'}`}
-                >
+                <div key={n.id} className={`px-4 py-3 rounded-xl border ${cardClass}`}>
                   <div className="flex items-start gap-3">
-                    <span className="text-xl shrink-0 mt-0.5">{isFlight ? '✈️' : '🏨'}</span>
+                    <span className="text-xl shrink-0 mt-0.5">{emoji}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="body-3 font-semibold text-neutral-7 mb-0.5">
-                        {isFlight ? 'Nuevo vuelo reservado' : 'Nueva reserva de hotel'}
-                      </p>
+                      <p className="body-3 font-semibold text-neutral-7 mb-0.5">{title}</p>
                       <p className="body-3 text-neutral-5 leading-snug">
-                        <span className={`font-semibold ${isFlight ? 'text-secondary-4' : 'text-auxiliary-green-5'}`}>{n.bookerName}</span>
-                        {' '}ha reservado{' '}
-                        <span className="font-semibold text-neutral-7">
-                          "{isFlight ? n.flightLabel : n.hotelName}"
-                        </span>
+                        <span className={`font-semibold ${nameColor}`}>{n.bookerName}</span>
+                        {' '}ha anotado{' '}
+                        <span className="font-semibold text-neutral-7">"{itemName}"</span>
                         {n.tripName ? <> en <span className="font-semibold text-neutral-7">"{n.tripName}"</span></> : ''}
                       </p>
                       <button
