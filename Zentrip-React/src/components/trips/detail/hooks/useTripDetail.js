@@ -10,6 +10,7 @@ export function useTripDetail(tripId) {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   useEffect(() => {
     if (!tripId || !user?.uid) return;
@@ -17,6 +18,7 @@ export function useTripDetail(tripId) {
     const fetchAll = async () => {
       setLoading(true);
       setError(null);
+      setAccessDenied(false);
       try {
         // El trip es crítico — si falla, mostramos error
         const tripData = await getTripById(tripId);
@@ -25,6 +27,8 @@ export function useTripDetail(tripId) {
           return;
         }
         setTrip(tripData);
+
+        const isCreator = user?.uid === tripData?.uid;
 
         // Members y activities son secundarios — no bloquean si fallan
         const [membersResult, activitiesResult] = await Promise.allSettled([
@@ -35,6 +39,11 @@ export function useTripDetail(tripId) {
         if (membersResult.status === 'fulfilled') {
           setMembers(membersResult.value);
         } else {
+          // Si no es el creador y getTripMembers falla, es acceso denegado (miembro eliminado)
+          if (!isCreator) {
+            setAccessDenied(true);
+            return;
+          }
           console.warn('[useTripDetail] No se pudieron cargar los miembros:', membersResult.reason);
         }
 
@@ -85,6 +94,7 @@ export function useTripDetail(tripId) {
     tripDays,
     loading,
     error,
+    accessDenied,
     setActivities,
     setMembers,
   };

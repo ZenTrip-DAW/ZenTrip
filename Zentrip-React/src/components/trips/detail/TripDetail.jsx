@@ -68,6 +68,7 @@ export default function TripDetail() {
     tripDays,
     loading,
     error,
+    accessDenied,
     setActivities,
     setMembers,
   } = useTripDetail(tripId);
@@ -92,6 +93,7 @@ export default function TripDetail() {
   };
 
   if (loading) return <LoadingState />;
+  if (accessDenied) return <ErrorState message="Ya no tienes acceso a este viaje." onBack={() => navigate('/trips')} />;
   if (error || !trip) return <ErrorState message={error || 'Viaje no encontrado.'} onBack={() => navigate('/trips')} />;
 
   const isCreator = user?.uid === trip?.uid;

@@ -181,8 +181,32 @@ async function createInvitation({ tripId, tripName, email, creatorId, creatorNam
     const doc = existing.docs[0];
     const data = doc.data();
 
-    // Ya aceptó → no reenviar
+    // Ya aceptó → comprobar si fue eliminado del viaje después
     if (data.status === 'accepted') {
+      const acceptedById = data.acceptedById;
+      if (acceptedById) {
+        const memberSnap = await db
+          .collection('trips').doc(tripId)
+          .collection('members').doc(acceptedById)
+          .get();
+        if (memberSnap.exists && memberSnap.data().invitationStatus === 'removed') {
+          // Fue eliminado → permitir re-invitar reseteando la invitación
+          const newToken = signInvitationJwt(
+            { kind: 'email', invitationId: doc.id, tripId, email: normalizedEmail },
+            EMAIL_INVITATION_TTL_SECONDS,
+          );
+          await doc.ref.update({
+            token: newToken,
+            status: 'pending',
+            tripName,
+            creatorId,
+            creatorName,
+            expiresAt: admin.firestore.Timestamp.fromDate(expiresAt),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+          return { invitationId: doc.id, token: newToken };
+        }
+      }
       return { invitationId: doc.id, token: data.token, alreadyAccepted: true };
     }
 
