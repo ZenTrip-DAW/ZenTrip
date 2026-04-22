@@ -179,7 +179,7 @@ export default function RestaurantDetailModal({ restaurant, tripId, trip, bookin
 
               {/* Captura del pago */}
               <div>
-                <p className="body-3 font-bold text-neutral-5 uppercase tracking-wider mb-3">Captura del pago</p>
+                <p className="body-3 font-bold text-neutral-5 uppercase tracking-wider mb-3">Captura de la reserva</p>
                 <BookingReceiptUpload
                   optional={false}
                   onUpdate={(urls) => setReceiptUrls(urls)}
@@ -324,24 +324,36 @@ export default function RestaurantDetailModal({ restaurant, tripId, trip, bookin
                 : '✓ Guardar en el itinerario'}
             </button>
           ) : (
-            <div className="flex flex-col sm:flex-row gap-3">
-              {tripId && (
-                <button
-                  onClick={() => setStep('confirm')}
-                  className="flex-1 h-11 rounded-lg body-2-semibold text-white bg-auxiliary-green-4 hover:bg-auxiliary-green-5 flex items-center justify-center gap-2 transition"
+            <>
+              <div className="flex gap-3">
+                {tripId && (
+                  <button
+                    onClick={() => setStep('confirm')}
+                    className="flex-1 h-11 rounded-lg body-2-semibold text-white bg-auxiliary-green-4 hover:bg-auxiliary-green-5 flex items-center justify-center gap-2 transition"
+                  >
+                    ✓ Añadir al viaje
+                  </button>
+                )}
+                <a
+                  href={mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-11 px-4 rounded-lg border border-primary-3 text-primary-3 flex items-center justify-center gap-2 body-2-semibold hover:bg-primary-1 transition"
                 >
-                  ✓ Añadir al viaje
-                </button>
+                  <ExternalLink className="w-4 h-4" /> Google Maps
+                </a>
+              </div>
+              {info.website && (
+                <a
+                  href={info.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full h-11 rounded-lg border border-secondary-3 text-secondary-3 flex items-center justify-center gap-2 body-2-semibold hover:bg-secondary-1 transition"
+                >
+                  <ExternalLink className="w-4 h-4" /> Reservar en su web
+                </a>
               )}
-              <a
-                href={mapsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="h-11 px-4 rounded-lg border border-secondary-3 text-secondary-3 flex items-center justify-center gap-2 body-2-semibold hover:bg-secondary-1 transition"
-              >
-                <ExternalLink className="w-4 h-4" /> Google Maps
-              </a>
-            </div>
+            </>
           )}
         </div>
 

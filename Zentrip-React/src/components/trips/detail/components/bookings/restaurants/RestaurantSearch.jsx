@@ -1,11 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Search, MapPin, Calendar, Users } from 'lucide-react';
 import { searchRestaurants } from '../../../../../../services/restaurantService';
 import { SectionLabel } from '../hotels/HotelAtoms';
 import BookingBanner from '../BookingBanner';
 import RestaurantCard from './RestaurantCard';
 import RestaurantDetailModal from './RestaurantDetailModal';
+import Pagination from '../../../../../ui/Pagination';
 import { useAuth } from '../../../../../../context/AuthContext';
+
+const PER_PAGE = 5;
+
+const FILTERS = [
+  { key: 'all',        label: 'Todos' },
+  { key: 'open_now',   label: 'Abierto ahora' },
+  { key: 'cheap',      label: '€ / €€' },
+  { key: 'top_rated',  label: 'Mejor valorados' },
+];
 
 function FormField({ label, icon: Icon, children }) {
   return (
@@ -29,6 +39,8 @@ export default function RestaurantSearch({ trip, tripId, members = [] }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+  const [filter, setFilter] = useState('all');
+  const [page, setPage] = useState(1);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -47,7 +59,7 @@ export default function RestaurantSearch({ trip, tripId, members = [] }) {
     );
   }
 
-  const canSearch = query.trim().length >= 2;
+  const canSearch = query.trim().length >= 2 && !!date;
 
   const handleSearch = async () => {
     if (!canSearch) return;
@@ -59,12 +71,61 @@ export default function RestaurantSearch({ trip, tripId, members = [] }) {
       const data = await searchRestaurants({ query: query.trim() });
       setResults(data?.data ?? []);
       setSearched(true);
+      setFilter('all');
+      setPage(1);
     } catch (err) {
       setError(err.message || 'No se pudo realizar la búsqueda. Inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
   };
+
+  const filtered = results.filter((r) => {
+    if (filter === 'open_now') return r.openNow === true;
+    if (filter === 'cheap') return r.priceLevel != null && r.priceLevel <= 2;
+    if (filter === 'top_rated') return r.rating != null && r.rating >= 4.5;
+    return true;
+  });
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const pageSlice = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  const renderResults = () => (
+    <div className="mb-6">
+      <div className="border-t border-neutral-1 mb-5" />
+      <div className="flex gap-2 flex-wrap mb-4">
+        {FILTERS.map((f) => (
+          <button
+            key={f.key}
+            onClick={() => { setFilter(f.key); setPage(1); }}
+            className={`h-8 px-3 rounded-full body-3 border transition ${
+              filter === f.key
+                ? 'border-primary-3 bg-primary-1 text-primary-4 font-bold'
+                : 'border-neutral-2 bg-white text-neutral-5 hover:border-primary-3 hover:text-primary-3'
+            }`}
+          >{f.label}</button>
+        ))}
+      </div>
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-3">
+        <p className="body-3 text-neutral-4">
+          <span className="font-bold text-neutral-7">{filtered.length} restaurantes</span>
+          {query && ` · ${query}`}
+          {people > 0 && ` · ${people} persona${people !== 1 ? 's' : ''}`}
+        </p>
+      </div>
+      {filtered.length > 0 ? (
+        <>
+          <div className="flex flex-col gap-3">
+            {pageSlice.map((r) => (
+              <RestaurantCard key={r.placeId} restaurant={r} onView={setSelectedRestaurant} />
+            ))}
+          </div>
+          <Pagination page={page} totalPages={totalPages} onPage={setPage} />
+        </>
+      ) : (
+        <p className="text-center py-10 body-2 text-neutral-4">No se encontraron restaurantes con estos filtros.</p>
+      )}
+    </div>
+  );
 
   return (
     <div className="bg-white rounded-2xl border border-neutral-1 overflow-hidden">
@@ -150,27 +211,7 @@ export default function RestaurantSearch({ trip, tripId, members = [] }) {
         )}
 
         {/* Resultados */}
-        {searched && (
-          <div className="mb-6">
-            <div className="border-t border-neutral-1 mb-5" />
-            <div className="flex justify-between items-center mb-4">
-              <p className="body-3 text-neutral-4">
-                <span className="font-bold text-neutral-7">{results.length} restaurantes</span>
-                {query && ` · ${query}`}
-                {people > 0 && ` · ${people} persona${people !== 1 ? 's' : ''}`}
-              </p>
-            </div>
-            {results.length > 0 ? (
-              <div className="flex flex-col gap-3">
-                {results.map((r) => (
-                  <RestaurantCard key={r.placeId} restaurant={r} onView={setSelectedRestaurant} />
-                ))}
-              </div>
-            ) : (
-              <p className="text-center py-10 body-2 text-neutral-4">No se encontraron restaurantes en esta zona.</p>
-            )}
-          </div>
-        )}
+        {searched && renderResults()}
 
         {/* Destino del viaje */}
         {trip?.destination && !searched && (

@@ -96,15 +96,18 @@ export default function NotificationPanel({ onClose }) {
             {tripNotifications.map((n) => {
               const isFlight = n.type === 'flight_booked';
               const isRestaurant = n.type === 'restaurant_booked';
-              const emoji = isFlight ? '✈️' : isRestaurant ? '🍽️' : '🏨';
-              const title = isFlight ? 'Nuevo vuelo reservado' : isRestaurant ? 'Nuevo restaurante anotado' : 'Nueva reserva de hotel';
-              const itemName = isFlight ? n.flightLabel : isRestaurant ? n.restaurantName : n.hotelName;
-              const nameColor = isFlight ? 'text-secondary-4' : isRestaurant ? 'text-primary-3' : 'text-auxiliary-green-5';
+              const isActivity = n.type === 'activity_booked';
+              const emoji = isFlight ? '✈️' : isRestaurant ? '🍽️' : isActivity ? '🎯' : '🏨';
+              const title = isFlight ? 'Nuevo vuelo reservado' : isRestaurant ? 'Nuevo restaurante anotado' : isActivity ? 'Nueva actividad anotada' : 'Nueva reserva de hotel';
+              const itemName = isFlight ? n.flightLabel : isRestaurant ? n.restaurantName : isActivity ? n.activityName : n.hotelName;
+              const nameColor = isFlight ? 'text-secondary-4' : isRestaurant ? 'text-primary-3' : isActivity ? 'text-primary-4' : 'text-auxiliary-green-5';
               const cardClass = isFlight
                 ? 'bg-secondary-1 border-secondary-2'
                 : isRestaurant
                   ? 'bg-primary-1 border-primary-2'
-                  : 'bg-auxiliary-green-1 border-auxiliary-green-3';
+                  : isActivity
+                    ? 'bg-primary-1 border-primary-2'
+                    : 'bg-auxiliary-green-1 border-auxiliary-green-3';
               return (
                 <div key={n.id} className={`px-4 py-3 rounded-xl border ${cardClass}`}>
                   <div className="flex items-start gap-3">

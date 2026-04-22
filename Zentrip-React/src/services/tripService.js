@@ -350,6 +350,26 @@ export async function sendRestaurantBookingNotifications(tripId, { bookerUid, bo
   ));
 }
 
+export async function sendActivityBookingNotifications(tripId, { bookerUid, bookerName, activityName, tripName }) {
+  const membersSnap = await getDocs(collection(db, 'trips', tripId, 'members'));
+  const recipients = membersSnap.docs
+    .map((d) => d.data())
+    .filter((m) => m.uid && m.uid !== bookerUid);
+
+  await Promise.all(recipients.map((m) =>
+    addDoc(collection(db, 'notifications'), {
+      recipientUid: m.uid,
+      type: 'activity_booked',
+      tripId,
+      tripName: tripName || '',
+      activityName,
+      bookerName: bookerName || 'Un miembro',
+      read: false,
+      createdAt: serverTimestamp(),
+    })
+  ));
+}
+
 // Trip gallery
 
 export async function getGalleryFolders(tripId) {
