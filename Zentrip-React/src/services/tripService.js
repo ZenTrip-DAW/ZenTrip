@@ -408,3 +408,8 @@ export async function addGalleryPhoto(tripId, photoData) {
   });
   return docRef.id;
 }
+
+export async function deleteGalleryPhoto(tripId, photoId) {
+  if (!tripId || !photoId) throw new Error('Trip id and photo id are required.');
+  await deleteDoc(doc(db, 'trips', tripId, 'galleryPhotos', photoId));
+}
