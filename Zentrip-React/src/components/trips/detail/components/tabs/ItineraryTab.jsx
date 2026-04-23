@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useWeather } from '../../hooks/useWeather';
 import { ChevronLeft } from 'lucide-react';
 import BookingBar from '../itinerary/BookingBar';
 import TripSummaryCard from '../itinerary/TripSummaryCard';
@@ -33,6 +34,7 @@ export default function ItinerarioTab({
 }) {
   const [selectedDay, setSelectedDay] = useState(tripDays[0] ?? null);
   const [activeBooking, setActiveBooking] = useState(initialActiveBooking);
+  const weatherByDate = useWeather(trip?.destination);
 
   const handleBookingSelect = (key) => {
     const opening = activeBooking !== key;
@@ -132,6 +134,7 @@ export default function ItinerarioTab({
                     selectedDay={selectedDay}
                     onSelectDay={setSelectedDay}
                     activitiesByDate={activitiesByDate}
+                    weatherByDate={weatherByDate}
                   />
                   <DayActivities
                     selectedDay={selectedDay}
