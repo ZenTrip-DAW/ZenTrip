@@ -15,7 +15,7 @@ export default function HotelSearch({ trip, members = [], tripId }) {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [dest, setDest]         = useState(trip?.destination || '');
+  const [dest, setDest]         = useState(trip?.destination?.split(',')[0]?.trim() || '');
   const [checkIn, setCheckIn]   = useState(trip?.startDate || '');
   const [checkOut, setCheckOut] = useState(trip?.endDate || '');
   const [rooms, setRooms]       = useState(1);
@@ -171,7 +171,7 @@ export default function HotelSearch({ trip, members = [], tripId }) {
           <div className="mb-6">
             <SectionLabel>Destino del viaje</SectionLabel>
             <button
-              onClick={() => setDest(trip.destination)}
+              onClick={() => setDest(trip.destination.split(',')[0].trim())}
               className="flex items-center gap-3 bg-white border border-neutral-1 rounded-xl px-4 py-3 hover:border-primary-2 hover:bg-primary-1 transition w-full text-left"
             >
               <span className="text-2xl">🏨</span>
