@@ -13,16 +13,19 @@ const rapidApiHeaders = {
 
 
 const resolveDestinationByCity = async ({ city, languageCode = 'es' }) => {
+  // Strip country if format is "City, Country" — the API only handles city names
+  const queryCity = city.includes(',') ? city.split(',')[0].trim() : city;
+
   const response = await axios.get(`${BASE_URL}/hotels/searchDestination`, {
     headers: rapidApiHeaders,
     params: {
-      query: city,
+      query: queryCity,
       languagecode: languageCode,
     },
   });
 
   const destinations = response.data?.data ?? response.data?.destinations ?? [];
-  const normalizedCity = city.trim().toLowerCase();
+  const normalizedCity = queryCity.trim().toLowerCase();
 
   const matchedDestination = destinations.find((destination) => {
     const name = String(destination.cityName || destination.name || destination.label || '').toLowerCase();

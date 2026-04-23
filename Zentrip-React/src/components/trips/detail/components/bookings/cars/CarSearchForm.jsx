@@ -37,6 +37,7 @@ export default function CarSearchForm({
   const pickUpTimer  = useRef(null);
   const dropOffTimer = useRef(null);
   const today = new Date().toISOString().split('T')[0];
+  const maxDate = (() => { const d = new Date(); d.setFullYear(d.getFullYear() + 2); return d.toISOString().split('T')[0]; })();
 
   const fetchSugg = async (query, setter) => {
     if (!query || query.length < 2) { setter([]); return; }
@@ -163,13 +164,13 @@ export default function CarSearchForm({
       {/* Fechas y horas */}
       <div className="grid grid-cols-2 gap-4 mb-4">
         <FormField label="Recogida" icon={Calendar}>
-          <input type="date" value={pickUpDate} min={today} onChange={(e) => onPickUpDateChange(e.target.value)} className={inputCls} />
+          <input type="date" value={pickUpDate} min={today} max={maxDate} onChange={(e) => { if (e.target.value <= maxDate) onPickUpDateChange(e.target.value); }} className={inputCls} />
         </FormField>
         <FormField label="Hora recogida" icon={Clock}>
           <input type="time" value={pickUpTime} onChange={(e) => onPickUpTimeChange(e.target.value)} className={inputCls} />
         </FormField>
         <FormField label="Devolución" icon={Calendar}>
-          <input type="date" value={dropOffDate} min={pickUpDate || today} onChange={(e) => onDropOffDateChange(e.target.value)} className={inputCls} />
+          <input type="date" value={dropOffDate} min={pickUpDate || today} max={maxDate} onChange={(e) => { if (e.target.value <= maxDate) onDropOffDateChange(e.target.value); }} className={inputCls} />
         </FormField>
         <FormField label="Hora devolución" icon={Clock}>
           <input type="time" value={dropOffTime} onChange={(e) => onDropOffTimeChange(e.target.value)} className={inputCls} />

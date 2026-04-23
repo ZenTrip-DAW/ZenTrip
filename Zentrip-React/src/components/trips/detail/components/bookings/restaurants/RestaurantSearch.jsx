@@ -43,6 +43,7 @@ export default function RestaurantSearch({ trip, tripId, members = [] }) {
   const [page, setPage] = useState(1);
 
   const today = new Date().toISOString().split('T')[0];
+  const maxDate = (() => { const d = new Date(); d.setFullYear(d.getFullYear() + 2); return d.toISOString().split('T')[0]; })();
 
   useEffect(() => {
     if (trip?.destination) setQuery(trip.destination.split(',')[0].trim());
@@ -167,7 +168,8 @@ export default function RestaurantSearch({ trip, tripId, members = [] }) {
                 type="date"
                 value={date}
                 min={today}
-                onChange={(e) => setDate(e.target.value)}
+                max={maxDate}
+                onChange={(e) => { if (e.target.value <= maxDate) setDate(e.target.value); }}
                 className="w-full h-10 px-3 border border-neutral-2 rounded-lg body-2 text-neutral-7 bg-white outline-none focus:border-secondary-3 focus:ring-2 focus:ring-secondary-3/20 transition"
               />
             </FormField>

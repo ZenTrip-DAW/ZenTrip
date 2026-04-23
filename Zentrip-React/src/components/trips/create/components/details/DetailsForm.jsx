@@ -55,6 +55,7 @@ export default function DetailsForm({
   onCancel,
 }) {
   const today = new Date().toISOString().split('T')[0];
+  const maxDate = (() => { const d = new Date(); d.setFullYear(d.getFullYear() + 2); return d.toISOString().split('T')[0]; })();
   const minEndDate = form.startDate ? addDays(form.startDate, 1) : today;
 
   const [dateErrors, setDateErrors] = useState({ startDate: '', endDate: '' });
@@ -96,7 +97,9 @@ export default function DetailsForm({
       setDateErrors((prev) => ({ ...prev, [name]: '' }));
       return onChange(e);
     }
-    if (name === 'startDate' && value < today) {
+    if (value > maxDate) {
+      setDateErrors((prev) => ({ ...prev, [name]: 'La fecha no puede ser más de 2 años en el futuro' }));
+    } else if (name === 'startDate' && value < today) {
       setDateErrors((prev) => ({ ...prev, startDate: 'No puedes seleccionar una fecha anterior a hoy' }));
     } else if (name === 'endDate' && value < minEndDate) {
       setDateErrors((prev) => ({ ...prev, endDate: 'La fecha fin no puede ser anterior a la fecha inicio' }));
@@ -217,6 +220,7 @@ export default function DetailsForm({
                   onChange={handleDateChange}
                   error={fieldErrors.startDate}
                   min={today}
+                  max={maxDate}
                 />
                 {dateErrors.startDate && (
                   <p className="mt-1 body-3 text-feedback-error">{dateErrors.startDate}</p>
@@ -232,6 +236,7 @@ export default function DetailsForm({
                   onChange={handleDateChange}
                   error={fieldErrors.endDate}
                   min={minEndDate}
+                  max={maxDate}
                   disabled={!form.startDate}
                 />
                 {dateErrors.endDate && (

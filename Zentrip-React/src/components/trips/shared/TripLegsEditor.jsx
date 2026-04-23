@@ -35,6 +35,9 @@ function TravelConnector({ prevEndDate, nextStartDate }) {
   );
 }
 
+const TODAY = new Date().toISOString().split('T')[0];
+const MAX_DATE = (() => { const d = new Date(); d.setFullYear(d.getFullYear() + 2); return d.toISOString().split('T')[0]; })();
+
 function LegRow({ stop, index, total, originName, onOriginChange, onChange, onRemove }) {
   const isLast = index === total - 1;
   const isFirst = index === 0;
@@ -99,7 +102,9 @@ function LegRow({ stop, index, total, originName, onOriginChange, onChange, onRe
             label="Desde"
             type="date"
             value={stop.startDate}
-            onChange={(e) => onChange({ ...stop, startDate: e.target.value })}
+            min={TODAY}
+            max={MAX_DATE}
+            onChange={(e) => { if (e.target.value <= MAX_DATE) onChange({ ...stop, startDate: e.target.value }); }}
           />
           <Input
             variant="light"
@@ -107,7 +112,9 @@ function LegRow({ stop, index, total, originName, onOriginChange, onChange, onRe
             label="Hasta"
             type="date"
             value={stop.endDate}
-            onChange={(e) => onChange({ ...stop, endDate: e.target.value })}
+            min={TODAY}
+            max={MAX_DATE}
+            onChange={(e) => { if (e.target.value <= MAX_DATE) onChange({ ...stop, endDate: e.target.value }); }}
           />
         </div>
       </div>

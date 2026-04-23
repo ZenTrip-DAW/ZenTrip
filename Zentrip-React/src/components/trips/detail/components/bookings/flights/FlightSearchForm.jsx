@@ -2,6 +2,8 @@ import { useRef, useState } from 'react';
 import AirportInput from './AirportInput';
 import PassengerDropdown from './PassengerDropdown';
 import { CABIN_LABELS, addDays, today, emptyLeg } from './flightUtils';
+
+const maxDate = (() => { const d = new Date(); d.setFullYear(d.getFullYear() + 2); return d.toISOString().split('T')[0]; })();
 import { IcSwap, IcUser, IcSeat, IcChevDown, IcCheck, IcTrash, IcPlus } from './flightIcons';
 
 export default function FlightSearchForm({
@@ -96,7 +98,8 @@ export default function FlightSearchForm({
                     type="date"
                     value={leg.date}
                     min={today}
-                    onChange={(e) => updateLeg(i, 'date', e.target.value)}
+                    max={maxDate}
+                    onChange={(e) => { if (e.target.value <= maxDate) updateLeg(i, 'date', e.target.value); }}
                     className="w-full border border-neutral-2 rounded-xl px-3 py-3 body-2 text-neutral-7 bg-transparent outline-none focus:border-secondary-3 transition-colors"
                   />
                 </div>
@@ -140,7 +143,8 @@ export default function FlightSearchForm({
                   type="date"
                   value={departDate}
                   min={today}
-                  onChange={(e) => onDepartDateChange(e.target.value)}
+                  max={maxDate}
+                  onChange={(e) => { if (e.target.value <= maxDate) onDepartDateChange(e.target.value); }}
                   className="w-full border border-neutral-2 rounded-xl px-3 py-3 body-2 text-neutral-7 bg-transparent outline-none focus:border-secondary-3 transition-colors"
                 />
               </div>
@@ -151,7 +155,8 @@ export default function FlightSearchForm({
                     type="date"
                     value={returnDate}
                     min={departDate}
-                    onChange={(e) => onReturnDateChange(e.target.value)}
+                    max={maxDate}
+                    onChange={(e) => { if (e.target.value <= maxDate) onReturnDateChange(e.target.value); }}
                     className="w-full border border-neutral-2 rounded-xl px-3 py-3 body-2 text-neutral-7 bg-transparent outline-none focus:border-secondary-3 transition-colors"
                   />
                 </div>

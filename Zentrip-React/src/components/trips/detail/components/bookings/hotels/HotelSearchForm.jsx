@@ -1,3 +1,5 @@
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { Search, MapPin, Calendar, BedDouble, Users, Baby } from 'lucide-react';
 import { SectionLabel } from './HotelAtoms';
 
@@ -25,15 +27,59 @@ function NumberInput({ value, onChange, min = 1 }) {
   );
 }
 
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
 function DateInput({ value, onChange }) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const maxDate = new Date(today);
+  maxDate.setFullYear(maxDate.getFullYear() + 2);
+
+  const years = [];
+  for (let y = today.getFullYear(); y <= maxDate.getFullYear(); y++) years.push(y);
+
+  const selected = value ? new Date(value + 'T00:00:00') : null;
+
+  const handleChange = (date) => {
+    if (!date) { onChange({ target: { value: '' } }); return; }
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    onChange({ target: { value: `${yyyy}-${mm}-${dd}` } });
+  };
+
   return (
-    <input
-      type="date"
-      value={value}
-      onChange={onChange}
-      min={today}
+    <DatePicker
+      selected={selected}
+      onChange={handleChange}
+      minDate={today}
+      maxDate={maxDate}
+      dateFormat="dd/MM/yyyy"
+      placeholderText="dd/mm/aaaa"
+      wrapperClassName="w-full"
       className="w-full h-10 px-3 border border-neutral-2 rounded-lg body-2 text-neutral-7 bg-white outline-none focus:border-secondary-3 focus:ring-2 focus:ring-secondary-3/20 transition"
+      renderCustomHeader={({ date, changeYear, changeMonth, decreaseMonth, increaseMonth, prevMonthButtonDisabled, nextMonthButtonDisabled }) => (
+        <div className="flex items-center justify-between px-2 py-1 gap-1">
+          <button onClick={decreaseMonth} disabled={prevMonthButtonDisabled} className="px-1 text-lg disabled:opacity-30 hover:text-primary-3">‹</button>
+          <div className="flex gap-1">
+            <select
+              value={date.getMonth()}
+              onChange={(e) => changeMonth(Number(e.target.value))}
+              className="text-xs border border-neutral-2 rounded px-1 py-0.5"
+            >
+              {MONTHS.map((m, i) => <option key={m} value={i}>{m}</option>)}
+            </select>
+            <select
+              value={date.getFullYear()}
+              onChange={(e) => changeYear(Number(e.target.value))}
+              className="text-xs border border-neutral-2 rounded px-1 py-0.5"
+            >
+              {years.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+          </div>
+          <button onClick={increaseMonth} disabled={nextMonthButtonDisabled} className="px-1 text-lg disabled:opacity-30 hover:text-primary-3">›</button>
+        </div>
+      )}
     />
   );
 }
