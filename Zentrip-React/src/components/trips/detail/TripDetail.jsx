@@ -52,11 +52,18 @@ export default function TripDetail() {
   const location = useLocation();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState(location.state?.activeTab ?? 'itinerario');
-  const [initialBooking, setInitialBooking] = useState(null);
-  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [initialBooking, setInitialBooking]     = useState(null);
+  const [initialRouteData, setInitialRouteData] = useState(null);
+  const [showLeaveModal, setShowLeaveModal]     = useState(false);
 
   const handleGoBook = (bookingKey) => {
     setInitialBooking(bookingKey);
+    setActiveTab('itinerario');
+  };
+
+  const handleOpenRoute = (routeData) => {
+    setInitialRouteData(routeData);
+    setInitialBooking('rutas');
     setActiveTab('itinerario');
   };
 
@@ -120,7 +127,8 @@ export default function TripDetail() {
           onAddActivity={handleAddActivity}
           onInvite={isCreator ? () => setActiveTab('invitaciones') : null}
           initialActiveBooking={initialBooking}
-          onBookingOpened={() => setInitialBooking(null)}
+          initialRouteData={initialRouteData}
+          onBookingOpened={() => { setInitialBooking(null); setInitialRouteData(null); }}
         />
       );
     }
@@ -143,6 +151,7 @@ export default function TripDetail() {
           members={members}
           tripId={tripId}
           onGoBook={handleGoBook}
+          onOpenRoute={handleOpenRoute}
         />
       );
     }

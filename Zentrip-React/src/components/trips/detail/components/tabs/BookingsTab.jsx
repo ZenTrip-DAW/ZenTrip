@@ -5,6 +5,7 @@ import CarBookings from '../bookings/cars/CarBookings';
 import FlightSearch from '../bookings/flights/FlightSearch';
 import RestaurantBookings from '../bookings/restaurants/RestaurantBookings';
 import ActivityBookings from '../bookings/activities/ActivityBookings';
+import RouteBookings from '../bookings/routes/RouteBookings';
 import PlaceholderTab from './PlaceholderTab';
 
 const SUBTABS = [
@@ -13,11 +14,11 @@ const SUBTABS = [
   { key: 'coches',       label: 'Coches',        Icon: Car,     available: true  },
   { key: 'trenes',       label: 'Trenes',        Icon: Train,   available: false },
   { key: 'actividades',  label: 'Actividades',   Icon: Compass, available: true  },
-  { key: 'rutas',        label: 'Rutas',         Icon: Map,     available: false },
+  { key: 'rutas',        label: 'Rutas',         Icon: Map,     available: true  },
   { key: 'restaurantes', label: 'Restaurantes',  Icon: Utensils,available: true  },
 ];
 
-export default function ReservasTab({ trip, members, tripId, initialSubTab = 'hoteles', onGoBook }) {
+export default function ReservasTab({ trip, members, tripId, initialSubTab = 'hoteles', onGoBook, onOpenRoute }) {
   const [activeSubTab, setActiveSubTab] = useState(initialSubTab);
 
   const renderContent = () => {
@@ -35,6 +36,9 @@ export default function ReservasTab({ trip, members, tripId, initialSubTab = 'ho
     }
     if (activeSubTab === 'actividades') {
       return <ActivityBookings tripId={tripId} onGoBook={onGoBook} />;
+    }
+    if (activeSubTab === 'rutas') {
+      return <RouteBookings tripId={tripId} onOpenRoute={onOpenRoute} />;
     }
     const tab = SUBTABS.find((t) => t.key === activeSubTab);
     return <PlaceholderTab label={tab?.label ?? 'Próximamente'} emoji="🚧" />;

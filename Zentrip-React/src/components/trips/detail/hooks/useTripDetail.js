@@ -85,19 +85,33 @@ export function useTripDetail(tripId) {
     return acc;
   }, {});
 
-  // Días del viaje generados desde startDate hasta endDate
+  // Días del viaje: rango derivado del trip/stops + cualquier fecha de actividad existente
   const tripDays = (() => {
-    if (!trip?.startDate || !trip?.endDate) return [];
-    const days = [];
-    const start = new Date(trip.startDate + 'T00:00:00');
-    const end = new Date(trip.endDate + 'T00:00:00');
-    const cur = new Date(start);
-    while (cur <= end) {
-      const iso = cur.toISOString().split('T')[0];
-      days.push(iso);
-      cur.setDate(cur.getDate() + 1);
+    const daySet = new Set();
+
+    // Rango de fechas desde trip o stops
+    let startDate = trip?.startDate || '';
+    let endDate   = trip?.endDate   || '';
+    if (!startDate || !endDate) {
+      const stops = Array.isArray(trip?.stops) ? trip.stops : [];
+      const ws = stops.filter((s) => s.startDate);
+      const we = stops.filter((s) => s.endDate);
+      if (!startDate && ws.length > 0) startDate = ws.map((s) => s.startDate).sort()[0];
+      if (!endDate   && we.length > 0) endDate   = we.map((s) => s.endDate).sort().reverse()[0];
     }
-    return days;
+    if (startDate && endDate) {
+      const cur = new Date(startDate + 'T00:00:00');
+      const end = new Date(endDate   + 'T00:00:00');
+      while (cur <= end) {
+        daySet.add(cur.toISOString().split('T')[0]);
+        cur.setDate(cur.getDate() + 1);
+      }
+    }
+
+    // Incluir siempre fechas de actividades existentes (aunque queden fuera del rango)
+    activities.forEach((act) => { if (act.date) daySet.add(act.date); });
+
+    return [...daySet].sort();
   })();
 
   return {

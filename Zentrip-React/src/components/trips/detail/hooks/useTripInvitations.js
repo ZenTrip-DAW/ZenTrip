@@ -3,7 +3,7 @@ import { useAuth } from '../../../../context/AuthContext';
 import { addMemberToTrip, removeMemberFromTrip, getTripPublicInviteLink, sendTripInvitations } from '../../../../services/tripService';
 import { useRecentMembers } from '../../create/hooks/useRecentMembers';
 
-export function useTripInvitations(tripId, tripName, initialMembers = [], onMemberRemoved) {
+export function useTripInvitations(tripId, tripName, initialMembers = [], onMemberRemoved, isCreator = true) {
   const { user } = useAuth();
   const [invitados, setInvitados] = useState(initialMembers);
   const [inviteLink, setInviteLink] = useState('');
@@ -14,13 +14,13 @@ export function useTripInvitations(tripId, tripName, initialMembers = [], onMemb
   }, [initialMembers]);
 
   useEffect(() => {
-    if (!tripId) return;
+    if (!tripId || !isCreator) return;
     let active = true;
     getTripPublicInviteLink(tripId, '')
       .then((data) => { if (active) setInviteLink(data?.shareLink || ''); })
       .catch(() => {});
     return () => { active = false; };
-  }, [tripId]);
+  }, [tripId, isCreator]);
 
   const handleAddMember = async (member) => {
     if (!member?.uid) return;

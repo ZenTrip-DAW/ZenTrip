@@ -28,6 +28,7 @@ export default function ItinerarioTab({
   onAddActivity,
   onInvite,
   initialActiveBooking = null,
+  initialRouteData = null,
   onBookingOpened,
 }) {
   const [selectedDay, setSelectedDay] = useState(tripDays[0] ?? null);
@@ -48,8 +49,10 @@ export default function ItinerarioTab({
       return (
         <RouteExplorer
           trip={trip}
+          tripId={tripId}
           tripDays={tripDays}
           activitiesByDate={activitiesByDate}
+          initialData={initialRouteData}
         />
       );
     }

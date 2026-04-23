@@ -30,7 +30,7 @@ const TABS = [
 export default function InvitationsTab({ tripId, tripName, members, isCreator, onLeaveTrip, onMemberRemoved }) {
   const [activeTab, setActiveTab] = useState('members');
   const [memberToRemove, setMemberToRemove] = useState(null);
-  const { invitados, inviteLink, recientes, handleAddMember, handleAddEmailGuest, handleRemoveMember } = useTripInvitations(tripId, tripName, members, onMemberRemoved);
+  const { invitados, inviteLink, recientes, handleAddMember, handleAddEmailGuest, handleRemoveMember } = useTripInvitations(tripId, tripName, members, onMemberRemoved, isCreator);
 
   if (!isCreator) {
     return (
