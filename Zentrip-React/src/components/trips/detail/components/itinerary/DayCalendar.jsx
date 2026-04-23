@@ -31,7 +31,7 @@ function getVisibleDays(allDays, view, offset) {
   return allDays.slice(offset * size, offset * size + size);
 }
 
-export default function DayCalendar({ tripDays, selectedDay, onSelectDay, activitiesByDate = {} }) {
+export default function DayCalendar({ tripDays, selectedDay, onSelectDay, activitiesByDate = {}, weatherByDate = {} }) {
   const [view, setView]     = React.useState('week1');
   const [offset, setOffset] = React.useState(0);
 
@@ -94,6 +94,7 @@ export default function DayCalendar({ tripDays, selectedDay, onSelectDay, activi
           const dayNum    = date.getDate();
           const isSelected = selectedDay === dayStr;
           const count     = (activitiesByDate[dayStr] || []).length;
+          const weather   = weatherByDate[dayStr];
 
           return (
             <button
@@ -112,9 +113,12 @@ export default function DayCalendar({ tripDays, selectedDay, onSelectDay, activi
               <span className={`text-base sm:text-lg font-semibold leading-none ${isSelected ? 'text-white' : 'text-secondary-5'}`}>
                 {dayNum}
               </span>
-              {/* Placeholder clima — se llenará cuando se integre la API */}
-              <span className="text-sm opacity-0 select-none leading-none">☀</span>
-              <span className={`body-3 ${isSelected ? 'text-secondary-1' : 'text-neutral-3'}`}>—</span>
+              <span className="text-base leading-none">
+                {weather?.emoji ?? <span className="opacity-0 select-none">☀</span>}
+              </span>
+              <span className={`text-[10px] font-semibold leading-none ${isSelected ? 'text-secondary-1' : 'text-neutral-4'}`}>
+                {weather?.temp != null ? `${weather.temp}°` : <span className="opacity-0">0°</span>}
+              </span>
               {count > 0 ? (
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-4.5 text-center leading-none ${
                   isSelected ? 'bg-white/20 text-white' : 'bg-primary-1 text-primary-3'
