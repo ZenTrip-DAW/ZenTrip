@@ -249,8 +249,6 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
         const flightDepCity = depSeg?.departureAirport?.cityName ?? depSeg?.departureAirport?.code ?? '';
         const flightDepNorm = normalize(flightDepCity);
         const tripOriginNorm = normalize(tripOrigin);
-        const tripDestNorm = normalize(tripDest);
-
         let insertBeforeLast = false;
         if (flightDepNorm && tripOriginNorm && flightDepNorm.includes(tripOriginNorm)) {
           insertBeforeLast = true;
@@ -261,12 +259,16 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
         await addStop(selectedTrip.id, { name: display, startDate, endDate: endDate || startDate }, { insertBeforeLast });
       };
 
-      // Destinos existentes sin fechas → siempre guardar
-      for (const dest of (resolvedNewDests?.autoSave ?? [])) await saveStop(dest);
+      // Destinos existentes sin fechas → siempre guardar (solo si se tiene permiso de escritura en el viaje)
+      for (const dest of (resolvedNewDests?.autoSave ?? [])) {
+        try { await saveStop(dest); } catch { /* miembro sin permisos de escritura en el viaje — continúa */ }
+      }
 
       // Ciudades nuevas → solo si el usuario marcó el checkbox
       if (addDestToTrip) {
-        for (const dest of (resolvedNewDests?.userChoice ?? [])) await saveStop(dest);
+        for (const dest of (resolvedNewDests?.userChoice ?? [])) {
+          try { await saveStop(dest); } catch { /* ídem */ }
+        }
       }
 
       const passengerLabel = buildPassengerLabel(passengers, members);

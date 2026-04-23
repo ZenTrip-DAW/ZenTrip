@@ -3,6 +3,7 @@ import { useJsApiLoader, GoogleMap, DirectionsRenderer, Autocomplete } from '@re
 import { Plus, X, Navigation, Clock, Route, MapPin, Car, Shuffle, Footprints, Bike, Bus, Save, Check } from 'lucide-react';
 import BookingBanner from '../BookingBanner';
 import { addBooking } from '../../../../../../services/tripService';
+import { useAuth } from '../../../../../../context/AuthContext';
 
 const LIBRARIES = ['places'];
 const MAP_STYLE = { width: '100%', height: '420px' };
@@ -232,6 +233,7 @@ function TransitItinerary({ legs }) {
 }
 
 export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesByDate = {}, initialData = null }) {
+  const { user } = useAuth();
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_KEY,
     libraries: LIBRARIES,
@@ -462,6 +464,11 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
         waypoints: waypoints.filter((w) => w.value.trim()).map((w) => w.value),
         distance: routeInfo.distance,
         duration: routeInfo.duration,
+        status: 'reservado',
+        createdBy: {
+          uid: user?.uid ?? null,
+          name: user?.displayName || user?.email || null,
+        },
       });
       setSaved(true);
       setSavingRoute(false);
