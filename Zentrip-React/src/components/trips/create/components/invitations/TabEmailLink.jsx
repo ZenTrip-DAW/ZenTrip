@@ -255,7 +255,7 @@ export default function TabEnlaceEmail({ enlaceInvitacion = '', invitados = [], 
             readOnly
             value={enlaceInvitacion}
             placeholder="https://zentrip.com/join/..."
-            className="flex-1 min-w-[220px] bg-neutral-1 border border-neutral-1 rounded-lg px-4 py-2 body-2 text-neutral-3 cursor-default focus:outline-none"
+            className="flex-1 min-w-220px bg-neutral-1 border border-neutral-1 rounded-lg px-4 py-2 body-2 text-neutral-3 cursor-default focus:outline-none"
           />
           <button
             type="button"
@@ -306,7 +306,7 @@ export default function TabEnlaceEmail({ enlaceInvitacion = '', invitados = [], 
               </button>
             </div>
 
-            <div className="mt-4 rounded-xl border border-neutral-1 bg-neutral-1 p-4 flex items-center justify-center min-h-[220px]">
+            <div className="mt-4 rounded-xl border border-neutral-1 bg-neutral-1 p-4 flex items-center justify-center min-h-220px">
               {qrLoading && <p className="body-2 text-neutral-4">Generando QR...</p>}
               {!qrLoading && qrError && <AlertMessage message={qrError} variant="error" />}
               {!qrLoading && !qrError && qrImage && (

@@ -82,7 +82,7 @@ function WaypointRow({ wp, index, total, onChange, onRemove, isLoaded }) {
     <div className="flex items-start gap-2 mb-1">
       <div className="flex flex-col items-center shrink-0 pt-3">
         <div className={`w-2.5 h-2.5 rounded-full ${dotColor}`} />
-        {!isLast && <div className="w-px flex-1 min-h-[20px] bg-neutral-2 mt-1" />}
+        {!isLast && <div className="w-px flex-1 min-h-20px bg-neutral-2 mt-1" />}
       </div>
 
       <div className="flex-1 min-w-0">
