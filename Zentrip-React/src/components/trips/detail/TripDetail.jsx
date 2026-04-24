@@ -153,7 +153,10 @@ export default function TripDetail() {
           members={members}
           isCreator={isCreator}
           onLeaveTrip={isCreator ? null : () => setShowLeaveModal(true)}
-          onMemberRemoved={(uid) => setMembers((prev) => prev.filter((m) => m.uid !== uid))}
+          onMemberRemoved={(uid) => setMembers((prev) => {
+            if (!prev.some((m) => m.uid === uid)) return prev;
+            return prev.filter((m) => m.uid !== uid);
+          })}
         />
       );
     }
