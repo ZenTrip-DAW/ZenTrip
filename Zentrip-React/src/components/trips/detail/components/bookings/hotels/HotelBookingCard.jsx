@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { fmtDate } from './hotelUtils';
 import { deleteBooking, deleteActivity } from '../../../../../../services/tripService';
+import ReceiptManagerModal from '../ReceiptManagerModal';
 
 function CancelBookingModal({ booking, tripId, onConfirm, onClose }) {
   const [deleting, setDeleting] = useState(false);
@@ -54,6 +55,8 @@ function CancelBookingModal({ booking, tripId, onConfirm, onClose }) {
 
 export default function HotelBookingCard({ booking, tripId, onDetails, onCancelled }) {
   const [showCancel, setShowCancel] = useState(false);
+  const [showReceipts, setShowReceipts] = useState(false);
+  const [receiptUrls, setReceiptUrls] = useState(booking.receiptUrls ?? []);
 
   return (
     <>
@@ -96,6 +99,12 @@ export default function HotelBookingCard({ booking, tripId, onDetails, onCancell
             </a>
           )}
           <button
+            onClick={() => setShowReceipts(true)}
+            className="h-9 px-3 rounded-lg bg-auxiliary-green-1 border border-auxiliary-green-2 body-3 font-semibold text-auxiliary-green-5 flex items-center justify-center hover:bg-auxiliary-green-2 transition w-full sm:w-auto"
+          >
+            🧾 {receiptUrls.length > 0 ? `${receiptUrls.length} comprobante${receiptUrls.length > 1 ? 's' : ''}` : 'Añadir comprobante'}
+          </button>
+          <button
             onClick={() => setShowCancel(true)}
             className="h-9 px-3 rounded-lg border border-b-feedback-error-strong text-feedback-error-strong body-3 font-bold flex items-center justify-center hover:bg-red-50 transition w-full sm:w-auto"
           >
@@ -104,6 +113,14 @@ export default function HotelBookingCard({ booking, tripId, onDetails, onCancell
         </div>
       </div>
 
+      {showReceipts && (
+        <ReceiptManagerModal
+          booking={{ ...booking, receiptUrls }}
+          tripId={tripId}
+          onClose={() => setShowReceipts(false)}
+          onUpdated={(urls) => setReceiptUrls(urls)}
+        />
+      )}
       {showCancel && (
         <CancelBookingModal
           booking={booking}

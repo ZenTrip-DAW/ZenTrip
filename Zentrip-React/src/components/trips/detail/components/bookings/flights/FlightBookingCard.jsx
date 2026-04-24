@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plane, Users, X, ExternalLink, Calendar, Clock, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { deleteFlightBooking } from '../../../../../../services/tripService';
+import ReceiptManagerModal from '../ReceiptManagerModal';
 import { SegmentRow } from './FlightAtoms';
 import {
   fmt, fmtDate, fmtDateShort, fmtTime,
@@ -113,6 +114,7 @@ export default function FlightBookingCard({ booking, tripId, members = [], onCan
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [showCancel, setShowCancel] = useState(false);
   const [showReceipts, setShowReceipts] = useState(false);
+  const [receiptUrls, setReceiptUrls] = useState(booking.receiptUrls ?? []);
 
   const segments = booking.segments ?? [];
   const hasSegments = segments.length > 0;
@@ -215,14 +217,12 @@ export default function FlightBookingCard({ booking, tripId, members = [], onCan
 
             {/* Footer: comprobante + cancelar */}
             <div className="px-4 pb-3 border-t border-neutral-1 pt-3 flex items-center gap-2 flex-wrap">
-              {booking.receiptUrls?.length > 0 && (
-                <button
-                  onClick={() => setShowReceipts(true)}
-                  className="flex items-center gap-1.5 body-3 text-auxiliary-green-5 font-semibold px-2.5 py-1.5 bg-auxiliary-green-1 border border-auxiliary-green-2 rounded-lg hover:bg-auxiliary-green-2 transition"
-                >
-                  🧾 Ver comprobante{booking.receiptUrls.length > 1 ? `s (${booking.receiptUrls.length})` : ''}
-                </button>
-              )}
+              <button
+                onClick={() => setShowReceipts(true)}
+                className="flex items-center gap-1.5 body-3 text-auxiliary-green-5 font-semibold px-2.5 py-1.5 bg-auxiliary-green-1 border border-auxiliary-green-2 rounded-lg hover:bg-auxiliary-green-2 transition"
+              >
+                🧾 {receiptUrls.length > 0 ? `${receiptUrls.length} comprobante${receiptUrls.length > 1 ? 's' : ''}` : 'Añadir comprobante'}
+              </button>
               <button
                 onClick={() => setShowCancel(true)}
                 className="ml-auto h-8 px-3 rounded-lg border border-red-300 text-red-600 body-3 font-semibold hover:bg-red-50 transition flex items-center gap-1"
@@ -234,8 +234,13 @@ export default function FlightBookingCard({ booking, tripId, members = [], onCan
         )}
       </div>
 
-      {showReceipts && booking.receiptUrls?.length > 0 && (
-        <ReceiptGallery urls={booking.receiptUrls} onClose={() => setShowReceipts(false)} />
+      {showReceipts && (
+        <ReceiptManagerModal
+          booking={{ ...booking, receiptUrls }}
+          tripId={tripId}
+          onClose={() => setShowReceipts(false)}
+          onUpdated={(urls) => setReceiptUrls(urls)}
+        />
       )}
       {showCancel && (
         <CancelModal
