@@ -34,10 +34,11 @@ export default function RestaurantSearch({ trip, tripId, members = [] }) {
   const { user } = useAuth();
   const [query, setQuery] = useState('');
   const [date, setDate] = useState(trip?.startDate || '');
-  const [people, setPeople] = useState(() => {
+  const [adults, setAdults] = useState(() => {
     const accepted = members.filter((m) => m.invitationStatus === 'accepted').length;
     return Math.max(1, accepted);
   });
+  const [children, setChildren] = useState(0);
   const [results, setResults] = useState([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -114,7 +115,7 @@ export default function RestaurantSearch({ trip, tripId, members = [] }) {
         <p className="body-3 text-neutral-4">
           <span className="font-bold text-neutral-7">{filtered.length} restaurantes</span>
           {query && ` · ${query}`}
-          {people > 0 && ` · ${people} persona${people !== 1 ? 's' : ''}`}
+          {adults > 0 && ` · ${adults} adulto${adults !== 1 ? 's' : ''}${children > 0 ? `, ${children} niño${children !== 1 ? 's' : ''}` : ''}`}
         </p>
       </div>
       {filtered.length > 0 ? (
@@ -166,8 +167,8 @@ export default function RestaurantSearch({ trip, tripId, members = [] }) {
             </FormField>
           </div>
 
-          {/* Fecha y personas */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          {/* Fecha, adultos y niños */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <FormField label="Fecha" icon={Calendar}>
               <input
                 type="date"
@@ -178,13 +179,23 @@ export default function RestaurantSearch({ trip, tripId, members = [] }) {
                 className="w-full h-10 px-3 border border-neutral-2 rounded-lg body-2 text-neutral-7 bg-white outline-none focus:border-secondary-3 focus:ring-2 focus:ring-secondary-3/20 transition"
               />
             </FormField>
-            <FormField label="Personas" icon={Users}>
+            <FormField label="Adultos" icon={Users}>
               <input
                 type="number"
                 min={1}
                 max={20}
-                value={people}
-                onChange={(e) => setPeople(Math.max(1, Math.min(20, Number(e.target.value))))}
+                value={adults}
+                onChange={(e) => setAdults(Math.max(1, Math.min(20, Number(e.target.value))))}
+                className="w-full h-10 px-3 border border-neutral-2 rounded-lg body-2 text-neutral-7 bg-white outline-none focus:border-secondary-3 focus:ring-2 focus:ring-secondary-3/20 transition"
+              />
+            </FormField>
+            <FormField label="Niños" icon={Users}>
+              <input
+                type="number"
+                min={0}
+                max={20}
+                value={children}
+                onChange={(e) => setChildren(Math.max(0, Math.min(20, Number(e.target.value))))}
                 className="w-full h-10 px-3 border border-neutral-2 rounded-lg body-2 text-neutral-7 bg-white outline-none focus:border-secondary-3 focus:ring-2 focus:ring-secondary-3/20 transition"
               />
             </FormField>
@@ -244,7 +255,7 @@ export default function RestaurantSearch({ trip, tripId, members = [] }) {
             restaurant={selectedRestaurant}
             tripId={tripId}
             trip={trip}
-            bookingParams={{ date, people }}
+            bookingParams={{ date, adults, children }}
             members={members}
             onClose={() => setSelectedRestaurant(null)}
           />

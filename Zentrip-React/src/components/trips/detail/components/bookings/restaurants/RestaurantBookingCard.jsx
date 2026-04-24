@@ -71,8 +71,10 @@ export default function RestaurantBookingCard({ booking, tripId, onCancelled }) 
                 {booking.date && (
                   <span className="text-[11px] text-neutral-4">{fmtDate(booking.date)}</span>
                 )}
-                {booking.people != null && (
-                  <span className="text-[11px] text-neutral-4">{booking.people} pers.</span>
+                {booking.adults != null && (
+                  <span className="text-[11px] text-neutral-4">
+                    {booking.adults} adulto{booking.adults !== 1 ? 's' : ''}{booking.children > 0 ? `, ${booking.children} niño${booking.children !== 1 ? 's' : ''}` : ''}
+                  </span>
                 )}
               </div>
             </div>
