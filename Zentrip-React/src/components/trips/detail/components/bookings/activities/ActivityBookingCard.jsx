@@ -125,7 +125,7 @@ export default function ActivityBookingCard({ booking, tripId, members = [], onC
           )}
           <button
             onClick={() => setShowReceipts(true)}
-            className="h-9 px-3 rounded-lg bg-auxiliary-green-1 border border-auxiliary-green-2 body-3 font-semibold text-auxiliary-green-5 flex items-center hover:bg-auxiliary-green-2 transition"
+            className="h-9 px-3 rounded-lg bg-secondary-1 border border-secondary-2 body-3 font-semibold text-secondary-4 flex items-center hover:bg-secondary-2 transition"
           >
             🧾 {receiptUrls.length > 0 ? `${receiptUrls.length} comprobante${receiptUrls.length > 1 ? 's' : ''}` : 'Añadir comprobante'}
           </button>

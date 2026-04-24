@@ -219,7 +219,7 @@ export default function FlightBookingCard({ booking, tripId, members = [], onCan
             <div className="px-4 pb-3 border-t border-neutral-1 pt-3 flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => setShowReceipts(true)}
-                className="flex items-center gap-1.5 body-3 text-auxiliary-green-5 font-semibold px-2.5 py-1.5 bg-auxiliary-green-1 border border-auxiliary-green-2 rounded-lg hover:bg-auxiliary-green-2 transition"
+                className="flex items-center gap-1.5 body-3 text-secondary-4 font-semibold px-2.5 py-1.5 bg-secondary-1 border border-secondary-2 rounded-lg hover:bg-secondary-2 transition"
               >
                 🧾 {receiptUrls.length > 0 ? `${receiptUrls.length} comprobante${receiptUrls.length > 1 ? 's' : ''}` : 'Añadir comprobante'}
               </button>
