@@ -34,7 +34,10 @@ export default function RestaurantSearch({ trip, tripId, members = [] }) {
   const { user } = useAuth();
   const [query, setQuery] = useState('');
   const [date, setDate] = useState(trip?.startDate || '');
-  const [people, setPeople] = useState(2);
+  const [people, setPeople] = useState(() => {
+    const accepted = members.filter((m) => m.invitationStatus === 'accepted').length;
+    return Math.max(1, accepted + 1);
+  });
   const [results, setResults] = useState([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
