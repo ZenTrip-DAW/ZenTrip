@@ -3,6 +3,7 @@ import { Search, MapPin, Calendar, Users } from 'lucide-react';
 import { searchRestaurants } from '../../../../../../services/restaurantService';
 import { SectionLabel } from '../hotels/HotelAtoms';
 import BookingBanner from '../BookingBanner';
+import ImageLoadGate from '../../../../../shared/ImageLoadGate';
 import RestaurantCard from './RestaurantCard';
 import RestaurantDetailModal from './RestaurantDetailModal';
 import Pagination from '../../../../../ui/Pagination';
@@ -129,16 +130,17 @@ export default function RestaurantSearch({ trip, tripId, members = [] }) {
   );
 
   return (
-    <div className="bg-white rounded-2xl border border-neutral-1 overflow-hidden">
-      <BookingBanner
-        src="/img/background/bookings/restaurant.jpg"
-        objectPosition="center 70%"
-        alt="Restaurantes"
-        title="¿Dónde coméis?"
-        subtitle="Busca los mejores restaurantes para tu grupo"
-      />
+    <ImageLoadGate src="/img/background/bookings/restaurant.jpg" alt="Restaurantes">
+      <div className="bg-white rounded-2xl border border-neutral-1 overflow-hidden">
+        <BookingBanner
+          src="/img/background/bookings/restaurant.jpg"
+          objectPosition="center 70%"
+          alt="Restaurantes"
+          title="¿Dónde coméis?"
+          subtitle="Busca los mejores restaurantes para tu grupo"
+        />
 
-      <div className="p-4 sm:p-6">
+        <div className="p-4 sm:p-6">
 
         {/* Formulario */}
         <div className="bg-white border border-neutral-1 rounded-2xl p-4 sm:p-6 shadow-sm mb-7">
@@ -205,45 +207,46 @@ export default function RestaurantSearch({ trip, tripId, members = [] }) {
           </button>
         </div>
 
-        {/* Error */}
-        {error && (
-          <div className="bg-feedback-error/10 border border-feedback-error/30 rounded-xl px-4 py-3 mb-5 body-3 text-feedback-error-strong flex items-center gap-2">
-            ⚠️ {error}
-          </div>
-        )}
+          {/* Error */}
+          {error && (
+            <div className="bg-feedback-error/10 border border-feedback-error/30 rounded-xl px-4 py-3 mb-5 body-3 text-feedback-error-strong flex items-center gap-2">
+              ⚠️ {error}
+            </div>
+          )}
 
-        {/* Resultados */}
-        {searched && renderResults()}
+          {/* Resultados */}
+          {searched && renderResults()}
 
-        {/* Destino del viaje */}
-        {trip?.destination && !searched && (
-          <div className="mb-6">
-            <SectionLabel>Destino del viaje</SectionLabel>
-            <button
-              onClick={() => setQuery(trip.destination.split(',')[0].trim())}
-              className="flex items-center gap-3 bg-white border border-neutral-1 rounded-xl px-4 py-3 hover:border-primary-2 hover:bg-primary-1 transition w-full text-left"
-            >
-              <span className="text-2xl">🍽️</span>
-              <div>
-                <p className="body-2-semibold text-neutral-7">{trip.destination}</p>
-                {trip.origin && <p className="body-3 text-neutral-4">Desde {trip.origin}</p>}
-              </div>
-            </button>
-          </div>
+          {/* Destino del viaje */}
+          {trip?.destination && !searched && (
+            <div className="mb-6">
+              <SectionLabel>Destino del viaje</SectionLabel>
+              <button
+                onClick={() => setQuery(trip.destination.split(',')[0].trim())}
+                className="flex items-center gap-3 bg-white border border-neutral-1 rounded-xl px-4 py-3 hover:border-primary-2 hover:bg-primary-1 transition w-full text-left"
+              >
+                <span className="text-2xl">🍽️</span>
+                <div>
+                  <p className="body-2-semibold text-neutral-7">{trip.destination}</p>
+                  {trip.origin && <p className="body-3 text-neutral-4">Desde {trip.origin}</p>}
+                </div>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Modal detalle */}
+        {selectedRestaurant && (
+          <RestaurantDetailModal
+            restaurant={selectedRestaurant}
+            tripId={tripId}
+            trip={trip}
+            bookingParams={{ date, people }}
+            members={members}
+            onClose={() => setSelectedRestaurant(null)}
+          />
         )}
       </div>
-
-      {/* Modal detalle */}
-      {selectedRestaurant && (
-        <RestaurantDetailModal
-          restaurant={selectedRestaurant}
-          tripId={tripId}
-          trip={trip}
-          bookingParams={{ date, people }}
-          members={members}
-          onClose={() => setSelectedRestaurant(null)}
-        />
-      )}
-    </div>
+    </ImageLoadGate>
   );
 }

@@ -3,6 +3,7 @@ import { Car } from 'lucide-react';
 import { SectionLabel } from '../hotels/HotelAtoms';
 import CarBookingCard from './CarBookingCard';
 import BookingBanner from '../BookingBanner';
+import ImageLoadGate from '../../../../../shared/ImageLoadGate';
 import { useAuth } from '../../../../../../context/AuthContext';
 import { getBookings } from '../../../../../../services/tripService';
 
@@ -26,15 +27,16 @@ export default function CarBookings({ tripId, onGoBook }) {
   }
 
   return (
-    <>
-      <BookingBanner
-        src="/img/background/bookings/car.jpg"
-        objectPosition="center 30%"
-        alt="Coches"
-        title="Coches"
-        subtitle="Gestiona los coches alquilados para el viaje"
-      />
-      <div className="p-4 sm:p-6">
+    <ImageLoadGate src="/img/background/bookings/car.jpg" alt="Coches">
+      <>
+        <BookingBanner
+          src="/img/background/bookings/car.jpg"
+          objectPosition="center 30%"
+          alt="Coches"
+          title="Coches"
+          subtitle="Gestiona los coches alquilados para el viaje"
+        />
+        <div className="p-4 sm:p-6">
         {bookings.length > 0 ? (
           <div className="mb-7">
             <SectionLabel>Coches reservados</SectionLabel>
@@ -69,7 +71,8 @@ export default function CarBookings({ tripId, onGoBook }) {
             <p className="body-3 text-neutral-4">Ir al buscador de coches del viaje</p>
           </div>
         </button>
-      </div>
-    </>
+        </div>
+      </>
+    </ImageLoadGate>
   );
 }

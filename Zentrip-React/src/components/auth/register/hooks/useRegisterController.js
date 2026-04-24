@@ -244,7 +244,9 @@ export function useRegisterController(navigate) {
       }
 
       if (inviteToken && invitationInfo?.tripName) {
-        window.dispatchEvent(new CustomEvent('zt-invitation-accepted-email', { detail: { tripName: invitationInfo.tripName } }));
+        window.dispatchEvent(new CustomEvent('zt-invitation-accepted-email', {
+          detail: { tripId: invitationInfo.tripId, tripName: invitationInfo.tripName },
+        }));
       }
 
       navigate(await getPostLoginPath(user));

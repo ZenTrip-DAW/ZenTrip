@@ -4,6 +4,7 @@ import { getBookings } from '../../../../../../services/tripService';
 import { useAuth } from '../../../../../../context/AuthContext';
 import FlightBookingCard from './FlightBookingCard';
 import BookingBanner from '../BookingBanner';
+import ImageLoadGate from '../../../../../shared/ImageLoadGate';
 import { SectionLabel, TipCard } from './FlightAtoms';
 import { todayStr, getFirstDep, TIPS } from './flightBookingUtils';
 
@@ -37,14 +38,15 @@ export default function FlightSearch({ members = [], tripId, onGoBook }) {
   }
 
   return (
-    <>
-      <BookingBanner
-        src="/img/background/bookings/plane.jpg"
-        alt="Vuelos"
-        title="Vuelos"
-        subtitle="Gestiona los vuelos reservados para el viaje"
-      />
-      <div className="p-4 sm:p-6">
+    <ImageLoadGate src="/img/background/bookings/plane.jpg" alt="Vuelos">
+      <>
+        <BookingBanner
+          src="/img/background/bookings/plane.jpg"
+          alt="Vuelos"
+          title="Vuelos"
+          subtitle="Gestiona los vuelos reservados para el viaje"
+        />
+        <div className="p-4 sm:p-6">
       {/* Vuelos próximos */}
       {upcoming.length > 0 ? (
         <div className="mb-7">
@@ -111,7 +113,8 @@ export default function FlightSearch({ members = [], tripId, onGoBook }) {
           </div>
         </div>
       )}
-      </div>
-    </>
+        </div>
+      </>
+    </ImageLoadGate>
   );
 }

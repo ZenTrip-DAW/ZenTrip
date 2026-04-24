@@ -126,8 +126,8 @@ const Header = () => {
                             <path d="M16.0183 24.5C15.8132 24.8536 15.5188 25.1471 15.1646 25.3511C14.8104 25.5552 14.4088 25.6625 14 25.6625C13.5912 25.6625 13.1896 25.5552 12.8354 25.3511C12.4812 25.1471 12.1868 24.8536 11.9817 24.5M21 9.33334C21 7.47683 20.2625 5.69635 18.9497 4.3836C17.637 3.07084 15.8565 2.33334 14 2.33334C12.1435 2.33334 10.363 3.07084 9.05025 4.3836C7.7375 5.69635 7 7.47683 7 9.33334C7 17.5 3.5 19.8333 3.5 19.8333H24.5C24.5 19.8333 21 17.5 21 9.33334Z" stroke="#1E1E1E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                         {notificationCount > 0 && (
-                            <span className="absolute -top-1 -right-1 bg-primary-3 text-white body-3 rounded-full flex items-center justify-center min-w-4.5 h-4.5">
-                                {notificationCount}
+                            <span className="absolute -top-1 -right-1 flex min-w-5 h-5 items-center justify-center rounded-full bg-primary-3 px-1 text-[10px] font-semibold leading-none text-white shadow-sm">
+                                {notificationCount > 99 ? '99+' : notificationCount}
                             </span>
                         )}
                     </button>

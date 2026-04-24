@@ -233,7 +233,9 @@ export function useLoginController(navigate) {
       await saveUserToken(refreshedUser);
       const { emailMismatch } = await reconcileInvitationAccess();
       if (inviteToken && !emailMismatch && invitationInfo?.tripName) {
-        window.dispatchEvent(new CustomEvent('zt-invitation-accepted-email', { detail: { tripName: invitationInfo.tripName } }));
+        window.dispatchEvent(new CustomEvent('zt-invitation-accepted-email', {
+          detail: { tripId: invitationInfo.tripId, tripName: invitationInfo.tripName },
+        }));
       }
       saveSessionExpiry();
       const destination = emailMismatch ? ROUTES.HOME : await getPostLoginPath(refreshedUser);

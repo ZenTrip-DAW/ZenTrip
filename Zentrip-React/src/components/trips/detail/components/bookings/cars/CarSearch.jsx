@@ -3,6 +3,7 @@ import { searchCars, getCarLocations } from '../../../../../../services/carServi
 import { mapApiCar, getDays, fmtDate, TIPS } from './carUtils';
 import { SectionLabel, TipCard } from '../hotels/HotelAtoms';
 import BookingBanner from '../BookingBanner';
+import ImageLoadGate from '../../../../../shared/ImageLoadGate';
 import CarSearchForm from './CarSearchForm';
 import CarResults from './CarResults';
 import CarDetailModal from './CarDetailModal';
@@ -115,94 +116,95 @@ export default function CarSearch({ trip, members = [], tripId, onGoBook }) {
   const handleSortChange   = (key) => { setSortKey(key); setPage(1); };
 
   return (
-    <div className="bg-white rounded-2xl border border-neutral-1 overflow-hidden">
-      <BookingBanner
-        src="/img/background/bookings/car.jpg"
-        objectPosition="center 30%"
-        alt="Coches"
-        title="¿Necesitáis coche?"
-        subtitle="Busca el alquiler de coche perfecto para tu grupo"
-      />
+    <ImageLoadGate src="/img/background/bookings/car.jpg" alt="Coches">
+      <div className="bg-white rounded-2xl border border-neutral-1 overflow-hidden">
+        <BookingBanner
+          src="/img/background/bookings/car.jpg"
+          objectPosition="center 30%"
+          alt="Coches"
+          title="¿Necesitáis coche?"
+          subtitle="Busca el alquiler de coche perfecto para tu grupo"
+        />
 
-      <div className="p-4 sm:p-6">
-
-        <div className="mb-7">
-          <CarSearchForm
-            pickUpLocation={pickUpLocation}     onPickUpLocationChange={setPickUpLocation}
-            dropOffLocation={dropOffLocation}   onDropOffLocationChange={setDropOffLocation}
-            sameLocation={sameLocation}         onSameLocationChange={setSameLocation}
-            pickUpDate={pickUpDate}             onPickUpDateChange={setPickUpDate}
-            dropOffDate={dropOffDate}           onDropOffDateChange={setDropOffDate}
-            pickUpTime={pickUpTime}             onPickUpTimeChange={setPickUpTime}
-            dropOffTime={dropOffTime}           onDropOffTimeChange={setDropOffTime}
-            driverAge={driverAge}               onDriverAgeChange={setDriverAge}
-            pickUpQuery={pickUpText}            onPickUpQueryChange={setPickUpText}
-            dropOffQuery={dropOffText}          onDropOffQueryChange={setDropOffText}
-            loading={loading}
-            canSearch={canSearch}
-            onSearch={handleSearch}
-          />
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div className="bg-feedback-error/10 border border-feedback-error/30 rounded-xl px-4 py-3 mb-5 body-3 text-feedback-error-strong flex items-center gap-2">
-            ⚠️ {error}
+        <div className="p-4 sm:p-6">
+          <div className="mb-7">
+            <CarSearchForm
+              pickUpLocation={pickUpLocation}     onPickUpLocationChange={setPickUpLocation}
+              dropOffLocation={dropOffLocation}   onDropOffLocationChange={setDropOffLocation}
+              sameLocation={sameLocation}         onSameLocationChange={setSameLocation}
+              pickUpDate={pickUpDate}             onPickUpDateChange={setPickUpDate}
+              dropOffDate={dropOffDate}           onDropOffDateChange={setDropOffDate}
+              pickUpTime={pickUpTime}             onPickUpTimeChange={setPickUpTime}
+              dropOffTime={dropOffTime}           onDropOffTimeChange={setDropOffTime}
+              driverAge={driverAge}               onDriverAgeChange={setDriverAge}
+              pickUpQuery={pickUpText}            onPickUpQueryChange={setPickUpText}
+              dropOffQuery={dropOffText}          onDropOffQueryChange={setDropOffText}
+              loading={loading}
+              canSearch={canSearch}
+              onSearch={handleSearch}
+            />
           </div>
-        )}
 
-        {/* Resultados */}
-        {searched && (
-          <CarResults
-            cars={cars}
-            searchedLocation={searchedLocation}
-            days={days}
-            filter={filter}   onFilterChange={handleFilterChange}
-            sortKey={sortKey} onSortChange={handleSortChange}
-            page={page}       onPageChange={setPage}
-            onView={setSelectedCar}
-          />
-        )}
+          {/* Error */}
+          {error && (
+            <div className="bg-feedback-error/10 border border-feedback-error/30 rounded-xl px-4 py-3 mb-5 body-3 text-feedback-error-strong flex items-center gap-2">
+              ⚠️ {error}
+            </div>
+          )}
 
-        {/* Destino del viaje */}
-        {trip?.destination && !searched && (
-          <div className="mb-6">
-            <SectionLabel>Destino del viaje</SectionLabel>
-            <div className="flex items-center gap-3 bg-white border border-neutral-1 rounded-xl px-4 py-3">
-              <span className="text-2xl">🚗</span>
-              <div>
-                <p className="body-2-semibold text-neutral-7">{trip.destination}</p>
-                {trip.origin && <p className="body-3 text-neutral-4">Desde {trip.origin}</p>}
-                {days > 0 && (
-                  <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary-1 text-primary-4 font-titles">
-                    {days} día{days !== 1 ? 's' : ''}
-                  </span>
-                )}
+          {/* Resultados */}
+          {searched && (
+            <CarResults
+              cars={cars}
+              searchedLocation={searchedLocation}
+              days={days}
+              filter={filter}   onFilterChange={handleFilterChange}
+              sortKey={sortKey} onSortChange={handleSortChange}
+              page={page}       onPageChange={setPage}
+              onView={setSelectedCar}
+            />
+          )}
+
+          {/* Destino del viaje */}
+          {trip?.destination && !searched && (
+            <div className="mb-6">
+              <SectionLabel>Destino del viaje</SectionLabel>
+              <div className="flex items-center gap-3 bg-white border border-neutral-1 rounded-xl px-4 py-3">
+                <span className="text-2xl">🚗</span>
+                <div>
+                  <p className="body-2-semibold text-neutral-7">{trip.destination}</p>
+                  {trip.origin && <p className="body-3 text-neutral-4">Desde {trip.origin}</p>}
+                  {days > 0 && (
+                    <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary-1 text-primary-4 font-titles">
+                      {days} día{days !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Tips */}
-        {!searched && (
-          <div>
-            <SectionLabel>Consejos para el alquiler</SectionLabel>
-            <div className="grid grid-cols-2 gap-3">
-              {TIPS.map((t) => <TipCard key={t.title} {...t} />)}
+          {/* Tips */}
+          {!searched && (
+            <div>
+              <SectionLabel>Consejos para el alquiler</SectionLabel>
+              <div className="grid grid-cols-2 gap-3">
+                {TIPS.map((t) => <TipCard key={t.title} {...t} />)}
+              </div>
             </div>
-          </div>
+          )}
+        </div>
+
+        {/* Modal de detalles */}
+        {selectedCar && (
+          <CarDetailModal
+            car={selectedCar}
+            searchParams={{ pickUpDate, dropOffDate, pickUpTime, dropOffTime, currencyCode: trip?.currency || 'EUR' }}
+            tripId={tripId}
+            onClose={() => setSelectedCar(null)}
+          />
         )}
       </div>
-
-      {/* Modal de detalles */}
-      {selectedCar && (
-        <CarDetailModal
-          car={selectedCar}
-          searchParams={{ pickUpDate, dropOffDate, pickUpTime, dropOffTime, currencyCode: trip?.currency || 'EUR' }}
-          tripId={tripId}
-          onClose={() => setSelectedCar(null)}
-        />
-      )}
-    </div>
+    </ImageLoadGate>
   );
 }

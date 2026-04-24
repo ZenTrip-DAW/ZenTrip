@@ -13,12 +13,15 @@ export function NotificationProvider({ children }) {
   const [unseenCount, setUnseenCount] = useState(0);
   const knownIdsRef = useRef(new Set());
   const knownTripNotifsRef = useRef(new Set());
+  const seenInvitationIdsRef = useRef(new Set());
+  const consumedAcceptedIdsRef = useRef(new Set());
 
   useEffect(() => {
     if (!user?.email) {
       setNotifications([]);
       setUnseenCount(0);
       knownIdsRef.current = new Set();
+      seenInvitationIdsRef.current = new Set();
       return;
     }
 
@@ -36,7 +39,9 @@ export function NotificationProvider({ children }) {
         const added = [...newIds].filter((id) => !knownIdsRef.current.has(id));
         const removed = [...knownIdsRef.current].filter((id) => !newIds.has(id));
         if (added.length > 0) setUnseenCount((prev) => prev + added.length);
-        if (removed.length > 0) setUnseenCount((prev) => Math.max(0, prev - removed.length));
+        const removedUnseen = removed.filter((id) => !seenInvitationIdsRef.current.has(id));
+        if (removedUnseen.length > 0) setUnseenCount((prev) => Math.max(0, prev - removedUnseen.length));
+        removed.forEach((id) => seenInvitationIdsRef.current.delete(id));
         knownIdsRef.current = newIds;
         setNotifications(docs);
       },
@@ -78,9 +83,9 @@ export function NotificationProvider({ children }) {
   // Escucha aceptaciones desde el flujo de login/registro por enlace
   useEffect(() => {
     const handleEmailAccepted = (e) => {
-      const { tripName } = e.detail || {};
+      const { tripId, tripName } = e.detail || {};
       if (!tripName) return;
-      setAcceptedNotifications((prev) => [{ tripName }, ...prev]);
+      setAcceptedNotifications((prev) => [{ tripId, tripName, createdAt: new Date().toISOString() }, ...prev]);
       setUnseenCount((prev) => prev + 1);
     };
     window.addEventListener('zt-invitation-accepted-email', handleEmailAccepted);
@@ -91,12 +96,33 @@ export function NotificationProvider({ children }) {
     setUnseenCount(0);
   }, []);
 
-  const markTripNotificationRead = useCallback(async (notifId) => {
-    await updateDoc(doc(db, 'notifications', notifId), { read: true });
+  const markInvitationNotificationSeen = useCallback((notifId) => {
+    if (!notifId || seenInvitationIdsRef.current.has(notifId)) return;
+    seenInvitationIdsRef.current.add(notifId);
+    setUnseenCount((prev) => Math.max(0, prev - 1));
   }, []);
 
+  const decrementUnseenCount = useCallback(() => {
+    setUnseenCount((prev) => Math.max(0, prev - 1));
+  }, []);
+
+  const markTripNotificationRead = useCallback(async (notifId) => {
+    await updateDoc(doc(db, 'notifications', notifId), { read: true });
+    decrementUnseenCount();
+  }, [decrementUnseenCount]);
+
   const addAcceptedNotification = useCallback((data) => {
-    setAcceptedNotifications((prev) => [data, ...prev]);
+    const uiId = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    setAcceptedNotifications((prev) => [{ uiId, createdAt: new Date().toISOString(), ...data }, ...prev]);
+  }, []);
+
+  const consumeAcceptedNotification = useCallback((uiId) => {
+    if (!uiId || consumedAcceptedIdsRef.current.has(uiId)) return;
+    consumedAcceptedIdsRef.current.add(uiId);
+    setAcceptedNotifications((prev) => prev.filter((notification) => notification.uiId !== uiId));
+    setUnseenCount((prev) => Math.max(0, prev - 1));
   }, []);
 
   const clearAcceptedNotifications = useCallback(() => {
@@ -109,9 +135,12 @@ export function NotificationProvider({ children }) {
       tripNotifications,
       unseenCount,
       markAsSeen,
+      decrementUnseenCount,
+      markInvitationNotificationSeen,
       markTripNotificationRead,
       acceptedNotifications,
       addAcceptedNotification,
+      consumeAcceptedNotification,
       clearAcceptedNotifications,
     }}>
       {children}

@@ -3,6 +3,7 @@ import { Utensils } from 'lucide-react';
 import { SectionLabel } from '../hotels/HotelAtoms';
 import RestaurantBookingCard from './RestaurantBookingCard';
 import BookingBanner from '../BookingBanner';
+import ImageLoadGate from '../../../../../shared/ImageLoadGate';
 import { useAuth } from '../../../../../../context/AuthContext';
 import { getBookings } from '../../../../../../services/tripService';
 
@@ -26,15 +27,16 @@ export default function RestaurantBookings({ tripId, onGoBook }) {
   }
 
   return (
-    <>
-      <BookingBanner
-        src="/img/background/bookings/restaurant.jpg"
-        objectPosition="center 70%"
-        alt="Restaurantes"
-        title="Restaurantes"
-        subtitle="Gestiona los restaurantes anotados para el viaje"
-      />
-      <div className="p-4 sm:p-6">
+    <ImageLoadGate src="/img/background/bookings/restaurant.jpg" alt="Restaurantes">
+      <>
+        <BookingBanner
+          src="/img/background/bookings/restaurant.jpg"
+          objectPosition="center 70%"
+          alt="Restaurantes"
+          title="Restaurantes"
+          subtitle="Gestiona los restaurantes anotados para el viaje"
+        />
+        <div className="p-4 sm:p-6">
         {bookings.length > 0 ? (
           <div className="mb-7">
             <SectionLabel>Restaurantes anotados</SectionLabel>
@@ -69,7 +71,8 @@ export default function RestaurantBookings({ tripId, onGoBook }) {
             <p className="body-3 text-neutral-4">Ir al buscador de restaurantes del viaje</p>
           </div>
         </button>
-      </div>
-    </>
+        </div>
+      </>
+    </ImageLoadGate>
   );
 }

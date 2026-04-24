@@ -4,6 +4,7 @@ import { getBookings } from '../../../../../../services/tripService';
 import { useAuth } from '../../../../../../context/AuthContext';
 import { SectionLabel } from '../hotels/HotelAtoms';
 import BookingBanner from '../BookingBanner';
+import ImageLoadGate from '../../../../../shared/ImageLoadGate';
 import ActivityBookingCard from './ActivityBookingCard';
 
 export default function ActivityBookings({ tripId, onGoBook }) {
@@ -26,15 +27,16 @@ export default function ActivityBookings({ tripId, onGoBook }) {
   }
 
   return (
-    <>
-      <BookingBanner
-        src="/img/background/bookings/attraction.jpg"
-        objectPosition="center 95%"
-        alt="Actividades"
-        title="Actividades"
-        subtitle="Gestiona las actividades anotadas para el viaje"
-      />
-      <div className="p-4 sm:p-6">
+    <ImageLoadGate src="/img/background/bookings/attraction.jpg" alt="Actividades">
+      <>
+        <BookingBanner
+          src="/img/background/bookings/attraction.jpg"
+          objectPosition="center 95%"
+          alt="Actividades"
+          title="Actividades"
+          subtitle="Gestiona las actividades anotadas para el viaje"
+        />
+        <div className="p-4 sm:p-6">
         {bookings.length > 0 ? (
           <div className="mb-7">
             <SectionLabel>Actividades anotadas</SectionLabel>
@@ -69,7 +71,8 @@ export default function ActivityBookings({ tripId, onGoBook }) {
             <p className="body-3 text-neutral-4">Ir al buscador de actividades del viaje</p>
           </div>
         </button>
-      </div>
-    </>
+        </div>
+      </>
+    </ImageLoadGate>
   );
 }

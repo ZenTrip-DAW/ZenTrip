@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Car, Footprints, Bike, Bus, Route, Clock, Trash2, Check, X, Pencil, ExternalLink } from 'lucide-react';
 import { getBookings, deleteBooking, updateBooking } from '../../../../../../services/tripService';
 import BookingBanner from '../BookingBanner';
+import ImageLoadGate from '../../../../../shared/ImageLoadGate';
 
 const MODE_ICON  = { DRIVING: Car, WALKING: Footprints, BICYCLING: Bike, TRANSIT: Bus };
 const MODE_LABEL = { DRIVING: 'Coche', WALKING: 'A pie', BICYCLING: 'Bicicleta', TRANSIT: 'Transporte público' };
@@ -166,16 +167,17 @@ export default function RouteBookings({ tripId, onOpenRoute }) {
   const handleRenamed = (id, name)  => setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, name } : b)));
 
   return (
-    <div className="rounded-2xl overflow-hidden">
-      <BookingBanner
-        src="/img/background/bookings/attraction.jpg"
-        objectPosition="center 60%"
-        alt="Rutas guardadas"
-        title="Tus rutas guardadas"
-        subtitle="Vuelve a explorar cualquier ruta o ábrela directamente en el itinerario"
-      />
+    <ImageLoadGate src="/img/background/bookings/attraction.jpg" alt="Rutas guardadas">
+      <div className="rounded-2xl overflow-hidden">
+        <BookingBanner
+          src="/img/background/bookings/attraction.jpg"
+          objectPosition="center 60%"
+          alt="Rutas guardadas"
+          title="Tus rutas guardadas"
+          subtitle="Vuelve a explorar cualquier ruta o ábrela directamente en el itinerario"
+        />
 
-      {loading ? (
+        {loading ? (
         <div className="p-8 flex items-center justify-center">
           <span className="w-6 h-6 border-2 border-primary-3/30 border-t-primary-3 rounded-full animate-spin" />
         </div>
@@ -213,7 +215,8 @@ export default function RouteBookings({ tripId, onOpenRoute }) {
             </div>
           ))}
         </div>
-      )}
-    </div>
+        )}
+      </div>
+    </ImageLoadGate>
   );
 }
