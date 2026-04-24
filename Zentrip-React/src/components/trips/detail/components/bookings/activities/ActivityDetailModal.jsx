@@ -19,7 +19,7 @@ function fmtPrice(price, currency) {
 
 export default function ActivityDetailModal({ activity, tripId, trip, bookingParams = {}, members = [], onClose }) {
   const { user, profile } = useAuth();
-  const { date } = bookingParams;
+  const { date, adults, children } = bookingParams;
 
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -90,6 +90,7 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
         notes: [
           info.rating != null ? `${info.rating.toFixed ? info.rating.toFixed(1) : info.rating}★` : null,
           info.price != null ? fmtPrice(info.price, info.currency) : null,
+          adults ? `${adults} adulto${adults !== 1 ? 's' : ''}${children > 0 ? `, ${children} niño${children !== 1 ? 's' : ''}` : ''}` : null,
           date ? fmtDate(date) : null,
         ].filter(Boolean).join(' · ') || 'Anotada',
         status: 'reservado',
@@ -111,6 +112,8 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
         duration: info.duration ?? null,
         freeCancellation: info.freeCancellation ?? false,
         date: date ?? null,
+        adults: adults ?? null,
+        children: children ?? 0,
         mapsUrl: mapsUrl ?? info.mapsUrl ?? null,
         status: 'reservado',
         activityId,
@@ -267,6 +270,18 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
                       <div>
                         <p className="body-3 text-neutral-4 mb-0.5">Fecha</p>
                         <p className="body-2-semibold text-neutral-7">{fmtDate(date)}</p>
+                      </div>
+                    )}
+                    {adults > 0 && (
+                      <div>
+                        <p className="body-3 text-neutral-4 mb-0.5">Adultos</p>
+                        <p className="body-2-semibold text-neutral-7">{adults}</p>
+                      </div>
+                    )}
+                    {children > 0 && (
+                      <div>
+                        <p className="body-3 text-neutral-4 mb-0.5">Niños</p>
+                        <p className="body-2-semibold text-neutral-7">{children}</p>
                       </div>
                     )}
                     {info.freeCancellation && (

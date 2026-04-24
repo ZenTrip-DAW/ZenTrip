@@ -71,6 +71,11 @@ export default function ActivityBookingCard({ booking, tripId, onCancelled }) {
               {booking.date && (
                 <span className="text-[11px] text-neutral-4">{fmtDate(booking.date)}</span>
               )}
+              {booking.adults != null && (
+                <span className="text-[11px] text-neutral-4">
+                  {booking.adults} adulto{booking.adults !== 1 ? 's' : ''}{booking.children > 0 ? `, ${booking.children} niño${booking.children !== 1 ? 's' : ''}` : ''}
+                </span>
+              )}
             </div>
           </div>
         </div>
