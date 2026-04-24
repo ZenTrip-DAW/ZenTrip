@@ -18,6 +18,8 @@ import {
   paxToApiChildren, emptyLeg, matchesFilters, addDays,
 } from '../trips/detail/components/bookings/flights/flightUtils';
 import { IcChevLeft } from '../trips/detail/components/bookings/flights/flightIcons';
+import BookingBanner from '../trips/detail/components/bookings/BookingBanner';
+import ImageLoadGate from '../shared/ImageLoadGate';
 
 export default function FlightsExplorer({ tripContext: tripContextProp, embedded = false }) {
   const { user, profile } = useAuth();
@@ -215,25 +217,31 @@ export default function FlightsExplorer({ tripContext: tripContextProp, embedded
   const filteredOffers = allOffers.filter((o) => matchesFilters(o, filters, tripType));
 
   return (
-    <div className={!embedded ? 'max-w-7xl mx-auto' : ''}>
+    <div className={!embedded ? 'max-w-7xl mx-auto flex flex-col gap-4' : ''}>
 
-      {/* Cabecera en modo standalone sin contexto de viaje */}
+      {/* Botón volver en modo standalone */}
       {!embedded && !tripContext && (
-        <div className="flex items-center gap-4 mb-6">
-          <button
-            type="button"
-            onClick={() => navigate(ROUTES.HOME)}
-            className="cursor-pointer w-9 h-9 rounded-full border border-neutral-2 flex items-center justify-center text-neutral-5 hover:bg-neutral-1 transition shrink-0"
-          >
-            <IcChevLeft size={16} color="#7A7270" />
-          </button>
-          <h1 className="title-h1-mobile md:title-h1-desktop text-secondary-5">
-            Buscar <span className="text-primary-3">vuelos</span>
-          </h1>
-        </div>
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1.5 body-3 text-neutral-4 hover:text-neutral-6 w-fit transition-colors"
+        >
+          <IcChevLeft size={16} color="#7A7270" />
+          Volver
+        </button>
       )}
 
-      <div className="space-y-4 py-4">
+      <ImageLoadGate src="/img/background/bookings/plane.jpg" alt="Vuelos">
+        <div className="bg-white rounded-2xl border border-neutral-1 overflow-hidden">
+          <BookingBanner
+            src="/img/background/bookings/plane.jpg"
+            alt="Vuelos"
+            title="Busca tu vuelo"
+            subtitle="Encuentra los mejores vuelos al mejor precio"
+          />
+          <div className="p-4 sm:p-6">
+
+      <div className="space-y-4">
         {/* Banner del viaje cuando viene desde un trip */}
         {tripContext && !embedded && <TripContextBanner tripContext={tripContext} activeTab="reservas" />}
 
@@ -339,6 +347,10 @@ export default function FlightsExplorer({ tripContext: tripContextProp, embedded
           />
         )}
       </div>
+
+          </div>
+        </div>
+      </ImageLoadGate>
     </div>
   );
 }

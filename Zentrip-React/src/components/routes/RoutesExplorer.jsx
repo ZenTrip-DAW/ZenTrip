@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
-import HotelSearch from '../trips/detail/components/bookings/hotels/HotelSearch';
+import RouteExplorer from '../trips/detail/components/bookings/routes/RouteExplorer';
 
-export default function HotelsExplorer() {
+export default function RoutesExplorer() {
   const navigate = useNavigate();
 
   return (
@@ -15,7 +15,7 @@ export default function HotelsExplorer() {
         <ChevronLeft className="w-4 h-4" />
         Volver
       </button>
-      <HotelSearch trip={null} tripId={null} members={[]} />
+      <RouteExplorer trip={null} tripId={null} tripDays={[]} activitiesByDate={{}} />
     </div>
   );
 }

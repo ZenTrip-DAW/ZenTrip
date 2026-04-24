@@ -4,7 +4,7 @@ import { ROUTES } from '../../config/routes';
 const CATEGORIES = [
   { key: "vuelos",      label: "Vuelos",           img: new URL("./img/image 34.png",    import.meta.url).href },
   { key: "hoteles",     label: "Hoteles",           img: new URL("./img/hoteles.png",     import.meta.url).href },
-  { key: "trenes",      label: "Trenes",            img: new URL("./img/trenes.png",      import.meta.url).href },
+  { key: "trenes",      label: "Trenes",            img: new URL("./img/trenes.png",      import.meta.url).href, soon: true },
   { key: "alquiler",    label: "Alquiler de coche", img: new URL("./img/coches.png",      import.meta.url).href },
   { key: "rutas",       label: "Rutas",             img: new URL("./img/rutas.png",       import.meta.url).href },
   { key: "actividades", label: "Actividades",       img: new URL("./img/actividades.png", import.meta.url).href },
@@ -15,13 +15,12 @@ export default function CategoryBar() {
   const navigate = useNavigate();
 
   const handleCategoryClick = (categoryKey) => {
-    if (categoryKey === 'vuelos') {
-      navigate(ROUTES.FLIGHTS);
-    } else if (categoryKey === 'hoteles') {
-      navigate(ROUTES.HOTELS);
-    } else if (categoryKey === 'alquiler') {
-      navigate(ROUTES.CARS);
-    }
+    if (categoryKey === 'vuelos')      navigate(ROUTES.FLIGHTS);
+    else if (categoryKey === 'hoteles')     navigate(ROUTES.HOTELS);
+    else if (categoryKey === 'alquiler')    navigate(ROUTES.CARS);
+    else if (categoryKey === 'restaurante') navigate(ROUTES.RESTAURANTS);
+    else if (categoryKey === 'actividades') navigate(ROUTES.ACTIVITIES);
+    else if (categoryKey === 'rutas')       navigate(ROUTES.ROUTES_EXPLORER);
   };
 
   return (
@@ -35,10 +34,16 @@ export default function CategoryBar() {
           <button
             key={cat.key}
             type="button"
-            onClick={() => handleCategoryClick(cat.key)}
-            className="w-full sm:flex-none sm:w-20 md:flex-1 md:w-auto cursor-pointer group"
+            onClick={() => !cat.soon && handleCategoryClick(cat.key)}
+            disabled={cat.soon}
+            className={`w-full sm:flex-none sm:w-20 md:flex-1 md:w-auto group ${cat.soon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
           >
-            <div className="w-full min-h-20 md:min-h-24 rounded-xl md:rounded-2xl bg-white/45 border border-white/40 group-hover:scale-110 transition-transform duration-200 flex flex-col items-center justify-center gap-1 px-1 md:px-2 py-2">
+            <div className="relative w-full min-h-20 md:min-h-24 rounded-xl md:rounded-2xl bg-white/45 border border-white/40 group-hover:scale-110 transition-transform duration-200 flex flex-col items-center justify-center gap-1 px-1 md:px-2 py-2">
+              {cat.soon && (
+                <span className="absolute top-1 right-1 text-[8px] md:text-[9px] font-bold bg-neutral-5 text-white rounded-full px-1.5 py-0.5 leading-tight">
+                  Pronto
+                </span>
+              )}
               <img src={cat.img} alt={cat.label} className="w-8 h-8 md:w-12 md:h-12 object-contain shrink-0" />
               <span className="text-[10px] md:text-sm font-semibold text-secondary-6 text-center leading-tight line-clamp-2">
                 {cat.label}

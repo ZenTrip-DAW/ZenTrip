@@ -3,6 +3,9 @@ export const ROUTES = {
   FLIGHTS: '/flights',
   HOTELS: '/hotels',
   CARS: '/cars',
+  RESTAURANTS: '/restaurants',
+  ACTIVITIES: '/activities',
+  ROUTES_EXPLORER: '/routes',
   AUTH: {
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
