@@ -24,18 +24,6 @@ function buildFlightLabel(offer) {
   return segs.map((s) => `${fmtAirport(s.departureAirport)} → ${fmtAirport(s.arrivalAirport)}`).join(' / ');
 }
 
-function buildPassengerLabel(passengers, members) {
-  if (passengers === 'all' || !Array.isArray(passengers)) {
-    const count = members.filter((m) => m.invitationStatus === 'accepted').length;
-    return `Todos (${count})`;
-  }
-  const names = passengers
-    .map((uid) => members.find((m) => m.uid === uid))
-    .filter(Boolean)
-    .map((m) => m.name || m.username || 'Miembro');
-  return names.length > 0 ? names.join(', ') : 'Sin pasajeros';
-}
-
 // ── TripRow ───────────────────────────────────────────────────────────────────
 const normalize = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
@@ -97,7 +85,6 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
   const currency = offer?.priceBreakdown?.total?.currencyCode ?? 'EUR';
   const total = toPrice(offer?.priceBreakdown?.total);
   const flightLabel = buildFlightLabel(offer);
-  const departureDate = seg0?.departureTime?.slice(0, 10);
 
   // Extrae solo las ciudades de destino del tramo de ida — excluye tramos de vuelta y ciudades solo de conexión.
   // En ida y vuelta el último segmento llega al origen, así que se descarta.
@@ -284,27 +271,28 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
         }
       }
 
-      const passengerLabel = buildPassengerLabel(passengers, members);
-      const activityName = `✈ ${flightLabel} — ${passengerLabel}`;
-
-      // Nombre del aeropuerto de destino para rutas
-      const destAirportAddress = seg0?.arrivalAirport?.name
-        || (seg0?.arrivalAirport?.cityName ? `Aeropuerto de ${seg0.arrivalAirport.cityName}` : '')
-        || seg0?.arrivalAirport?.code || '';
-
-      // Añade la actividad al itinerario
-      const activityId = await addActivity(selectedTrip.id, {
-        date: departureDate || '',
-        startTime: fmtTime(seg0?.departureTime),
-        endTime: fmtTime(seg0?.arrivalTime),
-        name: activityName,
-        type: 'vuelo',
-        status: 'reservado',
-        notes: '',
-        passengers,
-        stopId: null,
-        address: destAirportAddress,
-      });
+      // Crea una actividad por tramo (ida + vuelta si es ida y vuelta)
+      const activityIds = [];
+      for (const seg of (offer?.segments ?? [])) {
+        const segName = `✈ ${fmtAirport(seg.departureAirport)} → ${fmtAirport(seg.arrivalAirport)}`;
+        const segAddress = seg.arrivalAirport?.name
+          || (seg.arrivalAirport?.cityName ? `Aeropuerto de ${seg.arrivalAirport.cityName}` : '')
+          || seg.arrivalAirport?.code || '';
+        const actId = await addActivity(selectedTrip.id, {
+          date: seg.departureTime?.slice(0, 10) || '',
+          startTime: fmtTime(seg.departureTime),
+          endTime: fmtTime(seg.arrivalTime),
+          name: segName,
+          type: 'vuelo',
+          status: 'reservado',
+          notes: '',
+          passengers,
+          stopId: null,
+          address: segAddress,
+        });
+        activityIds.push(actId);
+      }
+      const activityId = activityIds[0] ?? null;
 
       // Construye el objeto de reserva
       const segmentsData = (offer?.segments ?? []).map((seg) => {
@@ -358,6 +346,7 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
         stopIds: savedStopIds,
         receiptUrls,
         activityId,
+        activityIds,
         // NUEVOS CAMPOS
         originAddress,
         originCoords,

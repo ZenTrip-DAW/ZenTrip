@@ -624,10 +624,10 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
   }
 
   return (
-    <ImageLoadGate src="/img/background/bookings/attraction.jpg" alt="Rutas">
+    <ImageLoadGate src="/img/background/bookings/rutes.jpg" alt="Rutas">
       <div className="bg-white rounded-2xl border border-neutral-1 overflow-hidden">
         <BookingBanner
-          src="/img/background/bookings/attraction.jpg"
+          src="/img/background/bookings/rutes.jpg"
           objectPosition="center 60%"
           alt="Rutas"
           title="¿Qué ruta quereis explorar?"

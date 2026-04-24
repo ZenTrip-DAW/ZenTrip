@@ -29,7 +29,7 @@ const STATUS_CONFIG = {
   cancelado: { label: 'Cancelado',   className: 'bg-feedback-error-bg text-feedback-error' },
 };
 
-function ActivityCard({ activity }) {
+function ActivityCard({ activity, members = [] }) {
   const typeCfg = TYPE_CONFIG[activity.type] || TYPE_CONFIG.actividad;
   const statusCfg = activity.status ? STATUS_CONFIG[activity.status] : null;
 
@@ -74,7 +74,7 @@ function ActivityCard({ activity }) {
               {activity.passengers === 'all'
                 ? 'Todos'
                 : Array.isArray(activity.passengers)
-                  ? `${activity.passengers.length} pasajero${activity.passengers.length !== 1 ? 's' : ''}`
+                  ? activity.passengers.map((uid) => members.find((m) => m.uid === uid)).filter(Boolean).map((m) => m.name || m.username || 'Miembro').join(', ') || `${activity.passengers.length} pasajero${activity.passengers.length !== 1 ? 's' : ''}`
                   : activity.passengers}
             </span>
           </div>
@@ -138,7 +138,7 @@ function WeatherPanel({ weatherData }) {
   );
 }
 
-export default function DayActivities({ selectedDay, activitiesByDate, onAddActivity, weatherData, location }) {
+export default function DayActivities({ selectedDay, activitiesByDate, onAddActivity, weatherData, location, members = [] }) {
   if (!selectedDay) {
     return (
       <div className="bg-white rounded-2xl border border-neutral-1 p-6 flex flex-col items-center justify-center py-16 gap-2">
@@ -186,7 +186,7 @@ export default function DayActivities({ selectedDay, activitiesByDate, onAddActi
       ) : (
         <div className="mt-2">
           {dayActivities.map((act) => (
-            <ActivityCard key={act.id} activity={act} />
+            <ActivityCard key={act.id} activity={act} members={members} />
           ))}
         </div>
       )}
