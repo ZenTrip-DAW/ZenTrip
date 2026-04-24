@@ -41,7 +41,7 @@ export default function ActivitySearch({ trip, tripId, members = [] }) {
   const [date, setDate] = useState(trip?.startDate || '');
   const [people, setPeople] = useState(() => {
     const accepted = members.filter((m) => m.invitationStatus === 'accepted').length;
-    return Math.max(1, accepted + 1);
+    return Math.max(1, accepted);
   });
   const [results, setResults] = useState([]);
   const [searched, setSearched] = useState(false);
