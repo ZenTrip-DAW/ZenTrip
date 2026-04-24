@@ -303,8 +303,9 @@ export async function deleteFlightBooking(tripId, bookingId) {
 
   await deleteDoc(doc(db, 'trips', tripId, 'bookings', bookingId));
 
-  if (booking.activityId) {
-    try { await deleteDoc(doc(db, 'trips', tripId, 'activities', booking.activityId)); } catch { /* actividad ya eliminada */ }
+  const activityIds = booking.activityIds ?? (booking.activityId ? [booking.activityId] : []);
+  for (const actId of activityIds) {
+    try { await deleteDoc(doc(db, 'trips', tripId, 'activities', actId)); } catch { /* actividad ya eliminada */ }
   }
 
   const stopIds = booking.stopIds ?? (booking.stopId ? [booking.stopId] : []);

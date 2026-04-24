@@ -173,6 +173,7 @@ export default function ItinerarioTab({
                     onAddActivity={onAddActivity}
                     weatherData={selectedDay ? weatherByDate[selectedDay] : null}
                     location={selectedDay ? (locationByDate[selectedDay] || trip?.destination) : trip?.destination}
+                    members={members}
                   />
                 </>
               )}
