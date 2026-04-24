@@ -231,17 +231,17 @@ export default function FlightsExplorer({ tripContext: tripContextProp, embedded
         </button>
       )}
 
-      <ImageLoadGate src="/img/background/bookings/plane.jpg" alt="Vuelos">
-        <div className="bg-white rounded-2xl border border-neutral-1 overflow-hidden">
-          <BookingBanner
-            src="/img/background/bookings/plane.jpg"
-            alt="Vuelos"
-            title="Busca tu vuelo"
-            subtitle="Encuentra los mejores vuelos al mejor precio"
-          />
-          <div className="p-4 sm:p-6">
-
-      <div className="space-y-4">
+      {!embedded ? (
+        <ImageLoadGate src="/img/background/bookings/plane.jpg" alt="Vuelos">
+          <div className="bg-white rounded-2xl border border-neutral-1 overflow-hidden">
+            <BookingBanner
+              src="/img/background/bookings/plane.jpg"
+              alt="Vuelos"
+              title="Busca tu vuelo"
+              subtitle="Encuentra los mejores vuelos al mejor precio"
+            />
+            <div className="p-4 sm:p-6">
+              <div className="space-y-4">
         {/* Banner del viaje cuando viene desde un trip */}
         {tripContext && !embedded && <TripContextBanner tripContext={tripContext} activeTab="reservas" />}
 
@@ -347,10 +347,100 @@ export default function FlightsExplorer({ tripContext: tripContextProp, embedded
           />
         )}
       </div>
-
+            </div>
           </div>
+        </ImageLoadGate>
+      ) : (
+        <div className="space-y-4">
+          {tripContext && !embedded && <TripContextBanner tripContext={tripContext} activeTab="reservas" />}
+          <FlightSearchForm
+            tripType={tripType}
+            onTripTypeChange={setTripType}
+            from={from} onFromChange={setFrom}
+            to={to} onToChange={setTo}
+            departDate={departDate} onDepartDateChange={setDepartDate}
+            returnDate={returnDate} onReturnDateChange={setReturnDate}
+            legs={legs} onLegsChange={setLegs}
+            pax={pax} onPaxChange={setPax}
+            cabinClass={cabinClass} onCabinClassChange={setCabinClass}
+            isLoading={isLoading}
+            error={error}
+            onSearch={tripType === 'MULTI_STOP' ? handleSearchMultiStop : handleSearch}
+          />
+          {noAirportWarnings.length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex flex-col gap-1">
+              {noAirportWarnings.map((city) => (
+                <p key={city} className="body-3 text-amber-700">
+                  ⚠️ {city} no tiene aeropuerto — introduce el origen o destino manualmente
+                </p>
+              ))}
+            </div>
+          )}
+          {showDateBar && from.id && to.id && (
+            <DateBar
+              baseDate={departDate}
+              fromId={from.id}
+              toId={to.id}
+              cabinClass={cabinClass}
+              activeDateStr={departDate}
+              onSelectDate={handleDateBarSelect}
+              currencyCode={currencyCode}
+              adults={pax.adults}
+              children={paxToApiChildren(pax) || undefined}
+              tripType={tripType}
+              returnDate={tripType === 'ROUND_TRIP' ? returnDate : undefined}
+            />
+          )}
+          {isLoading && (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <div className="w-10 h-10 border-2 border-secondary-3 border-t-transparent rounded-full animate-spin" />
+              <p className="body-2 text-neutral-5">Buscando los mejores vuelos...</p>
+            </div>
+          )}
+          {!isLoading && response && (
+            <FlightResults
+              response={response}
+              filteredOffers={filteredOffers}
+              allOffers={allOffers}
+              filters={filters}
+              onFiltersChange={setFilters}
+              sort={sort}
+              onSortChange={setSort}
+              tripType={tripType}
+              showFilters={showFilters}
+              onToggleFilters={() => setShowFilters(v => !v)}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+              onShowDetail={setDetailOffer}
+              onPurchase={setPurchaseOffer}
+            />
+          )}
+          {detailOffer && (
+            <FlightDetailDrawer
+              offer={detailOffer}
+              onClose={() => setDetailOffer(null)}
+              onPurchase={(offer) => { setDetailOffer(null); setPurchaseOffer(offer); }}
+            />
+          )}
+          {saveOffer && user && (
+            <FlightSaveModal
+              offer={saveOffer}
+              user={user}
+              tripContext={tripContext}
+              onClose={() => setSaveOffer(null)}
+            />
+          )}
+          {purchaseOffer && (
+            <PurchaseModal
+              offer={purchaseOffer}
+              fromState={from}
+              toState={to}
+              onClose={() => setPurchaseOffer(null)}
+              onSave={(offer) => { setPurchaseOffer(null); setSaveOffer(offer); }}
+            />
+          )}
         </div>
-      </ImageLoadGate>
+      )}
     </div>
   );
 }
