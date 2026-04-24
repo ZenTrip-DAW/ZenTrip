@@ -1,63 +1,56 @@
-# ZenTrip - Backend (Node.js)
+# ZenTrip Backend (Node.js)
 
-API REST del proyecto ZenTrip, construida con **Express** y **Firebase Admin SDK**. Gestiona la autenticación, usuarios, invitaciones a viajes y búsqueda de hoteles a través de la API de Booking.
+API REST de ZenTrip construida con Express y Firebase Admin. Da soporte a usuarios, invitaciones, viajes y búsquedas de hoteles, vuelos, coches, restaurantes y atracciones.
 
----
+## Stack
 
-## Tecnologías
+- Node.js
+- Express 5
+- Firebase Admin SDK
+- Axios
+- dotenv
+- cors
+- jsonwebtoken
 
-- [Node.js](https://nodejs.org/)
-- [Express 5](https://expressjs.com/)
-- [Firebase Admin SDK](https://firebase.google.com/docs/admin/setup)
-- [Axios](https://axios-http.com/)
-- [Mailjet](https://www.mailjet.com/) — envío de emails de invitación
-- [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken) — tokens de invitación
-- [dotenv](https://github.com/motdotla/dotenv)
-- [CORS](https://github.com/expressjs/cors)
+## Estructura Actual
 
----
-
-## Estructura del proyecto
-
-```
+```text
 Zentrip-Node/
 ├── server.js
 ├── src/
 │   ├── config/
-│   │   └── firebase.js                      # Inicialización de Firebase Admin SDK
+│   │   └── firebase.js
 │   ├── controllers/
-│   │   ├── hotelcontrollers.js              # Validación HTTP y respuesta para hoteles
-│   │   ├── invitationControllers.js         # Lógica de invitaciones a viajes
-│   │   └── userControllers.js              # Gestión de usuarios
-│   ├── errors/
-│   │   ├── AppError.js                      # Clase de error personalizada
-│   │   └── index.js
+│   │   ├── attractionControllers.js
+│   │   ├── carControllers.js
+│   │   ├── flightControllers.js
+│   │   ├── hotelcontrollers.js
+│   │   ├── invitationControllers.js
+│   │   ├── restaurantControllers.js
+│   │   ├── tripControllers.js
+│   │   └── userControllers.js
 │   ├── middlewares/
-│   │   ├── authMiddleware.js                # Verificación de token Firebase (Bearer)
-│   │   ├── errorHandler.js                  # Manejador global de errores
-│   │   └── recaptchaMiddleware.js           # Verificación de reCAPTCHA
+│   │   ├── authMiddleware.js
+│   │   ├── errorHandler.js
+│   │   └── recaptchaMiddleware.js
 │   ├── routes/
-│   │   ├── authRouters.js                   # /api/auth
-│   │   ├── hotelRouters.js                  # /api/hotels
-│   │   ├── invitationRouters.js             # /api/invitations
-│   │   └── userRouters.js                   # /api/users
+│   │   ├── attractionRouters.js
+│   │   ├── authRouters.js
+│   │   ├── carRouters.js
+│   │   ├── flightRouters.js
+│   │   ├── hotelRouters.js
+│   │   ├── invitationRouters.js
+│   │   ├── restaurantRouters.js
+│   │   ├── tripRouters.js
+│   │   └── userRouters.js
 │   └── services/
 │       ├── email/
-│       │   ├── invitationTokenService.js    # Generación y verificación de tokens JWT
-│       │   └── mailjetService.js            # Envío de emails con Mailjet
 │       ├── external/
-│       │   ├── apiService.js                # Llamadas genéricas a APIs externas
-│       │   └── hotelService.js              # Integración con Booking API (RapidAPI)
 │       └── firebase/
-│           └── firestoreService.js          # Operaciones con Firestore
-├── test-hotels.html                         # Página de prueba para la API de hoteles
-├── .env                                     # Variables de entorno (no subir al repo)
-└── package.json
+└── test-hotels.html
 ```
 
----
-
-## Instalación
+## Instalacion
 
 ```bash
 git clone https://github.com/ZenTrip-DAW/ZenTrip.git
@@ -65,118 +58,154 @@ cd ZenTrip/Zentrip-Node
 npm install
 ```
 
----
-## Configuración
-
-Crea un archivo `.env` en la raíz con las siguientes variables:
-
-```env
-PORT=5000
-RAPIDAPI_KEY=tu_clave_de_rapidapi
-MAILJET_API_KEY=tu_clave_mailjet
-MAILJET_API_SECRET=tu_secreto_mailjet
-JWT_SECRET=tu_secreto_jwt
-FIREBASE_PROJECT_ID=tu_project_id
-FIREBASE_CLIENT_EMAIL=tu_client_email
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-CORS_ORIGIN=http://localhost:5173,https://tu-frontend.vercel.app
-```
-
-`CORS_ORIGIN` admite varios origenes separados por coma.
----
-
-## Ejecución
+## Ejecucion
 
 ```bash
 node server.js
 ```
 
-El servidor arranca por defecto en `http://localhost:5000`.
+Servidor por defecto: `http://localhost:5000`
 
----
+## Variables De Entorno
 
-## Endpoints
+Crea un `.env` en `Zentrip-Node/`.
 
-### Auth — `/api/auth`
+```env
+PORT=5000
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| `POST` | `/verify-recaptcha` | Verifica el token reCAPTCHA antes del login |
+# CORS
+CORS_ORIGIN=http://localhost:5173,http://127.0.0.1:5173
+FRONTEND_URL=http://localhost:5173
 
----
+# Firebase Admin
+FIREBASE_PROJECT_ID=tu_project_id
+FIREBASE_CLIENT_EMAIL=tu_client_email
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 
-### Usuarios — `/api/users`
+# APIs externas
+RAPIDAPI_KEY=tu_rapidapi_key
+GOOGLE_PLACES_API_KEY=tu_google_places_api_key
 
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| `GET` | `/protected-data` | Datos de prueba protegidos | Bearer token |
-| `POST` | `/create-user-admin` | Crea un usuario en Firebase Admin | No |
-| `GET` | `/search-users` | Busca usuarios por email/nombre | No |
-| `GET` | `/users/:uid` | Obtiene un usuario por UID | No |
+# Invitaciones y correo
+JWT_INVITE_SECRET=tu_secreto_para_invitaciones
+# Alternativa de compatibilidad si no usas JWT_INVITE_SECRET:
+JWT_SECRET=tu_secreto_general
+MAILJET_API_KEY=tu_mailjet_api_key
+MAILJET_API_SECRET=tu_mailjet_api_secret
+MAILJET_SENDER_EMAIL=no-reply@tudominio.com
+MAILJET_SENDER_NAME=ZenTrip
 
----
+# Seguridad login
+RECAPTCHA_SECRET_KEY=tu_recaptcha_secret
 
-### Invitaciones — `/api/invitations`
-
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| `POST` | `/send` | Envía invitaciones por email a un viaje | Bearer token |
-| `GET` | `/verify` | Verifica un token de invitación | No |
-| `POST` | `/accept` | Acepta una invitación por email | Bearer token |
-| `POST` | `/reject` | Rechaza una invitación por email | Bearer token |
-| `POST` | `/claim-my-invitations` | Reclama invitaciones pendientes del usuario | Bearer token |
-| `POST` | `/public-link` | Crea o recupera el enlace público de un viaje | Bearer token |
-| `GET` | `/public-link/preview` | Previsualiza el enlace público | Bearer token |
-| `POST` | `/public-link/regenerate` | Regenera el enlace público | Bearer token |
-| `GET` | `/public-verify` | Verifica un token de enlace público | No |
-| `POST` | `/public-accept` | Acepta una invitación por enlace público | Bearer token |
-
----
-
-### Hoteles — `/api/hotels`
-
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| `GET` | `/search` | Busca hoteles por ciudad y fechas | No |
-| `GET` | `/details` | Obtiene el detalle de un hotel | No |
-| `GET` | `/policies` | Obtiene las políticas de un hotel | No |
-
-**Parámetros de `/search`:**
-
-| Parámetro | Tipo | Obligatorio | Descripción |
-|-----------|------|-------------|-------------|
-| `city` | string | Sí (o `destId`) | Nombre de la ciudad |
-| `destId` | string | Sí (o `city`) | ID de destino de Booking |
-| `arrivalDate` | string | Sí | Fecha entrada `YYYY-MM-DD` |
-| `departureDate` | string | Sí | Fecha salida `YYYY-MM-DD` |
-| `adults` | number | Sí | Número de adultos (≥ 1) |
-| `roomQty` | number | No | Número de habitaciones (≥ 1) |
-| `pageNumber` | number | No | Página de resultados (5 por página) |
-| `languageCode` | string | No | Código de idioma (ej: `es`) |
-| `currencyCode` | string | No | Moneda (ej: `EUR`) |
-
----
-
-## Autenticación
-
-Las rutas protegidas requieren un token de Firebase en la cabecera:
-
+# Eliminacion de imagenes Cloudinary en viajes
+CLOUDINARY_CLOUD=tu_cloud_name
+CLOUDINARY_API_KEY=tu_cloudinary_api_key
+CLOUDINARY_API_SECRET=tu_cloudinary_api_secret
 ```
+
+Nota: `CORS_ORIGIN` admite varios origenes separados por comas. En local tambien se aceptan `localhost` y `127.0.0.1` para puertos `5173` y `4173`.
+
+## Health Y Utilidades
+
+- `GET /` -> mensaje de servidor activo.
+- `GET /test-hotels` y `GET /test-hotels.html` -> pagina de prueba para hoteles.
+
+## API Endpoints
+
+## Auth (`/api/auth`)
+
+| Metodo | Ruta | Auth | Descripcion |
+|---|---|---|---|
+| `POST` | `/verify-recaptcha` | No | Valida el token de reCAPTCHA antes del login |
+
+## Usuarios (`/api`)
+
+| Metodo | Ruta | Auth | Descripcion |
+|---|---|---|---|
+| `GET` | `/protected-data` | Si | Endpoint protegido de prueba |
+| `POST` | `/create-user-admin` | No | Crea usuario con Firebase Admin |
+| `GET` | `/search-users` | No | Busca usuarios |
+| `GET` | `/users/:uid` | No | Obtiene un usuario por UID |
+
+## Invitaciones (`/api/invitations`)
+
+| Metodo | Ruta | Auth | Descripcion |
+|---|---|---|---|
+| `POST` | `/send` | Si | Envia invitaciones de viaje por email |
+| `GET` | `/verify` | No | Verifica token de invitacion |
+| `POST` | `/accept` | Si | Acepta invitacion |
+| `POST` | `/reject` | Si | Rechaza invitacion |
+| `POST` | `/claim-my-invitations` | Si | Reclama invitaciones pendientes |
+| `GET` | `/public-link/preview` | Si | Previsualiza enlace publico de viaje |
+| `POST` | `/public-link` | Si | Crea/recupera enlace publico |
+| `POST` | `/public-link/regenerate` | Si | Regenera enlace publico |
+| `GET` | `/public-verify` | No | Verifica token publico |
+| `POST` | `/public-accept` | Si | Acepta invitacion desde enlace publico |
+
+## Viajes (`/api/trips`)
+
+| Metodo | Ruta | Auth | Descripcion |
+|---|---|---|---|
+| `GET` | `/my-trips` | Si | Obtiene viajes del usuario autenticado |
+| `GET` | `/:tripId/members` | Si | Lista miembros de un viaje |
+| `POST` | `/:tripId/bookings/hotels` | Si | Guarda reserva de hotel en un viaje |
+| `DELETE` | `/gallery/image` | Si | Elimina imagen de galeria (Cloudinary) |
+
+## Hoteles (`/api/hotels`)
+
+| Metodo | Ruta |
+|---|---|
+| `GET` | `/search` |
+| `GET` | `/details` |
+| `GET` | `/policies` |
+| `GET` | `/photos` |
+| `GET` | `/children-policies` |
+| `GET` | `/rooms` |
+
+## Vuelos (`/api/flights`)
+
+| Metodo | Ruta |
+|---|---|
+| `GET` | `/destinations` |
+| `GET` | `/search` |
+| `GET` | `/search-multi-stops` |
+| `GET` | `/details` |
+| `GET` | `/min-price` |
+| `GET` | `/min-price-multi-stops` |
+| `GET` | `/seat-map` |
+
+## Coches (`/api/cars`)
+
+| Metodo | Ruta |
+|---|---|
+| `GET` | `/location` |
+| `GET` | `/search` |
+| `GET` | `/details` |
+
+## Restaurantes (`/api/restaurants`)
+
+| Metodo | Ruta |
+|---|---|
+| `GET` | `/search` |
+| `GET` | `/details` |
+
+## Atracciones (`/api/attractions`)
+
+| Metodo | Ruta |
+|---|---|
+| `GET` | `/search` |
+| `GET` | `/details` |
+
+## Auth En Rutas Protegidas
+
+Las rutas con `Auth: Si` requieren:
+
+```http
 Authorization: Bearer <firebase_id_token>
 ```
 
----
+## Notas
 
-## Variables de entorno
-
-| Variable | Descripción |
-|----------|-------------|
-| `PORT` | Puerto del servidor (por defecto `5000`) |
-| `RAPIDAPI_KEY` | Clave de RapidAPI para la Booking API |
-| `MAILJET_API_KEY` | Clave pública de Mailjet |
-| `MAILJET_API_SECRET` | Clave secreta de Mailjet |
-| `JWT_SECRET` | Secreto para firmar tokens de invitación |
-| `FIREBASE_PROJECT_ID` | ID del proyecto de Firebase |
-| `FIREBASE_CLIENT_EMAIL` | Client email del service account de Firebase |
-| `FIREBASE_PRIVATE_KEY` | Private key del service account (con `\n`) |
-| `CORS_ORIGIN` | Uno o varios origenes permitidos separados por coma |
+- El middleware global de errores centraliza las respuestas ante excepciones.
+- El backend depende de claves externas (RapidAPI, Google Places, Mailjet, reCAPTCHA); sin ellas algunos modulos responderan error de configuracion.
