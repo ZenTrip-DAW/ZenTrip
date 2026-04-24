@@ -1,96 +1,78 @@
-# ✈️ ZenTrip – Plan, Pack & Go
+# ZenTrip
 
-Aplicación web para la **planificación integral de viajes** individuales y grupales.  
-ZenTrip centraliza itinerario, presupuesto, equipaje, votaciones, chat y servicios externos en una sola plataforma colaborativa.
+ZenTrip es una aplicacion web para organizar viajes individuales o en grupo desde una sola plataforma. El proyecto esta dividido en frontend React y backend Node.js, con Firebase como base para autenticacion y datos.
 
----
+## Estado Actual Del Proyecto
 
-## 📌 Descripción
+Actualmente ZenTrip ya incluye:
 
-ZenTrip permite organizar un viaje completo sin depender de múltiples herramientas.  
-Los usuarios pueden planificar actividades, dividir gastos, coordinar equipaje, consultar el clima, buscar alojamientos y tomar decisiones en grupo mediante votaciones.
+- Autenticacion con Firebase (email/password y Google).
+- Verificacion de email, rutas protegidas y flujo de onboarding de perfil.
+- Creacion, listado y detalle de viajes.
+- Gestion de miembros e invitaciones a viajes (incluyendo enlace publico).
+- Exploradores de hoteles, vuelos y coches.
+- Busqueda de restaurantes y atracciones.
+- Guardado de reservas dentro de viajes.
+- Soporte de imagenes de viaje con Cloudinary.
+- Notificaciones internas y utilidades de mapa/clima en detalle de viaje.
 
-Incluye funcionalidades específicas para **viajes con mascotas**, aportando un valor diferencial.
+## Arquitectura
 
----
+- Frontend: React 19 + Vite + React Router.
+- Backend: Node.js + Express 5.
+- Datos y auth: Firebase (Firestore + Auth).
+- Integraciones externas: RapidAPI (hoteles, vuelos, coches), Google Places, Mailjet, Google Maps, reCAPTCHA.
 
-## 🎯 Objetivos
+## Estructura Del Repositorio
 
-- Centralizar toda la planificación del viaje en una sola app  
-- Facilitar la organización de viajes en grupo  
-- Mejorar la toma de decisiones colaborativas  
-- Controlar gastos y dividir costes automáticamente  
-- Ofrecer herramientas como equipaje compartido y viajes pet-friendly  
+```text
+ZenTrip/
+├── Zentrip-React/   # Frontend
+└── Zentrip-Node/    # Backend API
+```
 
----
+## Puesta En Marcha (Local)
 
-## 🚀 Funcionalidades principales
+1. Instalar dependencias:
 
-### 🗺️ Planificación del viaje
-- Creación de viajes individuales y grupales  
-- Calendario interactivo con actividades por día  
-- Itinerario estructurado  
-- Sistema de votaciones para decisiones en grupo  
+```bash
+cd Zentrip-Node && npm install
+cd ../Zentrip-React && npm install
+```
 
-### 💰 Gestión de presupuesto
-- Registro de gastos  
-- Cálculo automático del total  
-- División equitativa o personalizada  
-- Seguimiento de pagos  
+2. Crear variables de entorno:
 
-### 🎒 Equipaje colaborativo
-- Listas individuales y compartidas  
-- Checklist interactiva  
-- Control de duplicidades  
+- Backend: `.env` en `Zentrip-Node/`
+- Frontend: `.env` en `Zentrip-React/`
 
-### 🐾 Viajes con mascotas
-- Filtro de alojamientos pet-friendly  
-- Consulta de condiciones y suplementos  
-- Cálculo de coste adicional  
+3. Levantar backend:
 
-### 💬 Comunicación
-- Chat exclusivo por viaje  
-- Bot moderador inteligente (OpenAI)  
+```bash
+cd Zentrip-Node
+node server.js
+```
 
-### 🌐 Integraciones externas
-- Clima en destino  
-- Mapas y rutas  
-- Alojamientos, vuelos y transporte  
-- Eventos y lugares turísticos  
-- Conversor de divisas  
+4. Levantar frontend:
 
-### 🖼️ Multimedia y comunidad
-- Repositorio de imágenes por viaje  
-- Foro comunitario  
+```bash
+cd Zentrip-React
+npm run dev
+```
 
----
+5. Abrir aplicacion en:
 
-## 🧱 Tecnologías
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:5000`
 
-### Frontend
-- React + Vite  
-- Tailwind CSS  
+## Documentacion De Cada Modulo
 
-### Backend
-- Node.js + Express
-- Firebase  
+- Frontend: ver `Zentrip-React/README.md`
+- Backend: ver `Zentrip-Node/Readme.md`
 
-### Base de datos
-- Firebase Firestore
+## Notas
 
-### APIs externas
-- Amadeus / Booking / Airbnb  
-- Google Maps & Directions  
-- Rome2Rio  
-- Weather API  
-- CurrencyLayer  
-- Splitwise  
-- OpenAI API  
-- Eventbrite / Ticketmaster  
-- OpenTripMap  
-- Unsplash  
-
----
+- El frontend consume el backend por `VITE_API_URL` (si no existe, usa `http://localhost:5000/api`).
+- Para desplegar en Vercel, configurar todas las variables `VITE_*` del frontend y las variables del backend segun su README.
 
 
 
