@@ -59,8 +59,7 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
 
   const acceptedMembers = members.filter((m) => m.invitationStatus === 'accepted');
 
-  const canSave = receiptUrls.length > 0 &&
-    (selectedMembers === 'all' || (Array.isArray(selectedMembers) && selectedMembers.length > 0));
+  const canSave = selectedMembers === 'all' || (Array.isArray(selectedMembers) && selectedMembers.length > 0);
 
   const handleSave = async () => {
     if (!tripId || !user) return;
@@ -207,7 +206,7 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
 
               <div>
                 <p className="body-3 font-bold text-neutral-5 uppercase tracking-wider mb-3">Captura de la reserva</p>
-                <BookingReceiptUpload optional={false} onUpdate={(urls) => setReceiptUrls(urls)} />
+                <BookingReceiptUpload onUpdate={(urls) => setReceiptUrls(urls)} />
               </div>
             </div>
 

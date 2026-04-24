@@ -4,7 +4,7 @@ import { ChevronLeft } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useTripDetail } from './hooks/useTripDetail';
 import { useWeather } from './hooks/useWeather';
-import { addActivity, removeMemberFromTrip } from '../../../services/tripService';
+import { addActivity, deleteActivity, removeMemberFromTrip } from '../../../services/tripService';
 import ConfirmModal from '../../ui/ConfirmModal';
 import AddActivityModal from './components/itinerary/AddActivityModal';
 import TripDetailHeader from './components/TripDetailHeader';
@@ -100,6 +100,15 @@ export default function TripDetail() {
     }
   };
 
+  const handleDeleteActivity = async (activityId) => {
+    try {
+      await deleteActivity(tripId, activityId);
+      setActivities((prev) => prev.filter((a) => a.id !== activityId));
+    } catch (err) {
+      console.error('[TripDetail] Error al eliminar actividad:', err);
+    }
+  };
+
   if (loading) return <LoadingState />;
   if (accessDenied) return <ErrorState message="Ya no tienes acceso a este viaje." onBack={() => navigate('/trips')} />;
   if (error || !trip) return <ErrorState message={error || 'Viaje no encontrado.'} onBack={() => navigate('/trips')} />;
@@ -126,6 +135,7 @@ export default function TripDetail() {
           tripDays={tripDays}
           tripId={tripId}
           onAddActivity={handleAddActivity}
+          onDeleteActivity={handleDeleteActivity}
           onInvite={isCreator ? () => setActiveTab('invitaciones') : null}
           initialActiveBooking={initialBooking}
           initialRouteData={initialRouteData}
@@ -170,6 +180,7 @@ export default function TripDetail() {
         <AddActivityModal
           date={addActivityModal.date}
           creator={profile ? { uid: user.uid, name: profile.displayName || profile.username || user.email } : null}
+          existingActivities={addActivityModal.date ? (activitiesByDate[addActivityModal.date] || []) : []}
           onClose={() => setAddActivityModal({ open: false, date: null })}
           onSave={handleSaveActivity}
         />

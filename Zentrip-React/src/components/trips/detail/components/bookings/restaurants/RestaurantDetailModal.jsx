@@ -112,8 +112,7 @@ export default function RestaurantDetailModal({ restaurant, tripId, trip, bookin
     }
   };
 
-  const canSave = receiptUrls.length > 0 &&
-    (selectedMembers === 'all' || (Array.isArray(selectedMembers) && selectedMembers.length > 0));
+  const canSave = selectedMembers === 'all' || (Array.isArray(selectedMembers) && selectedMembers.length > 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -182,7 +181,6 @@ export default function RestaurantDetailModal({ restaurant, tripId, trip, bookin
               <div>
                 <p className="body-3 font-bold text-neutral-5 uppercase tracking-wider mb-3">Captura de la reserva</p>
                 <BookingReceiptUpload
-                  optional={false}
                   onUpdate={(urls) => setReceiptUrls(urls)}
                 />
               </div>
