@@ -33,7 +33,7 @@ export function validateProfileForm(form) {
     errors.country = profileValidationMessages.requiredCountry;
   }
 
-  if (form.profilePhoto && !/^https?:\/\/.+/.test(form.profilePhoto.trim())) {
+  if (form.profilePhoto && !/^(https?:\/\/.+|data:image\/.+)/.test(form.profilePhoto.trim())) {
     errors.profilePhoto = profileValidationMessages.invalidProfilePhoto;
   }
 
