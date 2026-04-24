@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useTripDetail } from './hooks/useTripDetail';
+import { useWeather } from './hooks/useWeather';
 import { addActivity, removeMemberFromTrip } from '../../../services/tripService';
 import ConfirmModal from '../../ui/ConfirmModal';
 import TripDetailHeader from './components/TripDetailHeader';
@@ -80,6 +81,8 @@ export default function TripDetail() {
     setMembers,
   } = useTripDetail(tripId);
 
+  const { weatherByDate, locationByDate, currentWeather } = useWeather(trip?.destination, trip?.stops);
+
   const handleAddActivity = async (date) => {
     // Por ahora añade una actividad de ejemplo. En el futuro se abrirá un modal.
     const newActivity = {
@@ -129,6 +132,8 @@ export default function TripDetail() {
           initialActiveBooking={initialBooking}
           initialRouteData={initialRouteData}
           onBookingOpened={() => { setInitialBooking(null); setInitialRouteData(null); }}
+          weatherByDate={weatherByDate}
+          locationByDate={locationByDate}
         />
       );
     }
@@ -185,7 +190,7 @@ export default function TripDetail() {
       </button>
 
       {/* Header del viaje */}
-      <TripDetailHeader trip={trip} members={members} />
+      <TripDetailHeader trip={trip} members={members} currentWeather={currentWeather} />
 
       {/* Pestañas */}
       <TripDetailTabs activeTab={activeTab} onTabChange={setActiveTab} />

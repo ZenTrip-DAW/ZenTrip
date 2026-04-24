@@ -70,6 +70,7 @@ export default function RestaurantDetailModal({ restaurant, tripId, trip, bookin
           date ? fmtDate(date) : null,
         ].filter(Boolean).join(' · ') || 'Anotado',
         status: 'reservado',
+        address: info.address ?? null,
       });
 
       const newBookingId = await addBooking(tripId, {

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { onSnapshot, doc } from 'firebase/firestore';
 import { db } from '../../../../config/firebaseConfig';
 import { useAuth } from '../../../../context/AuthContext';
-import { getTripById, getTripMembers, getActivities } from '../../../../services/tripService';
+import { getTripById, getTripMembers, getActivities, getBookings } from '../../../../services/tripService';
 
 export function useTripDetail(tripId) {
   const { user } = useAuth();
@@ -33,9 +33,10 @@ export function useTripDetail(tripId) {
         const isCreator = user?.uid === tripData?.uid;
 
         // Members y activities son secundarios — no bloquean si fallan
-        const [membersResult, activitiesResult] = await Promise.allSettled([
+        const [membersResult, activitiesResult, bookingsResult] = await Promise.allSettled([
           getTripMembers(tripId),
           getActivities(tripId),
+          getBookings(tripId),
         ]);
 
         if (membersResult.status === 'fulfilled') {
@@ -50,7 +51,25 @@ export function useTripDetail(tripId) {
         }
 
         if (activitiesResult.status === 'fulfilled') {
-          setActivities(activitiesResult.value);
+          let acts = activitiesResult.value;
+          if (bookingsResult.status === 'fulfilled') {
+            const bkgs = bookingsResult.value;
+            acts = acts.map((act) => {
+              const bk = bkgs.find((b) => b.activityId === act.id);
+              if (!bk) return act;
+              const addr =
+                bk.type === 'vuelo' ? (bk.destinationAddress || '') :
+                bk.type === 'car'   ? (bk.pickUpAddress || '') :
+                (bk.address || '');
+              const extra = {};
+              if (!act.address && addr) extra.address = addr;
+              if (!act.city && bk.city) extra.city = bk.city;
+              if (act.lat == null && bk.lat != null) extra.lat = bk.lat;
+              if (act.lng == null && bk.lng != null) extra.lng = bk.lng;
+              return Object.keys(extra).length ? { ...act, ...extra } : act;
+            });
+          }
+          setActivities(acts);
         } else {
           console.warn('[useTripDetail] No se pudieron cargar las actividades:', activitiesResult.reason);
         }
@@ -103,7 +122,10 @@ export function useTripDetail(tripId) {
       const cur = new Date(startDate + 'T00:00:00');
       const end = new Date(endDate   + 'T00:00:00');
       while (cur <= end) {
-        daySet.add(cur.toISOString().split('T')[0]);
+        const y = cur.getFullYear();
+        const mo = String(cur.getMonth() + 1).padStart(2, '0');
+        const dy = String(cur.getDate()).padStart(2, '0');
+        daySet.add(`${y}-${mo}-${dy}`);
         cur.setDate(cur.getDate() + 1);
       }
     }

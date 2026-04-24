@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useWeather } from '../../hooks/useWeather';
 import { ChevronLeft } from 'lucide-react';
 import BookingBar from '../itinerary/BookingBar';
 import TripSummaryCard from '../itinerary/TripSummaryCard';
@@ -33,13 +32,15 @@ export default function ItinerarioTab({
   initialActiveBooking = null,
   initialRouteData = null,
   onBookingOpened,
+  weatherByDate = {},
+  locationByDate = {},
 }) {
-  const [selectedDay, setSelectedDay] = useState(tripDays[0] ?? null);
+  const today = new Date().toISOString().split('T')[0];
+  const [selectedDay, setSelectedDay] = useState(() =>
+    tripDays.includes(today) ? today : (tripDays[0] ?? null)
+  );
   const [activeBooking, setActiveBooking] = useState(initialActiveBooking);
   const [flightBannerLoaded, setFlightBannerLoaded] = useState(false);
-  const weatherByDate = useWeather(trip?.destination);
-
-  const isFlightBooking = activeBooking === 'vuelos';
 
   const handleBookingSelect = (key) => {
     const opening = activeBooking !== key;
@@ -105,6 +106,7 @@ export default function ItinerarioTab({
                 tripName: trip?.name,
                 origin: trip?.origin,
                 destination: trip?.destination,
+                stops: trip?.stops ?? [],
                 memberCount: acceptedCount || 1,
                 startDate: trip?.startDate,
                 endDate: trip?.endDate,
@@ -169,6 +171,8 @@ export default function ItinerarioTab({
                     selectedDay={selectedDay}
                     activitiesByDate={activitiesByDate}
                     onAddActivity={onAddActivity}
+                    weatherData={selectedDay ? weatherByDate[selectedDay] : null}
+                    location={selectedDay ? (locationByDate[selectedDay] || trip?.destination) : trip?.destination}
                   />
                 </>
               )}

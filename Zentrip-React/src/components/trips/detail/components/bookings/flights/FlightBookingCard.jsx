@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Plane, Users, X, ExternalLink, Calendar, Clock, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
-import { deleteBooking, deleteActivity } from '../../../../../../services/tripService';
+import { deleteFlightBooking } from '../../../../../../services/tripService';
 import { SegmentRow } from './FlightAtoms';
 import {
   fmt, fmtDate, fmtDateShort, fmtTime,
@@ -13,8 +13,7 @@ function CancelModal({ booking, tripId, onConfirm, onClose }) {
   const handleConfirm = async () => {
     setDeleting(true);
     try {
-      await deleteBooking(tripId, booking.id);
-      if (booking.activityId) await deleteActivity(tripId, booking.activityId);
+      await deleteFlightBooking(tripId, booking.id);
       onConfirm();
     } finally {
       setDeleting(false);
