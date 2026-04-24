@@ -1,11 +1,82 @@
 import { useRef, useState } from 'react';
 import { getNames } from 'country-list';
 import ISO6391 from 'iso-639-1';
+import { createAvatar } from '@dicebear/core';
+import { adventurer, funEmoji } from '@dicebear/collection';
+import { Upload, Sparkles, X, RefreshCw } from 'lucide-react';
 import { uploadImage, validateImageFile } from '../../../services/cloudinaryService';
 import Input from '../../ui/Input';
 import Button from '../../ui/Button';
 import AlertMessage from '../../ui/AlertMessage';
 import UserAvatar from '../../ui/UserAvatar';
+
+const AVATAR_STYLES = [
+  { key: 'adventurer', label: 'Aventurero', generator: adventurer },
+  { key: 'funEmoji', label: 'Fun Emoji', generator: funEmoji },
+];
+
+function generateAvatarDataUrl(style, seed) {
+  const svg = createAvatar(style, { seed }).toString();
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+function generateSeeds(count = 8) {
+  return Array.from({ length: count }, () => Math.random().toString(36).slice(2));
+}
+
+function AvatarPicker({ onSelect }) {
+  const [activeStyle, setActiveStyle] = useState('adventurer');
+  const [seeds, setSeeds] = useState(() => generateSeeds());
+
+  const currentStyle = AVATAR_STYLES.find((s) => s.key === activeStyle);
+
+  return (
+    <div className="mt-3 border border-slate-200 rounded-lg p-3 bg-slate-50">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex gap-1">
+          {AVATAR_STYLES.map((s) => (
+            <button
+              key={s.key}
+              type="button"
+              onClick={() => setActiveStyle(s.key)}
+              className={`px-2 py-1 text-xs font-medium rounded transition cursor-pointer ${
+                activeStyle === s.key
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => setSeeds(generateSeeds())}
+          className="flex items-center gap-1 text-xs text-slate-400 hover:text-orange-500 cursor-pointer transition"
+          title="Generar nuevos"
+        >
+          <RefreshCw size={12} />
+          Nuevos
+        </button>
+      </div>
+      <div className="grid grid-cols-4 gap-2">
+        {seeds.map((seed) => {
+          const url = generateAvatarDataUrl(currentStyle.generator, seed);
+          return (
+            <button
+              key={seed}
+              type="button"
+              onClick={() => onSelect(url)}
+              className="rounded-full overflow-hidden border-2 border-transparent hover:border-orange-400 focus:border-orange-500 transition cursor-pointer aspect-square"
+            >
+              <img src={url} alt="avatar" className="w-full h-full" />
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 const LANGUAGES = ISO6391.getAllNativeNames().sort();
 const CURRENCIES = ['EUR €', 'USD $', 'GBP £', 'JPY ¥', 'MXN $'];
@@ -40,6 +111,7 @@ function AvatarUpload({ value, fullName, onUploaded }) {
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
+  const [showPicker, setShowPicker] = useState(false);
 
   async function handleFile(e) {
     const file = e.target.files[0];
@@ -65,38 +137,69 @@ function AvatarUpload({ value, fullName, onUploaded }) {
 
   return (
     <div>
-      <label className="block body-bold text-slate-600 mb-1">Foto de perfil</label>
-      <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+      <label className="block body-bold text-slate-600 mb-3">Foto de perfil</label>
+
+      <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:gap-5">
         <UserAvatar
           src={value}
           alt="Avatar"
           fullName={fullName}
-          sizeClass="w-16 h-16"
-          containerClass="border-2 border-slate-200 shrink-0"
-          initialsClass="body-semibold text-slate-500"
+          sizeClass="w-20 h-20"
+          containerClass="border-2 border-slate-200 shrink-0 shadow-sm"
+          initialsClass="text-xl font-semibold text-slate-500"
         />
-        <div className="flex flex-col gap-1 items-center sm:items-start">
-          <button
-            type="button"
-            onClick={() => inputRef.current.click()}
-            disabled={uploading}
-            className="text-sm font-medium text-orange-500 hover:text-orange-600 disabled:opacity-50 cursor-pointer text-center sm:text-left"
-          >
-            {uploading ? 'Subiendo...' : 'Cambiar foto'}
-          </button>
+
+        <div className="flex flex-col gap-2 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button
+              type="button"
+              onClick={() => inputRef.current.click()}
+              disabled={uploading}
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-full border border-slate-300 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 hover:border-slate-400 transition disabled:opacity-50 cursor-pointer"
+            >
+              <Upload size={14} />
+              {uploading ? 'Subiendo...' : 'Subir foto'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowPicker((p) => !p)}
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition cursor-pointer ${
+                showPicker
+                  ? 'border-orange-400 bg-orange-50 text-orange-600'
+                  : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:border-orange-300 hover:text-orange-500'
+              }`}
+            >
+              <Sparkles size={14} />
+              Elegir avatar
+            </button>
+          </div>
+
           {value && !uploading && (
             <button
               type="button"
               onClick={() => onUploaded('')}
-              className="text-xs text-slate-400 hover:text-red-400 cursor-pointer text-center sm:text-left"
+              className="flex items-center justify-center sm:justify-start gap-1 text-xs text-slate-400 hover:text-red-400 cursor-pointer transition"
             >
-              Eliminar
+              <X size={12} />
+              Eliminar foto
             </button>
           )}
-          {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
+
+          {uploadError && <p className="text-xs text-red-500 text-center sm:text-left">{uploadError}</p>}
         </div>
       </div>
+
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+
+      {showPicker && (
+        <AvatarPicker
+          onSelect={(url) => {
+            onUploaded(url);
+            setShowPicker(false);
+          }}
+        />
+      )}
     </div>
   );
 }

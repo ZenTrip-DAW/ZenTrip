@@ -38,6 +38,6 @@ export async function saveUserProfile(user, form) {
 
   await updateProfile(user, {
     displayName: `${payload.firstName} ${payload.lastName}`.trim(),
-    photoURL: payload.profilePhoto || null,
+    photoURL: payload.profilePhoto?.startsWith('http') ? payload.profilePhoto : null,
   });
 }

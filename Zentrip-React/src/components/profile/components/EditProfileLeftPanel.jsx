@@ -7,11 +7,11 @@ const NAV_ITEMS = [
   { key: 'security', label: 'Seguridad', Icon: Lock },
 ];
 
-const AVATAR_COLORS = ['#4f6f8f', '#7ea3c9', '#5f8d7a', '#d9a67a', '#c48aa6'];
+const AVATAR_COLORS = ['', '#4f6f8f', '#7ea3c9', '#5f8d7a', '#d9a67a', '#c48aa6'];
 
 export default function EditProfileLeftPanel({ heroImg, logoImg, usuario, form, setForm, activeSection, setActiveSection }) {
   const initials = `${form.firstName?.[0] || ''}${form.lastName?.[0] || ''}`.toUpperCase() || '?';
-  const avatarBackground = form.avatarColor || AVATAR_COLORS[0];
+  const avatarBackground = form.avatarColor || '';
 
   const handleAvatarColorChange = () => {
     const currentIndex = AVATAR_COLORS.indexOf(avatarBackground);
@@ -62,10 +62,12 @@ export default function EditProfileLeftPanel({ heroImg, logoImg, usuario, form, 
                   className="h-full w-full rounded-full object-cover"
                   onError={(e) => { e.target.style.display = 'none'; }}
                 />
-                <span
-                  className="absolute inset-0 rounded-full"
-                  style={{ backgroundColor: avatarBackground, opacity: 0.35 }}
-                />
+                {avatarBackground && (
+                  <span
+                    className="absolute inset-0 rounded-full"
+                    style={{ backgroundColor: avatarBackground, opacity: 0.35 }}
+                  />
+                )}
               </>
             ) : (
               <span className="text-sm font-bold text-white select-none">{initials}</span>
@@ -79,10 +81,12 @@ export default function EditProfileLeftPanel({ heroImg, logoImg, usuario, form, 
           >
             <Paintbrush size={11} />
           </button>
-          <span
-            className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-slate-900"
-            style={{ backgroundColor: avatarBackground }}
-          />
+          {avatarBackground && (
+            <span
+              className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-slate-900"
+              style={{ backgroundColor: avatarBackground }}
+            />
+          )}
         </div>
         <div className="min-w-0">
           <p className="body-bold text-white truncate">
