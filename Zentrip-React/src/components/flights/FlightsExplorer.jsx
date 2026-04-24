@@ -28,14 +28,9 @@ export default function FlightsExplorer({ tripContext: tripContextProp, embedded
 
   // ── Estado del formulario de búsqueda ─────────────────────────────────────
   const [tripType, setTripType] = useState('ROUND_TRIP');
-  const [from, setFrom] = useState(() => {
-    const origin = tripContext?.origin;
-    return origin ? { id: '', label: origin, code: '', cityName: origin } : { id: '', label: '', code: '' };
-  });
-  const [to, setTo] = useState(() => {
-    const destination = tripContext?.destination;
-    return destination ? { id: '', label: destination, code: '', cityName: destination } : { id: '', label: '', code: '' };
-  });
+  const [from, setFrom] = useState({ id: '', label: '', code: '' });
+  const [to, setTo] = useState({ id: '', label: '', code: '' });
+  const [noAirportWarnings, setNoAirportWarnings] = useState([]);
   const [departDate, setDepartDate] = useState(today);
   const [returnDate, setReturnDate] = useState(nextWeek);
   const [legs, setLegs] = useState([emptyLeg(today), emptyLeg(nextWeek)]);
@@ -81,7 +76,7 @@ export default function FlightsExplorer({ tripContext: tripContextProp, embedded
         const items = (res?.data ?? [])
           .filter((i) => i.type === 'CITY' || i.type === 'AIRPORT')
           .map((i) => ({ ...i, cityName: originalName || i.cityName || i.name || i.code }));
-        if (items.length === 0) return { id: '', label: originalName, code: '', cityName: originalName };
+        if (items.length === 0) return { id: '', label: '', code: '', cityName: originalName, noAirport: true };
         const airports = items.filter((i) => i.type === 'AIRPORT');
         const city = items.find((i) => i.type === 'CITY');
         const match = (city && airports.length > 1) ? city : (airports[0] ?? city ?? items[0]);
@@ -112,8 +107,12 @@ export default function FlightsExplorer({ tripContext: tripContextProp, embedded
         resolveToAirport(tripContext.origin),
         resolveToAirport(tripContext.destination),
       ]).then(([fromAirport, toAirport]) => {
-        if (fromAirport.id) setFrom(fromAirport);
-        if (toAirport.id) setTo(toAirport);
+        const warnings = [];
+        if (fromAirport.noAirport) warnings.push(fromAirport.cityName);
+        else if (fromAirport.id) setFrom(fromAirport);
+        if (toAirport.noAirport) warnings.push(toAirport.cityName);
+        else if (toAirport.id) setTo(toAirport);
+        if (warnings.length > 0) setNoAirportWarnings(warnings);
       });
       if (tripContext.startDate >= today) setDepartDate(tripContext.startDate);
       if (tripContext.endDate >= (tripContext.startDate || today)) setReturnDate(tripContext.endDate);
@@ -253,6 +252,17 @@ export default function FlightsExplorer({ tripContext: tripContextProp, embedded
           error={error}
           onSearch={tripType === 'MULTI_STOP' ? handleSearchMultiStop : handleSearch}
         />
+
+        {/* Aviso de ciudades sin aeropuerto */}
+        {noAirportWarnings.length > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex flex-col gap-1">
+            {noAirportWarnings.map((city) => (
+              <p key={city} className="body-3 text-amber-700">
+                ⚠️ {city} no tiene aeropuerto — introduce el origen o destino manualmente
+              </p>
+            ))}
+          </div>
+        )}
 
         {/* Barra de precios por día */}
         {showDateBar && from.id && to.id && (

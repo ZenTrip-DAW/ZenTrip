@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react';
-import { X, MapPin, Clock, FileText, Tag, UserCircle, AlertCircle } from 'lucide-react';
+import { X, MapPin, Clock, FileText, Tag, UserCircle, AlertCircle, AlertTriangle } from 'lucide-react';
 import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
 import Button from '../../../../ui/Button';
 
 const LIBRARIES = ['places'];
 const NOTES_MAX = 300;
+const NAME_MAX = 50;
 
 function FieldError({ message }) {
   if (!message) return null;
@@ -16,7 +17,16 @@ function FieldError({ message }) {
   );
 }
 
-export default function AddActivityModal({ date, creator, onClose, onSave }) {
+function timeLt(a, b) {
+  return a && b && a >= b;
+}
+
+function timesOverlap(newStart, newEnd, existStart, existEnd) {
+  if (!existStart || !existEnd) return false;
+  return newStart < existEnd && newEnd > existStart;
+}
+
+export default function AddActivityModal({ date, creator, existingActivities = [], onClose, onSave }) {
   const [name, setName] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
@@ -24,6 +34,7 @@ export default function AddActivityModal({ date, creator, onClose, onSave }) {
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [showOverlapWarn, setShowOverlapWarn] = useState(false);
   const acRef = useRef(null);
 
   const { isLoaded } = useJsApiLoader({
@@ -38,18 +49,27 @@ export default function AddActivityModal({ date, creator, onClose, onSave }) {
   };
 
   const errors = {
-    name: !name.trim() ? 'El nombre es obligatorio' : null,
+    name: !name.trim()
+      ? 'El nombre es obligatorio'
+      : name.trim().length > NAME_MAX
+        ? `Máximo ${NAME_MAX} caracteres`
+        : null,
     startTime: !startTime ? 'La hora de inicio es obligatoria' : null,
-    endTime: !endTime ? 'La hora de fin es obligatoria' : null,
+    endTime: !endTime
+      ? 'La hora de fin es obligatoria'
+      : timeLt(startTime, endTime)
+        ? 'La hora de fin debe ser posterior a la de inicio'
+        : null,
     address: !address.trim() ? 'La dirección es obligatoria' : null,
   };
 
   const isValid = !Object.values(errors).some(Boolean);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitted(true);
-    if (!isValid) return;
+  const hasOverlap = isValid && existingActivities.some(
+    (act) => act.startTime && act.endTime && timesOverlap(startTime, endTime, act.startTime, act.endTime)
+  );
+
+  const doSave = async () => {
     setSaving(true);
     await onSave({
       date,
@@ -60,15 +80,23 @@ export default function AddActivityModal({ date, creator, onClose, onSave }) {
       notes: notes.trim() || null,
       type: 'actividad',
       status: 'pendiente',
+      source: 'manual',
       createdBy: creator ?? null,
     });
     setSaving(false);
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitted(true);
+    if (!isValid) return;
+    if (hasOverlap) { setShowOverlapWarn(true); return; }
+    await doSave();
+  };
+
   const inputBase = 'border rounded-xl px-3 py-2 body-2 text-secondary-5 placeholder:text-neutral-3 focus:outline-none focus:ring-2 transition-colors';
   const inputOk = `${inputBase} border-neutral-2 focus:ring-primary-3/40`;
   const inputErr = `${inputBase} border-feedback-error focus:ring-feedback-error/30 bg-feedback-error-bg/30`;
-
   const fieldClass = (field) => (submitted && errors[field] ? inputErr : inputOk);
 
   const addressInput = (
@@ -86,6 +114,30 @@ export default function AddActivityModal({ date, creator, onClose, onSave }) {
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
       <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col gap-5 p-6 max-h-[90vh] overflow-y-auto">
+
+        {/* Aviso solapamiento */}
+        {showOverlapWarn && (
+          <div className="absolute inset-0 z-10 bg-white rounded-2xl flex flex-col gap-4 p-6 justify-center">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-amber-500" />
+              </div>
+              <h3 className="title-h3-desktop text-secondary-5">Horario ocupado</h3>
+            </div>
+            <p className="body-2 text-neutral-4">
+              Ya tienes una actividad dentro de este tiempo. ¿Seguro que deseas agregar otra?
+            </p>
+            <div className="flex gap-3 mt-2">
+              <Button variant="ghost" className="flex-1 w-auto!" onClick={() => setShowOverlapWarn(false)}>
+                Revisar horario
+              </Button>
+              <Button variant="orange" className="flex-1 w-auto!" disabled={saving} onClick={async () => { setShowOverlapWarn(false); await doSave(); }}>
+                {saving ? 'Guardando...' : 'Sí, agregar'}
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <h2 className="title-h3-desktop text-secondary-5">Nueva actividad</h2>
@@ -104,11 +156,16 @@ export default function AddActivityModal({ date, creator, onClose, onSave }) {
             <input
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value.slice(0, NAME_MAX + 1))}
               placeholder="Ej. Visita al museo"
               className={fieldClass('name')}
             />
-            {submitted && <FieldError message={errors.name} />}
+            <div className="flex items-start justify-between gap-2">
+              {submitted ? <FieldError message={errors.name} /> : <span />}
+              <span className={`body-3 shrink-0 ${name.length >= NAME_MAX ? 'text-feedback-error' : 'text-neutral-3'}`}>
+                {name.length}/{NAME_MAX}
+              </span>
+            </div>
           </div>
 
           {/* Horario */}
@@ -135,7 +192,6 @@ export default function AddActivityModal({ date, creator, onClose, onSave }) {
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  min={startTime || undefined}
                   className={fieldClass('endTime')}
                 />
                 {submitted && <FieldError message={errors.endTime} />}

@@ -207,7 +207,7 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
 
               <div>
                 <p className="body-3 font-bold text-neutral-5 uppercase tracking-wider mb-3">Captura de la reserva</p>
-                <BookingReceiptUpload optional={false} onUpdate={(urls) => setReceiptUrls(urls)} />
+                <BookingReceiptUpload onUpdate={(urls) => setReceiptUrls(urls)} />
               </div>
             </div>
 

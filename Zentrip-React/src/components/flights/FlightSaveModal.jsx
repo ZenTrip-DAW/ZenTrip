@@ -228,7 +228,7 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
       .finally(() => setLoadingTrip(false));
   }, [selectedTrip?.id]);
 
-  const canSave = receiptUrls.length > 0 && selectedTrip && (passengers === 'all' || (Array.isArray(passengers) && passengers.length > 0));
+  const canSave = selectedTrip && (passengers === 'all' || (Array.isArray(passengers) && passengers.length > 0));
 
   const handleSave = async () => {
     if (!canSave || saving) return;
@@ -569,14 +569,10 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
                 <p className="body-3 font-bold text-neutral-5 uppercase tracking-wider mb-1">
                   Captura del pago
                 </p>
-                <p className="body-3 text-neutral-3 mb-3">
-                  Sube una captura de la confirmación del pago. El botón de guardar se activará cuando subas al menos una imagen.
-                </p>
                 <BookingReceiptUpload
                   initialUrls={[]}
                   onUpdate={setReceiptUrls}
                   label="Captura del pago"
-                  optional={false}
                 />
               </div>
 
@@ -605,9 +601,6 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
                   <>✓ Guardar en el itinerario</>
                 )}
               </button>
-              {!canSave && receiptUrls.length === 0 && (
-                <p className="body-3 text-neutral-3 text-center mt-2">Sube el comprobante para continuar</p>
-              )}
             </div>
           </>
         )}
