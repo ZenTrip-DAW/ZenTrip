@@ -1,8 +1,20 @@
+import { useNavigate } from 'react-router-dom';
+import { ChevronLeft } from 'lucide-react';
 import ActivitySearch from '../trips/detail/components/bookings/activities/ActivitySearch';
 
 export default function ActivitiesExplorer() {
+  const navigate = useNavigate();
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
+    <div className="max-w-7xl mx-auto flex flex-col gap-4">
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 body-3 text-neutral-4 hover:text-neutral-6 w-fit transition-colors"
+      >
+        <ChevronLeft className="w-4 h-4" />
+        Volver
+      </button>
       <ActivitySearch trip={null} tripId={null} members={[]} />
     </div>
   );
