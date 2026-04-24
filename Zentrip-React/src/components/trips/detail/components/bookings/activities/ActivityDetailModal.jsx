@@ -59,8 +59,7 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
 
   const acceptedMembers = members.filter((m) => m.invitationStatus === 'accepted');
 
-  const canSave = receiptUrls.length > 0 &&
-    (selectedMembers === 'all' || (Array.isArray(selectedMembers) && selectedMembers.length > 0));
+  const canSave = selectedMembers === 'all' || (Array.isArray(selectedMembers) && selectedMembers.length > 0);
 
   const handleSave = async () => {
     if (!tripId || !user) return;
