@@ -26,16 +26,16 @@ export default function ReservasTab({ trip, members, tripId, initialSubTab = 'ho
       return <HotelBookings trip={trip} members={members} tripId={tripId} onGoBook={onGoBook} />;
     }
     if (activeSubTab === 'coches') {
-      return <CarBookings tripId={tripId} onGoBook={onGoBook} />;
+      return <CarBookings tripId={tripId} members={members} onGoBook={onGoBook} />;
     }
     if (activeSubTab === 'vuelos') {
       return <FlightSearch members={members} tripId={tripId} onGoBook={setActiveSubTab} />;
     }
     if (activeSubTab === 'restaurantes') {
-      return <RestaurantBookings tripId={tripId} onGoBook={onGoBook} />;
+      return <RestaurantBookings tripId={tripId} members={members} onGoBook={onGoBook} />;
     }
     if (activeSubTab === 'actividades') {
-      return <ActivityBookings tripId={tripId} onGoBook={onGoBook} />;
+      return <ActivityBookings tripId={tripId} members={members} onGoBook={onGoBook} />;
     }
     if (activeSubTab === 'rutas') {
       return <RouteBookings tripId={tripId} onOpenRoute={onOpenRoute} />;

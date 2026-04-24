@@ -7,7 +7,7 @@ import BookingBanner from '../BookingBanner';
 import ImageLoadGate from '../../../../../shared/ImageLoadGate';
 import ActivityBookingCard from './ActivityBookingCard';
 
-export default function ActivityBookings({ tripId, onGoBook }) {
+export default function ActivityBookings({ tripId, members = [], onGoBook }) {
   const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
 
@@ -46,6 +46,7 @@ export default function ActivityBookings({ tripId, onGoBook }) {
                   key={b.id}
                   booking={b}
                   tripId={tripId}
+                  members={members}
                   onCancelled={(id) => setBookings((prev) => prev.filter((x) => x.id !== id))}
                 />
               ))}
