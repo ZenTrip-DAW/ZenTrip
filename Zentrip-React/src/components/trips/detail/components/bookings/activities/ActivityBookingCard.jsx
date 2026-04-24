@@ -81,7 +81,7 @@ export default function ActivityBookingCard({ booking, tripId, onCancelled }) {
               href={booking.mapsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 h-9 min-w-[120px] rounded-lg border border-secondary-3 text-secondary-3 body-3 font-bold flex items-center justify-center gap-1.5 hover:bg-secondary-1 transition"
+              className="flex-1 h-9 min-w-120px rounded-lg border border-secondary-3 text-secondary-3 body-3 font-bold flex items-center justify-center gap-1.5 hover:bg-secondary-1 transition"
             >
               <ExternalLink className="w-3.5 h-3.5" /> Google Maps
             </a>

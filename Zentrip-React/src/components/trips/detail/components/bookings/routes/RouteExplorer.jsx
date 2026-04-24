@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useJsApiLoader, GoogleMap, DirectionsRenderer, Autocomplete } from '@react-google-maps/api';
-import { Plus, X, Navigation, Clock, Route, MapPin, Car, Shuffle, Footprints, Bike, Bus, Save, Check } from 'lucide-react';
+import { Plus, X, Navigation, Clock, Route, MapPin, Car, Shuffle, Footprints, Bike, Bus, Save, Check, GripVertical, Hotel, Plane, Train, Compass, Utensils } from 'lucide-react';
 import BookingBanner from '../BookingBanner';
-import { addBooking } from '../../../../../../services/tripService';
+import { addBooking, updateBooking, getBookings } from '../../../../../../services/tripService';
 import { useAuth } from '../../../../../../context/AuthContext';
 
 const LIBRARIES = ['places'];
@@ -36,26 +36,65 @@ function formatDuration(seconds) {
 }
 
 let _wpCounter = 0;
-function newWp(value = '', fromActivity = false) {
-  return { id: `wp-${++_wpCounter}`, value, fromActivity };
+function newWp(value = '', fromActivity = false, label = null) {
+  return { id: `wp-${++_wpCounter}`, value, fromActivity, label };
+}
+
+const ACTIVITY_LABEL_CFG = {
+  hotel:       { Icon: Hotel,   text: 'Hotel' },
+  vuelo:       { Icon: Plane,   text: 'Aeropuerto' },
+  actividad:   { Icon: Compass, text: 'Actividad' },
+  restaurante: { Icon: Utensils, text: 'Restaurante' },
+  restaurant:  { Icon: Utensils, text: 'Restaurante' },
+  car:         { Icon: Car,     text: 'Recogida coche' },
+  tren:        { Icon: Train,   text: 'Tren' },
+};
+
+function activityLabel(activity) {
+  const cfg = ACTIVITY_LABEL_CFG[activity.type];
+  const name = activity.hotelName || activity.name || '';
+  return cfg ? { Icon: cfg.Icon, text: cfg.text, name } : { Icon: MapPin, text: '', name };
 }
 
 // Extracts "Madrid (MAD)" from "✈ Madrid (MAD) → Barcelona (BCN) — passengers"
-function extractFlightDeparture(name) {
-  const m = name?.match(/✈\s*(.+?)\s+(?:→|⇄)/);
-  return m ? m[1].trim() : null;
+
+// Extrae el aeropuerto de DESTINO del nombre de actividad de vuelo (fallback para reservas antiguas sin address)
+// Extrae el aeropuerto de llegada y su dirección para vuelos
+function extractFlightArrivalWaypoint(activity) {
+  if (activity.arrivalAirportAddress) return activity.arrivalAirportAddress;
+  if (activity.arrivalAirportName) return activity.arrivalAirportName;
+  if (activity.address) return activity.address;
+  const m = activity.name?.match(/[→⇄]\s*([^—]+)/);
+  if (m) return m[1].replace(/\(.+\)/, '').trim();
+  return activity.name;
+}
+
+function appendCity(text, city) {
+  if (!city || !text) return text;
+  return text.toLowerCase().includes(city.toLowerCase()) ? text : `${text}, ${city}`;
+}
+
+function extractAddressOrName(activity) {
+  const city = activity.city || '';
+  if (activity.address) return appendCity(activity.address, city);
+  const base = activity.hotelName || activity.name || '';
+  if (base && city) return `${base}, ${city}`;
+  if (base) return base;
+  if (activity.lat != null && activity.lng != null) return `${activity.lat},${activity.lng}`;
+  return '';
 }
 
 function activityToWaypoint(activity) {
+  const label = activityLabel(activity);
   if (activity.type === 'vuelo') {
-    const airport = extractFlightDeparture(activity.name);
-    return newWp(airport || activity.name, true);
+    return newWp(extractFlightArrivalWaypoint(activity), true, label);
   }
-  return newWp(activity.name, true);
+  return newWp(extractAddressOrName(activity), true, label);
 }
 
-function WaypointRow({ wp, index, total, onChange, onRemove, isLoaded }) {
+function WaypointRow({ wp, index, total, onChange, onRemove, onMove, isLoaded }) {
   const acRef = useRef(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const handlePlaceChanged = () => {
     const place = acRef.current?.getPlace();
@@ -65,7 +104,7 @@ function WaypointRow({ wp, index, total, onChange, onRemove, isLoaded }) {
 
   const isFirst = index === 0;
   const isLast = index === total - 1;
-  const dotColor = isFirst ? 'bg-auxiliary-green-5' : isLast ? 'bg-feedback-error' : 'bg-primary-3';
+  const dotColor = isFirst || isLast ? 'bg-auxiliary-green-5' : 'bg-primary-3';
 
   const inputEl = (
     <input
@@ -79,23 +118,38 @@ function WaypointRow({ wp, index, total, onChange, onRemove, isLoaded }) {
   );
 
   return (
-    <div className="flex items-start gap-2 mb-1">
+    <div
+      draggable
+      onDragStart={(e) => { e.dataTransfer.setData('text/plain', String(index)); e.dataTransfer.effectAllowed = 'move'; }}
+      onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setIsDragOver(true); }}
+      onDragLeave={() => setIsDragOver(false)}
+      onDrop={(e) => { e.preventDefault(); setIsDragOver(false); const from = Number(e.dataTransfer.getData('text/plain')); if (from !== index) onMove(from, index); }}
+      onDragEnd={() => setIsDragOver(false)}
+      className={`flex items-start gap-2 mb-1 transition-opacity ${isDragOver ? 'opacity-50' : ''}`}
+    >
+      <div className="shrink-0 pt-3 cursor-grab text-neutral-2 hover:text-neutral-4 transition-colors">
+        <GripVertical className="w-4 h-4" />
+      </div>
+
       <div className="flex flex-col items-center shrink-0 pt-3">
         <div className={`w-2.5 h-2.5 rounded-full ${dotColor}`} />
         {!isLast && <div className="w-px flex-1 min-h-20px bg-neutral-2 mt-1" />}
       </div>
 
       <div className="flex-1 min-w-0">
+        {wp.label && (
+          <div className="flex items-center gap-1.5 mb-1">
+            <wp.label.Icon className="w-3.5 h-3.5 text-neutral-4 shrink-0" />
+            <p className="body-3 text-neutral-4 font-semibold truncate">
+              {wp.label.text}{wp.label.name ? ` · ${wp.label.name}` : ''}
+            </p>
+          </div>
+        )}
         {isLoaded ? (
           <Autocomplete onLoad={(ac) => { acRef.current = ac; }} onPlaceChanged={handlePlaceChanged}>
             {inputEl}
           </Autocomplete>
         ) : inputEl}
-        {wp.fromActivity && (
-          <p className="body-3 text-amber-500 mt-0.5 flex items-center gap-1">
-            <span>⚠</span> Nombre de actividad — selecciona una dirección del desplegable
-          </p>
-        )}
       </div>
 
       {total > 2 ? (
@@ -255,14 +309,31 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
   const [calculating, setCalculating] = useState(false);
   const [optimizing, setOptimizing] = useState(false);
   const [error, setError] = useState(null);
+  const existingId = initialData?.id ?? null;
   const [savingRoute, setSavingRoute] = useState(false);
-  const [routeName, setRouteName] = useState('');
+  const [routeName, setRouteName] = useState(initialData?.name || '');
   const [saved, setSaved] = useState(false);
+  const [saveMode, setSaveMode] = useState(null); // 'updated' | 'new'
+  const [isDirty, setIsDirty] = useState(false);
+  const [bookings, setBookings] = useState([]);
+  const bookingsLoadedRef = useRef(false);
   const mapRef = useRef(null);
   const isMounted = useRef(false);
   const skipNextFillRef = useRef(!!initialData);
   const shouldAutoCalculateRef = useRef(!!initialData);
 
+  // Carga reservas para detectar hotel por rango de fechas
+  useEffect(() => {
+    if (!tripId) return;
+    getBookings(tripId)
+      .then((bks) => {
+        setBookings(bks);
+        bookingsLoadedRef.current = true;
+      })
+      .catch(() => { bookingsLoadedRef.current = true; });
+  }, [tripId]);
+
+  // Rellena waypoints inteligentemente: hotel detectado por rango, vuelo de llegada primero
   const fillFromDay = useCallback((day) => {
     if (!day) return;
     const acts = (activitiesByDate[day] || [])
@@ -273,24 +344,60 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
         if (!b.startTime) return -1;
         return a.startTime.localeCompare(b.startTime);
       });
-    if (acts.length >= 2) {
-      setWaypoints(acts.map(activityToWaypoint));
-    } else if (acts.length === 1) {
-      setWaypoints([activityToWaypoint(acts[0]), newWp()]);
-    } else {
-      const dest = trip?.destination?.split(',')[0]?.trim() || '';
-      setWaypoints([newWp(dest), newWp()]);
+
+    // Hotel: primero buscar en actividades del día, luego en reservas que abarquen el día
+    let hotel = acts.find((a) => a.type === 'hotel');
+    if (!hotel) {
+      const hotelBk = bookings.find(
+        (b) => b.type === 'hotel' && b.checkIn && b.checkOut && b.checkIn <= day && b.checkOut >= day
+      );
+      if (hotelBk) {
+        hotel = {
+          type: 'hotel',
+          name: hotelBk.hotelName || hotelBk.name || '',
+          address: hotelBk.address || '',
+          city: hotelBk.city || '',
+          lat: hotelBk.lat ?? null,
+          lng: hotelBk.lng ?? null,
+          startTime: null,
+        };
+      }
     }
+
+    const nonHotel = acts.filter((a) => a.type !== 'hotel');
+    // Vuelo de llegada: el primer vuelo del día ordenado por hora (suele ser llegada al destino)
+    const arrivalFlight = nonHotel.length > 0 && nonHotel[0].type === 'vuelo' ? nonHotel[0] : null;
+    const restActs = arrivalFlight ? nonHotel.slice(1) : nonHotel;
+
+    let wps = [];
+    if (arrivalFlight) {
+      // Aeropuerto de llegada como origen, luego hotel, luego resto
+      wps = [activityToWaypoint(arrivalFlight)];
+      if (hotel) wps.push(activityToWaypoint(hotel));
+      wps.push(...restActs.map(activityToWaypoint));
+    } else if (hotel) {
+      wps = [activityToWaypoint(hotel), ...restActs.map(activityToWaypoint)];
+    } else if (acts.length >= 1) {
+      wps = acts.map(activityToWaypoint);
+    }
+    if (wps.length < 2) wps.push(newWp());
+    setWaypoints(wps);
     setDirections(null);
     setRouteInfo(null);
     setError(null);
     setSaved(false);
-  }, [activitiesByDate, trip?.destination]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activitiesByDate, trip?.destination, bookings]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (skipNextFillRef.current) { skipNextFillRef.current = false; return; }
     fillFromDay(selectedDay);
   }, [selectedDay]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-rellena cuando las reservas cargan por primera vez (para detectar hotel por rango)
+  useEffect(() => {
+    if (bookings.length === 0 || skipNextFillRef.current) return;
+    fillFromDay(selectedDay);
+  }, [bookings]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-calculate when API loads if we came from a saved route
   useEffect(() => {
@@ -301,10 +408,22 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
 
   const handleChange = useCallback((id, value) => {
     setWaypoints((prev) => prev.map((w) => (w.id === id ? { ...w, value, fromActivity: false } : w)));
+    setIsDirty(true);
   }, []);
 
   const handleRemove = useCallback((id) => {
     setWaypoints((prev) => prev.filter((w) => w.id !== id));
+    setIsDirty(true);
+  }, []);
+
+  const handleMove = useCallback((from, to) => {
+    setWaypoints((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+    setIsDirty(true);
   }, []);
 
   const STATUS_MSGS = {
@@ -450,6 +569,29 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
       copy.splice(copy.length - 1, 0, newWp());
       return copy;
     });
+    setIsDirty(true);
+  };
+
+  const buildRoutePayload = (name) => ({
+    name,
+    date: selectedDay || null,
+    travelMode,
+    waypoints: waypoints.filter((w) => w.value.trim()).map((w) => w.value),
+    distance: routeInfo.distance,
+    duration: routeInfo.duration,
+  });
+
+  const handleUpdateRoute = async () => {
+    if (!existingId || !routeInfo) return;
+    const name = routeName.trim() || initialData?.name || (selectedDay ? formatDayLong(selectedDay) : 'Ruta guardada');
+    try {
+      await updateBooking(tripId, existingId, buildRoutePayload(name));
+      setSaved(true);
+      setSaveMode('updated');
+      setIsDirty(false);
+    } catch (err) {
+      console.error('[RouteExplorer] Error al actualizar ruta:', err);
+    }
   };
 
   const handleSaveRoute = async () => {
@@ -458,20 +600,14 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
     try {
       await addBooking(tripId, {
         type: 'ruta',
-        name,
-        date: selectedDay || null,
-        travelMode,
-        waypoints: waypoints.filter((w) => w.value.trim()).map((w) => w.value),
-        distance: routeInfo.distance,
-        duration: routeInfo.duration,
         status: 'reservado',
-        createdBy: {
-          uid: user?.uid ?? null,
-          name: user?.displayName || user?.email || null,
-        },
+        createdBy: { uid: user?.uid ?? null, name: user?.displayName || user?.email || null },
+        ...buildRoutePayload(name),
       });
       setSaved(true);
       setSavingRoute(false);
+      setSaveMode('new');
+      setIsDirty(false);
     } catch (err) {
       console.error('[RouteExplorer] Error al guardar ruta:', err);
     }
@@ -506,7 +642,7 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
             </label>
             <select
               value={selectedDay || ''}
-              onChange={(e) => setSelectedDay(e.target.value || null)}
+              onChange={(e) => { setSelectedDay(e.target.value || null); setIsDirty(true); }}
               className="cursor-pointer w-full max-w-xs h-10 px-3 pr-8 border border-neutral-2 rounded-xl text-sm font-semibold text-secondary-5 bg-white outline-none focus:border-primary-3 focus:ring-2 focus:ring-primary-3/10 transition font-body appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23A19694%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-position-[right_10px_center]"
             >
               <option value="">Sin día seleccionado</option>
@@ -552,7 +688,7 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
             </div>
           </div>
 
-          <div className="mb-4">
+          <div className="mb-2">
             {waypoints.map((wp, idx) => (
               <WaypointRow
                 key={wp.id}
@@ -561,10 +697,16 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
                 total={waypoints.length}
                 onChange={handleChange}
                 onRemove={handleRemove}
+                onMove={handleMove}
                 isLoaded={isLoaded}
               />
             ))}
           </div>
+          {waypoints.some((w) => w.fromActivity) && (
+            <p className="body-3 text-amber-500 mb-4 flex items-center gap-1.5">
+              <span>⚠</span> Confirma o ajusta las direcciones en el desplegable de Google
+            </p>
+          )}
 
           {/* Travel mode */}
           <div className="flex gap-2 mb-4 flex-wrap">
@@ -572,7 +714,7 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
               <button
                 key={key}
                 type="button"
-                onClick={() => setTravelMode(key)}
+                onClick={() => { setTravelMode(key); setIsDirty(true); }}
                 className={`cursor-pointer flex items-center gap-1.5 px-3 py-1.5 rounded-full border body-3 transition ${
                   travelMode === key
                     ? 'border-primary-3 bg-primary-1 text-primary-3 font-bold'
@@ -637,39 +779,69 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
             </div>
 
             {/* Save route */}
-            {tripId && !saved && (
-              savingRoute ? (
-                <div className="flex items-center gap-2 border border-neutral-2 rounded-xl px-4 py-3">
+            {tripId && (
+              saved ? (
+                <p className="body-3 text-auxiliary-green-5 flex items-center gap-1.5">
+                  <Check className="w-4 h-4" />
+                  {saveMode === 'updated' ? 'Cambios guardados en Reservas → Rutas' : 'Nueva ruta guardada en Reservas → Rutas'}
+                </p>
+              ) : existingId && !isDirty ? null : existingId && isDirty ? (
+                /* Editing a saved route → show update + save-as-new */
+                <div className="flex flex-col gap-2 border border-neutral-2 rounded-xl px-4 py-3">
                   <input
-                    autoFocus
                     value={routeName}
                     onChange={(e) => setRouteName(e.target.value)}
-                    placeholder={selectedDay ? formatDayLong(selectedDay) : 'Nombre de la ruta'}
-                    className="flex-1 body-2 text-neutral-7 outline-none placeholder:text-neutral-3"
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleSaveRoute(); if (e.key === 'Escape') setSavingRoute(false); }}
+                    placeholder={initialData?.name || 'Nombre de la ruta'}
+                    className="w-full body-2 text-neutral-7 outline-none placeholder:text-neutral-3 border-b border-neutral-1 pb-2"
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleUpdateRoute(); }}
                   />
-                  <button type="button" onClick={handleSaveRoute} className="cursor-pointer shrink-0 px-3 py-1.5 bg-primary-3 hover:bg-primary-4 text-white rounded-lg body-3 font-semibold transition flex items-center gap-1">
-                    <Check className="w-3.5 h-3.5" /> Guardar
-                  </button>
-                  <button type="button" onClick={() => setSavingRoute(false)} className="cursor-pointer shrink-0 p-1.5 text-neutral-3 hover:text-neutral-5 transition">
-                    <X className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={handleUpdateRoute}
+                      className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-primary-3 hover:bg-primary-4 text-white rounded-lg body-3 font-semibold transition"
+                    >
+                      <Check className="w-3.5 h-3.5" /> Guardar cambios
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveRoute}
+                      className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 border border-neutral-2 hover:border-secondary-3 text-neutral-5 hover:text-secondary-5 rounded-lg body-3 font-semibold transition"
+                    >
+                      <Save className="w-3.5 h-3.5" /> Guardar como nueva ruta
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => { setRouteName(selectedDay ? formatDayLong(selectedDay) : ''); setSavingRoute(true); }}
-                  className="cursor-pointer flex items-center gap-2 body-3 font-semibold text-secondary-5 hover:text-secondary-4 transition w-fit"
-                >
-                  <Save className="w-4 h-4" />
-                  Guardar ruta en Reservas
-                </button>
+                /* New route → collapsed button → expand name input */
+                savingRoute ? (
+                  <div className="flex items-center gap-2 border border-neutral-2 rounded-xl px-4 py-3">
+                    <input
+                      autoFocus
+                      value={routeName}
+                      onChange={(e) => setRouteName(e.target.value)}
+                      placeholder={selectedDay ? formatDayLong(selectedDay) : 'Nombre de la ruta'}
+                      className="flex-1 body-2 text-neutral-7 outline-none placeholder:text-neutral-3"
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleSaveRoute(); if (e.key === 'Escape') setSavingRoute(false); }}
+                    />
+                    <button type="button" onClick={handleSaveRoute} className="cursor-pointer shrink-0 px-3 py-1.5 bg-primary-3 hover:bg-primary-4 text-white rounded-lg body-3 font-semibold transition flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5" /> Guardar
+                    </button>
+                    <button type="button" onClick={() => setSavingRoute(false)} className="cursor-pointer shrink-0 p-1.5 text-neutral-3 hover:text-neutral-5 transition">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => { setRouteName(selectedDay ? formatDayLong(selectedDay) : ''); setSavingRoute(true); }}
+                    className="cursor-pointer flex items-center gap-2 body-3 font-semibold text-secondary-5 hover:text-secondary-4 transition w-fit"
+                  >
+                    <Save className="w-4 h-4" />
+                    Guardar ruta en Reservas
+                  </button>
+                )
               )
-            )}
-            {saved && (
-              <p className="body-3 text-auxiliary-green-5 flex items-center gap-1.5">
-                <Check className="w-4 h-4" /> Ruta guardada en Reservas → Rutas
-              </p>
             )}
           </div>
         )}

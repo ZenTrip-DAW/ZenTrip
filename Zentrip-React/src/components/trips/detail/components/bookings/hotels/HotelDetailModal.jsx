@@ -140,6 +140,16 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
 
   const getBookingData = () => {
     const bookingUrl = `https://www.booking.com/searchresults.es.html?dest_id=${hotel.id}&dest_type=hotel&checkin=${checkIn}&checkout=${checkOut}&group_adults=${adults}&no_rooms=${rooms}`;
+    // Dirección del hotel: específica > nombre+ciudad > ciudad > nombre
+    const cityStr = hotel.loc || hotel.city || '';
+    const address =
+      prop.location?.address ||
+      prop.address ||
+      hotel.address ||
+      (hotel.name && cityStr ? `${hotel.name}, ${cityStr}` : null) ||
+      cityStr ||
+      hotel.name ||
+      '';
     return {
       type: 'hotel',
       hotelId: hotel.id,
@@ -158,6 +168,7 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
       currency: hotel.currency,
       status: 'reservado',
       bookingUrl,
+      address, // <--- SIEMPRE GUARDAR DIRECCIÓN
       createdBy: {
         uid: user.uid,
         name: profile?.displayName || profile?.firstName || user.email,
@@ -183,6 +194,7 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
         return;
       }
       const bookingData = getBookingData();
+      const address = bookingData.address;
       const activityId = await addActivity(tripId, {
         date: checkIn,
         startTime: details?.data?.property?.checkin?.fromTime || '15:00',
@@ -191,6 +203,7 @@ export default function HotelDetailModal({ hotel, searchParams, tripId, trip, on
         type: 'hotel',
         notes: hotel.price != null ? `Reservado · ${hotel.price} ${hotel.currency}/noche · ${nights} noche${nights !== 1 ? 's' : ''}` : 'Reservado',
         status: 'reservado',
+        address,
       });
       const newBookingId = await addBooking(tripId, { ...bookingData, activityId });
       await sendBookingNotifications(tripId, {

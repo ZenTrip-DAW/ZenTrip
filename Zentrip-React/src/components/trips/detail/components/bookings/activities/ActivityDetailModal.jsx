@@ -72,6 +72,15 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
       );
       if (isDuplicate) { setStep('duplicate'); return; }
 
+      // Construir dirección: específica > nombre+ciudad > ciudad > nombre
+      // activity.city viene siempre del mapProduct (búsqueda); info.city puede faltar en details
+      const city = info.city ?? activity.city ?? null;
+      const address =
+        info.address ||
+        (info.name && city ? `${info.name}, ${city}` : null) ||
+        city ||
+        info.name ||
+        null;
       const activityId = await addActivity(tripId, {
         date: date || '',
         startTime: '',
@@ -84,6 +93,8 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
           date ? fmtDate(date) : null,
         ].filter(Boolean).join(' · ') || 'Anotada',
         status: 'reservado',
+        address,
+        ...(info.lat != null && info.lng != null ? { lat: info.lat, lng: info.lng } : {}),
       });
 
       const newBookingId = await addBooking(tripId, {
@@ -91,7 +102,9 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
         slug: activity.slug ?? null,
         attractionId: info.id ?? null,
         activityName: info.name,
-        address: info.address ?? null,
+        city: city ?? null,
+        address,
+        ...(info.lat != null && info.lng != null ? { lat: info.lat, lng: info.lng } : {}),
         rating: info.rating ?? null,
         price: info.price ?? null,
         currency: info.currency ?? 'EUR',
