@@ -1,4 +1,4 @@
-import { Share2, Settings, Users, Sun } from 'lucide-react';
+import { Share2, Settings, Users } from 'lucide-react';
 
 const MONTHS_SHORT = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 
@@ -24,7 +24,7 @@ function countTripDays(startDate, endDate) {
   return Math.round((e - s) / 86400000) + 1;
 }
 
-export default function TripDetailHeader({ trip, members }) {
+export default function TripDetailHeader({ trip, members, currentWeather }) {
   const acceptedMembers = members.filter((m) => m.invitationStatus === 'accepted');
   const memberCount = acceptedMembers.length;
   const dateLabel = formatHeaderDateRange(trip.startDate, trip.endDate);
@@ -54,14 +54,19 @@ export default function TripDetailHeader({ trip, members }) {
       </div>
 
       {/* Acciones */}
-      <div className="flex items-center gap-2 shrink-0">
-        {/* Weather chip — vacío hasta integración de API */}
-        <div className="hidden sm:flex items-center gap-1.5 bg-amber-50 border border-amber-100 rounded-full px-3 py-1.5 body-3 text-amber-700">
-          <Sun className="w-4 h-4" />
-          <span>— · {trip.destination || '—'}</span>
+      <div className="flex items-center gap-2 shrink-0 flex-wrap">
+        {/* Weather chip — clima actual en el destino */}
+        <div className="hidden sm:flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-full px-3 py-1.5 body-3 text-blue-600">
+          <span className="text-base leading-none">
+            {currentWeather?.emoji ?? '🌡️'}
+          </span>
+          <span className="font-semibold">
+            {currentWeather?.temp != null ? `${currentWeather.temp}ºC` : '—'}
+          </span>
+          <span className="text-blue-300">·</span>
+          <span>{trip.destination || '—'}</span>
         </div>
 
-        {/* En móvil: solo icono. En sm+: icono + texto */}
         <button
           type="button"
           className="flex items-center gap-1.5 border border-neutral-2 rounded-full p-2 sm:px-4 sm:py-1.5 body-3 text-neutral-5 hover:bg-neutral-1 transition-colors"

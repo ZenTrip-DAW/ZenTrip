@@ -24,18 +24,6 @@ function buildFlightLabel(offer) {
   return segs.map((s) => `${fmtAirport(s.departureAirport)} → ${fmtAirport(s.arrivalAirport)}`).join(' / ');
 }
 
-function buildPassengerLabel(passengers, members) {
-  if (passengers === 'all' || !Array.isArray(passengers)) {
-    const count = members.filter((m) => m.invitationStatus === 'accepted').length;
-    return `Todos (${count})`;
-  }
-  const names = passengers
-    .map((uid) => members.find((m) => m.uid === uid))
-    .filter(Boolean)
-    .map((m) => m.name || m.username || 'Miembro');
-  return names.length > 0 ? names.join(', ') : 'Sin pasajeros';
-}
-
 // ── TripRow ───────────────────────────────────────────────────────────────────
 const normalize = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
@@ -97,7 +85,6 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
   const currency = offer?.priceBreakdown?.total?.currencyCode ?? 'EUR';
   const total = toPrice(offer?.priceBreakdown?.total);
   const flightLabel = buildFlightLabel(offer);
-  const departureDate = seg0?.departureTime?.slice(0, 10);
 
   // Extrae solo las ciudades de destino del tramo de ida — excluye tramos de vuelta y ciudades solo de conexión.
   // En ida y vuelta el último segmento llega al origen, así que se descarta.
@@ -160,6 +147,17 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
           s.startDate && (matchCity(city, s.name) || (stopsEn[i] && matchCity(city, stopsEn[i])))
         );
 
+      // Vuelo interno: el vuelo sale desde el destino actual del viaje o desde una parada existente.
+      // Ej: si el viaje es a Bangkok y compras un vuelo Bangkok→Chiang Mai → escala interna → auto-añadir.
+      const isInternalFlight =
+        flightOriginCity.length > 2 && (
+          matchCity(flightOriginCity, tripDestRaw) ||
+          matchCity(flightOriginCity, destEn || tripDestRaw) ||
+          existingStops.some((s, i) =>
+            matchCity(flightOriginCity, s.name) || (stopsEn[i] && matchCity(flightOriginCity, stopsEn[i]))
+          )
+        );
+
       const autoSave = [];
       const userChoice = [];
 
@@ -172,9 +170,14 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
         if (matchesTripDest(city) && !alreadyInStops(city)) {
           // Destino existente sin fechas → guardar automáticamente
           autoSave.push({ original: city, display });
-        } else if (!alreadyInStops(city) && !matchesTripDest(city)) {
-          // Ciudad nueva → el usuario decide
-          userChoice.push({ original: city, display });
+        } else if (!alreadyInStops(city)) {
+          if (isInternalFlight) {
+            // Vuelo interno (sale desde destino/parada del viaje) → añadir parada automáticamente
+            autoSave.push({ original: city, display });
+          } else {
+            // Ciudad nueva sin relación clara → el usuario decide
+            userChoice.push({ original: city, display });
+          }
         }
       }
 
@@ -225,7 +228,7 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
       .finally(() => setLoadingTrip(false));
   }, [selectedTrip?.id]);
 
-  const canSave = receiptUrls.length > 0 && selectedTrip && (passengers === 'all' || (Array.isArray(passengers) && passengers.length > 0));
+  const canSave = selectedTrip && (passengers === 'all' || (Array.isArray(passengers) && passengers.length > 0));
 
   const handleSave = async () => {
     if (!canSave || saving) return;
@@ -234,7 +237,6 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
     try {
       const segs = offer?.segments ?? [];
       const tripOrigin = (tripContext?.origin ?? selectedTrip?.origin ?? '').split(',')[0].trim();
-      const tripDest = (tripContext?.destination ?? selectedTrip?.destination ?? '').split(',')[0].trim();
 
       const saveStop = async ({ original, display }) => {
         const arrSeg = segs.find((s) => normalize(s.arrivalAirport?.cityName ?? s.arrivalAirport?.code ?? '') === normalize(original));
@@ -242,10 +244,6 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
         const startDate = arrSeg?.arrivalTime?.slice(0, 10) || '';
         const endDate = depSeg?.departureTime?.slice(0, 10) || '';
 
-        // Ordenación inteligente:
-        // Si el vuelo sale del origen del viaje, insertar antes del destino actual
-        // Si el vuelo sale del destino, añadir al final
-        // Si no, añadir al final
         const flightDepCity = depSeg?.departureAirport?.cityName ?? depSeg?.departureAirport?.code ?? '';
         const flightDepNorm = normalize(flightDepCity);
         const tripOriginNorm = normalize(tripOrigin);
@@ -253,39 +251,48 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
         if (flightDepNorm && tripOriginNorm && flightDepNorm.includes(tripOriginNorm)) {
           insertBeforeLast = true;
         }
-        // Si el vuelo sale del destino, insertBeforeLast = false (añadir al final)
-        // Si no coincide con origen ni destino, por defecto al final
 
-        await addStop(selectedTrip.id, { name: display, startDate, endDate: endDate || startDate }, { insertBeforeLast });
+        return addStop(selectedTrip.id, { name: display, startDate, endDate: endDate || startDate }, { insertBeforeLast });
       };
 
-      // Destinos existentes sin fechas → siempre guardar (solo si se tiene permiso de escritura en el viaje)
+      // Recoger IDs de las paradas creadas/actualizadas para poder limpiarlas si se elimina el vuelo
+      // addStop puede devolver un stop único o un array (cuando hace split de una parada existente)
+      const collectIds = (result) => {
+        const arr = Array.isArray(result) ? result : (result ? [result] : []);
+        arr.forEach((s) => { if (s?.id) savedStopIds.push(s.id); });
+      };
+      const savedStopIds = [];
       for (const dest of (resolvedNewDests?.autoSave ?? [])) {
-        try { await saveStop(dest); } catch { /* miembro sin permisos de escritura en el viaje — continúa */ }
+        try { collectIds(await saveStop(dest)); } catch { /* miembro sin permisos de escritura en el viaje — continúa */ }
       }
-
-      // Ciudades nuevas → solo si el usuario marcó el checkbox
       if (addDestToTrip) {
         for (const dest of (resolvedNewDests?.userChoice ?? [])) {
-          try { await saveStop(dest); } catch { /* ídem */ }
+          try { collectIds(await saveStop(dest)); } catch { /* ídem */ }
         }
       }
 
-      const passengerLabel = buildPassengerLabel(passengers, members);
-      const activityName = `✈ ${flightLabel} — ${passengerLabel}`;
-
-      // Añade la actividad al itinerario
-      const activityId = await addActivity(selectedTrip.id, {
-        date: departureDate || '',
-        startTime: fmtTime(seg0?.departureTime),
-        endTime: fmtTime(seg0?.arrivalTime),
-        name: activityName,
-        type: 'vuelo',
-        status: 'reservado',
-        notes: '',
-        passengers,
-        stopId: null,
-      });
+      // Crea una actividad por tramo (ida + vuelta si es ida y vuelta)
+      const activityIds = [];
+      for (const seg of (offer?.segments ?? [])) {
+        const segName = `✈ ${fmtAirport(seg.departureAirport)} → ${fmtAirport(seg.arrivalAirport)}`;
+        const segAddress = seg.arrivalAirport?.name
+          || (seg.arrivalAirport?.cityName ? `Aeropuerto de ${seg.arrivalAirport.cityName}` : '')
+          || seg.arrivalAirport?.code || '';
+        const actId = await addActivity(selectedTrip.id, {
+          date: seg.departureTime?.slice(0, 10) || '',
+          startTime: fmtTime(seg.departureTime),
+          endTime: fmtTime(seg.arrivalTime),
+          name: segName,
+          type: 'vuelo',
+          status: 'reservado',
+          notes: '',
+          passengers,
+          stopId: null,
+          address: segAddress,
+        });
+        activityIds.push(actId);
+      }
+      const activityId = activityIds[0] ?? null;
 
       // Construye el objeto de reserva
       const segmentsData = (offer?.segments ?? []).map((seg) => {
@@ -311,6 +318,13 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
         };
       });
 
+
+      // Dirección y coordenadas de origen y destino
+      const originAddress = seg0?.departureAirport?.name || seg0?.departureAirport?.cityName || seg0?.departureAirport?.code || '';
+      const originCoords = seg0?.departureAirport?.location || null;
+      const destinationAddress = seg0?.arrivalAirport?.name || seg0?.arrivalAirport?.cityName || seg0?.arrivalAirport?.code || '';
+      const destinationCoords = seg0?.arrivalAirport?.location || null;
+
       const bookingData = {
         type: 'vuelo',
         flightLabel,
@@ -328,9 +342,16 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
         currency,
         status: 'reservado',
         passengers,
-        stopId: null,
+        stopId: savedStopIds[0] ?? null,
+        stopIds: savedStopIds,
         receiptUrls,
         activityId,
+        activityIds,
+        // NUEVOS CAMPOS
+        originAddress,
+        originCoords,
+        destinationAddress,
+        destinationCoords,
         createdBy: {
           uid: user.uid,
           name: user.displayName || user.email || '',
@@ -548,14 +569,10 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
                 <p className="body-3 font-bold text-neutral-5 uppercase tracking-wider mb-1">
                   Captura del pago
                 </p>
-                <p className="body-3 text-neutral-3 mb-3">
-                  Sube una captura de la confirmación del pago. El botón de guardar se activará cuando subas al menos una imagen.
-                </p>
                 <BookingReceiptUpload
                   initialUrls={[]}
                   onUpdate={setReceiptUrls}
                   label="Captura del pago"
-                  optional={false}
                 />
               </div>
 
@@ -584,9 +601,6 @@ export default function FlightSaveModal({ offer, user, tripContext, onClose }) {
                   <>✓ Guardar en el itinerario</>
                 )}
               </button>
-              {!canSave && receiptUrls.length === 0 && (
-                <p className="body-3 text-neutral-3 text-center mt-2">Sube el comprobante para continuar</p>
-              )}
             </div>
           </>
         )}

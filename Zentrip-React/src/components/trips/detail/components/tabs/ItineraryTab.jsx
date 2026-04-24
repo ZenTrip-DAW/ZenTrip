@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useWeather } from '../../hooks/useWeather';
 import { ChevronLeft } from 'lucide-react';
 import BookingBar from '../itinerary/BookingBar';
 import TripSummaryCard from '../itinerary/TripSummaryCard';
@@ -12,6 +11,7 @@ import RestaurantSearch from '../bookings/restaurants/RestaurantSearch';
 import ActivitySearch from '../bookings/activities/ActivitySearch';
 import FlightsExplorer from '../../../../flights/FlightsExplorer';
 import BookingBanner from '../bookings/BookingBanner';
+import ImageLoadGate from '../../../../shared/ImageLoadGate';
 import RouteExplorer from '../bookings/routes/RouteExplorer';
 import PlaceholderTab from './PlaceholderTab';
 
@@ -29,17 +29,19 @@ export default function ItinerarioTab({
   tripDays,
   tripId,
   onAddActivity,
+  onDeleteActivity,
   onInvite,
   initialActiveBooking = null,
   initialRouteData = null,
   onBookingOpened,
+  weatherByDate = {},
+  locationByDate = {},
 }) {
-  const [selectedDay, setSelectedDay] = useState(tripDays[0] ?? null);
+  const today = new Date().toISOString().split('T')[0];
+  const [selectedDay, setSelectedDay] = useState(() =>
+    tripDays.includes(today) ? today : (tripDays[0] ?? null)
+  );
   const [activeBooking, setActiveBooking] = useState(initialActiveBooking);
-  const [flightBannerLoaded, setFlightBannerLoaded] = useState(false);
-  const weatherByDate = useWeather(trip?.destination);
-
-  const isFlightBooking = activeBooking === 'vuelos';
 
   const handleBookingSelect = (key) => {
     const opening = activeBooking !== key;
@@ -65,53 +67,32 @@ export default function ItinerarioTab({
     }
     if (activeBooking === 'vuelos') {
       const acceptedCount = members.filter((m) => m.invitationStatus === 'accepted').length;
-
-      if (!flightBannerLoaded) {
-        return (
-          <>
-            <img
-              src={FLIGHT_BANNER_SRC}
-              alt=""
-              aria-hidden="true"
-              style={{ display: 'none' }}
-              onLoad={() => setFlightBannerLoaded(true)}
-            />
-            <div className="bg-white rounded-2xl border border-neutral-1 overflow-hidden animate-pulse">
-              <div className="h-44 sm:h-52 w-full bg-linear-to-br from-secondary-3 to-secondary-4" />
-              <div className="p-4 sm:p-6 space-y-3">
-                <div className="h-4 w-2/3 rounded-full bg-neutral-1" />
-                <div className="h-4 w-full rounded-full bg-neutral-1" />
-                <div className="h-4 w-5/6 rounded-full bg-neutral-1" />
-                <div className="h-56 rounded-2xl bg-neutral-1" />
-              </div>
-            </div>
-          </>
-        );
-      }
-
       return (
-        <div className="bg-white rounded-2xl border border-neutral-1 overflow-hidden">
-          <BookingBanner
-            src={FLIGHT_BANNER_SRC}
-            alt="Vuelos"
-            title="¿Cómo llegáis?"
-            subtitle="Busca vuelos para tu grupo en cualquier destino del mundo"
-          />
-          <div className="p-4 sm:p-6">
-            <FlightsExplorer
-              embedded
-              tripContext={{
-                tripId,
-                tripName: trip?.name,
-                origin: trip?.origin,
-                destination: trip?.destination,
-                memberCount: acceptedCount || 1,
-                startDate: trip?.startDate,
-                endDate: trip?.endDate,
-              }}
+        <ImageLoadGate src={FLIGHT_BANNER_SRC} alt="Vuelos">
+          <div className="bg-white rounded-2xl border border-neutral-1 overflow-hidden">
+            <BookingBanner
+              src={FLIGHT_BANNER_SRC}
+              alt="Vuelos"
+              title="¿Cómo llegáis?"
+              subtitle="Busca vuelos para tu grupo en cualquier destino del mundo"
             />
+            <div className="p-4 sm:p-6">
+              <FlightsExplorer
+                embedded
+                tripContext={{
+                  tripId,
+                  tripName: trip?.name,
+                  origin: trip?.origin,
+                  destination: trip?.destination,
+                  stops: trip?.stops ?? [],
+                  memberCount: acceptedCount || 1,
+                  startDate: trip?.startDate,
+                  endDate: trip?.endDate,
+                }}
+              />
+            </div>
           </div>
-        </div>
+        </ImageLoadGate>
       );
     }
     return <PlaceholderTab label={BOOKING_LABELS[activeBooking] ?? 'Próximamente'} emoji="🚧" />;
@@ -169,6 +150,10 @@ export default function ItinerarioTab({
                     selectedDay={selectedDay}
                     activitiesByDate={activitiesByDate}
                     onAddActivity={onAddActivity}
+                    onDeleteActivity={onDeleteActivity}
+                    weatherData={selectedDay ? weatherByDate[selectedDay] : null}
+                    location={selectedDay ? (locationByDate[selectedDay] || trip?.destination) : trip?.destination}
+                    members={members}
                   />
                 </>
               )}

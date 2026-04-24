@@ -1,6 +1,19 @@
 import { useState } from 'react';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Users } from 'lucide-react';
 import { deleteBooking, deleteActivity } from '../../../../../../services/tripService';
+import ReceiptManagerModal from '../ReceiptManagerModal';
+
+function getMemberNames(booking, members) {
+  const accepted = members.filter((m) => m.invitationStatus === 'accepted');
+  if (booking.members === 'all') return accepted.map((m) => m.name || m.username || 'Miembro');
+  if (Array.isArray(booking.members)) {
+    return booking.members.map((uid) => {
+      const m = members.find((x) => x.uid === uid);
+      return m ? (m.name || m.username || 'Miembro') : null;
+    }).filter(Boolean);
+  }
+  return [];
+}
 
 function fmtDate(dateStr) {
   if (!dateStr) return null;
@@ -45,8 +58,11 @@ function CancelModal({ booking, tripId, onConfirm, onClose }) {
   );
 }
 
-export default function ActivityBookingCard({ booking, tripId, onCancelled }) {
+export default function ActivityBookingCard({ booking, tripId, members = [], onCancelled }) {
   const [showCancel, setShowCancel] = useState(false);
+  const [showReceipts, setShowReceipts] = useState(false);
+  const [receiptUrls, setReceiptUrls] = useState(booking.receiptUrls ?? []);
+  const memberNames = getMemberNames(booking, members);
 
   return (
     <>
@@ -71,9 +87,30 @@ export default function ActivityBookingCard({ booking, tripId, onCancelled }) {
               {booking.date && (
                 <span className="text-[11px] text-neutral-4">{fmtDate(booking.date)}</span>
               )}
+              {booking.adults != null && (
+                <span className="text-[11px] text-neutral-4">
+                  {booking.adults} adulto{booking.adults !== 1 ? 's' : ''}{booking.children > 0 ? `, ${booking.children} niño${booking.children !== 1 ? 's' : ''}` : ''}
+                </span>
+              )}
             </div>
           </div>
         </div>
+
+        {(memberNames.length > 0 || booking.createdBy?.name) && (
+          <div className="flex flex-col gap-1 mb-3">
+            {memberNames.length > 0 && (
+              <div className="flex items-start gap-2 body-3 text-neutral-6">
+                <Users className="w-3.5 h-3.5 text-neutral-3 shrink-0 mt-0.5" />
+                <span>{memberNames.join(', ')}</span>
+              </div>
+            )}
+            {booking.createdBy?.name && (
+              <p className="body-3 text-neutral-3">
+                Reservado por <span className="font-semibold text-neutral-5">{booking.createdBy.name}</span>
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="flex gap-2 flex-wrap">
           {booking.mapsUrl && (
@@ -81,16 +118,17 @@ export default function ActivityBookingCard({ booking, tripId, onCancelled }) {
               href={booking.mapsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 h-9 min-w-[120px] rounded-lg border border-secondary-3 text-secondary-3 body-3 font-bold flex items-center justify-center gap-1.5 hover:bg-secondary-1 transition"
+              className="flex-1 h-9 min-w-120px rounded-lg border border-secondary-3 text-secondary-3 body-3 font-bold flex items-center justify-center gap-1.5 hover:bg-secondary-1 transition"
             >
               <ExternalLink className="w-3.5 h-3.5" /> Google Maps
             </a>
           )}
-          {booking.receiptUrls?.length > 0 && (
-            <span className="h-9 px-3 rounded-lg bg-auxiliary-green-1 border border-auxiliary-green-2 body-3 font-semibold text-auxiliary-green-5 flex items-center">
-              🧾 {booking.receiptUrls.length} comprobante{booking.receiptUrls.length > 1 ? 's' : ''}
-            </span>
-          )}
+          <button
+            onClick={() => setShowReceipts(true)}
+            className="h-9 px-3 rounded-lg bg-secondary-1 border border-secondary-2 body-3 font-semibold text-secondary-4 flex items-center hover:bg-secondary-2 transition"
+          >
+            🧾 {receiptUrls.length > 0 ? `${receiptUrls.length} comprobante${receiptUrls.length > 1 ? 's' : ''}` : 'Añadir comprobante'}
+          </button>
           <button
             onClick={() => setShowCancel(true)}
             className="h-9 px-3 rounded-lg border border-red-300 text-red-600 body-3 font-semibold hover:bg-red-50 transition"
@@ -100,6 +138,14 @@ export default function ActivityBookingCard({ booking, tripId, onCancelled }) {
         </div>
       </div>
 
+      {showReceipts && (
+        <ReceiptManagerModal
+          booking={{ ...booking, receiptUrls }}
+          tripId={tripId}
+          onClose={() => setShowReceipts(false)}
+          onUpdated={(urls) => setReceiptUrls(urls)}
+        />
+      )}
       {showCancel && (
         <CancelModal
           booking={booking}

@@ -113,7 +113,7 @@ function RouteCard({ booking, tripId, onDeleted, onRenamed, onOpenRoute }) {
         )}
       </div>
 
-      {/* Waypoints */}
+      {/* Waypoints y itinerario */}
       {booking.waypoints?.length > 0 && (
         <div className="flex flex-col gap-0.5">
           {booking.waypoints.map((wp, i) => {
@@ -132,7 +132,7 @@ function RouteCard({ booking, tripId, onDeleted, onRenamed, onOpenRoute }) {
         </div>
       )}
 
-      {/* Open in itinerary */}
+      {/* Abrir en Itinerario */}
       <button
         type="button"
         onClick={() => onOpenRoute(booking)}

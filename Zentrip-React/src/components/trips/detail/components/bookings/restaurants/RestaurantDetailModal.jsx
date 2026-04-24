@@ -16,7 +16,7 @@ function fmtDate(dateStr) {
 
 export default function RestaurantDetailModal({ restaurant, tripId, trip, bookingParams = {}, members = [], onClose }) {
   const { user, profile } = useAuth();
-  const { date, people } = bookingParams;
+  const { date, adults, children } = bookingParams;
 
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -66,10 +66,11 @@ export default function RestaurantDetailModal({ restaurant, tripId, trip, bookin
         type: 'restaurant',
         notes: [
           info.rating != null ? `${info.rating}★` : null,
-          people ? `${people} persona${people !== 1 ? 's' : ''}` : null,
+          adults ? `${adults} adulto${adults !== 1 ? 's' : ''}${children > 0 ? `, ${children} niño${children !== 1 ? 's' : ''}` : ''}` : null,
           date ? fmtDate(date) : null,
         ].filter(Boolean).join(' · ') || 'Anotado',
         status: 'reservado',
+        address: info.address ?? null,
       });
 
       const newBookingId = await addBooking(tripId, {
@@ -82,7 +83,8 @@ export default function RestaurantDetailModal({ restaurant, tripId, trip, bookin
         rating: info.rating ?? null,
         priceLevel: info.priceLevel ?? null,
         date: date ?? null,
-        people: people ?? null,
+        adults: adults ?? null,
+        children: children ?? 0,
         mapsUrl,
         status: 'reservado',
         activityId,
@@ -111,8 +113,7 @@ export default function RestaurantDetailModal({ restaurant, tripId, trip, bookin
     }
   };
 
-  const canSave = receiptUrls.length > 0 &&
-    (selectedMembers === 'all' || (Array.isArray(selectedMembers) && selectedMembers.length > 0));
+  const canSave = selectedMembers === 'all' || (Array.isArray(selectedMembers) && selectedMembers.length > 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -159,9 +160,9 @@ export default function RestaurantDetailModal({ restaurant, tripId, trip, bookin
                 <div className="min-w-0">
                   <p className="body-2-semibold text-neutral-7 truncate">{info.name}</p>
                   {info.address && <p className="body-3 text-neutral-4 truncate">📍 {info.address}</p>}
-                  {(date || people) && (
+                  {(date || adults) && (
                     <p className="body-3 text-neutral-4">
-                      {[date && fmtDate(date), people && `${people} pers.`].filter(Boolean).join(' · ')}
+                      {[date && fmtDate(date), adults && `${adults} ad.${children > 0 ? ` · ${children} niño${children !== 1 ? 's' : ''}` : ''}`].filter(Boolean).join(' · ')}
                     </p>
                   )}
                 </div>
@@ -181,7 +182,6 @@ export default function RestaurantDetailModal({ restaurant, tripId, trip, bookin
               <div>
                 <p className="body-3 font-bold text-neutral-5 uppercase tracking-wider mb-3">Captura de la reserva</p>
                 <BookingReceiptUpload
-                  optional={false}
                   onUpdate={(urls) => setReceiptUrls(urls)}
                 />
               </div>
@@ -232,20 +232,26 @@ export default function RestaurantDetailModal({ restaurant, tripId, trip, bookin
                 )}
 
                 {/* Datos de reserva */}
-                {(date || people) && (
+                {(date || adults) && (
                   <div className="bg-secondary-1/40 rounded-xl p-4 mb-5">
                     <p className="body-3 font-bold text-neutral-5 uppercase tracking-wider mb-3">Tu reserva</p>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                       {date && (
                         <div>
                           <p className="body-3 text-neutral-4 mb-0.5">Fecha</p>
                           <p className="body-2-semibold text-neutral-7">{fmtDate(date)}</p>
                         </div>
                       )}
-                      {people && (
+                      {adults > 0 && (
                         <div>
-                          <p className="body-3 text-neutral-4 mb-0.5">Personas</p>
-                          <p className="body-2-semibold text-neutral-7">{people} persona{people !== 1 ? 's' : ''}</p>
+                          <p className="body-3 text-neutral-4 mb-0.5">Adultos</p>
+                          <p className="body-2-semibold text-neutral-7">{adults}</p>
+                        </div>
+                      )}
+                      {children > 0 && (
+                        <div>
+                          <p className="body-3 text-neutral-4 mb-0.5">Niños</p>
+                          <p className="body-2-semibold text-neutral-7">{children}</p>
                         </div>
                       )}
                     </div>

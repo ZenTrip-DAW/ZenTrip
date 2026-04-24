@@ -107,7 +107,16 @@ function mapDetails(d) {
     price: d.representativePrice?.chargeAmount ?? null,
     currency: d.representativePrice?.currency ?? 'EUR',
     duration: d.duration ?? null,
-    address: d.location?.address ?? d.address ?? null,
+    ...(() => {
+      const a = d.addresses;
+      const p = a?.meeting?.[0] ?? a?.arrival?.[0] ?? a?.departure?.[0] ?? a?.entrance?.[0] ?? a?.attraction?.[0] ?? null;
+      return {
+        address: p?.address ?? d.location?.address ?? d.address ?? null,
+        city: d.ufiDetails?.bCityName ?? p?.city ?? d.location?.city ?? null,
+        lat: p?.latitude != null ? parseFloat(p.latitude) : null,
+        lng: p?.longitude != null ? parseFloat(p.longitude) : null,
+      };
+    })(),
     freeCancellation: d.cancellationPolicy?.hasFreeCancellation ?? false,
     whatsIncluded: (d.whatsIncluded ?? []).slice(0, 6).map((i) => i.item ?? i.name ?? String(i)),
     reviews: (Array.isArray(d.reviews?.reviews) ? d.reviews.reviews : []).slice(0, 5).map((r) => ({

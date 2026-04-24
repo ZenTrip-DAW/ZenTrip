@@ -10,7 +10,11 @@ export function useTripInvitations(tripId, tripName, initialMembers = [], onMemb
   const { recientes, addToRecentMembers } = useRecentMembers(user);
 
   useEffect(() => {
-    setInvitados(initialMembers);
+    setInvitados((prev) => {
+      const serverIds = new Set(initialMembers.map((m) => m.id));
+      const localOnly = prev.filter((m) => !serverIds.has(m.id));
+      return [...initialMembers, ...localOnly];
+    });
   }, [initialMembers]);
 
   useEffect(() => {

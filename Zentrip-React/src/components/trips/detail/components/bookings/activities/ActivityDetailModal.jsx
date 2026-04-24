@@ -19,7 +19,7 @@ function fmtPrice(price, currency) {
 
 export default function ActivityDetailModal({ activity, tripId, trip, bookingParams = {}, members = [], onClose }) {
   const { user, profile } = useAuth();
-  const { date } = bookingParams;
+  const { date, adults, children } = bookingParams;
 
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -59,8 +59,7 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
 
   const acceptedMembers = members.filter((m) => m.invitationStatus === 'accepted');
 
-  const canSave = receiptUrls.length > 0 &&
-    (selectedMembers === 'all' || (Array.isArray(selectedMembers) && selectedMembers.length > 0));
+  const canSave = selectedMembers === 'all' || (Array.isArray(selectedMembers) && selectedMembers.length > 0);
 
   const handleSave = async () => {
     if (!tripId || !user) return;
@@ -72,6 +71,15 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
       );
       if (isDuplicate) { setStep('duplicate'); return; }
 
+      // Construir dirección: específica > nombre+ciudad > ciudad > nombre
+      // activity.city viene siempre del mapProduct (búsqueda); info.city puede faltar en details
+      const city = info.city ?? activity.city ?? null;
+      const address =
+        info.address ||
+        (info.name && city ? `${info.name}, ${city}` : null) ||
+        city ||
+        info.name ||
+        null;
       const activityId = await addActivity(tripId, {
         date: date || '',
         startTime: '',
@@ -81,9 +89,12 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
         notes: [
           info.rating != null ? `${info.rating.toFixed ? info.rating.toFixed(1) : info.rating}★` : null,
           info.price != null ? fmtPrice(info.price, info.currency) : null,
+          adults ? `${adults} adulto${adults !== 1 ? 's' : ''}${children > 0 ? `, ${children} niño${children !== 1 ? 's' : ''}` : ''}` : null,
           date ? fmtDate(date) : null,
         ].filter(Boolean).join(' · ') || 'Anotada',
         status: 'reservado',
+        address,
+        ...(info.lat != null && info.lng != null ? { lat: info.lat, lng: info.lng } : {}),
       });
 
       const newBookingId = await addBooking(tripId, {
@@ -91,13 +102,17 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
         slug: activity.slug ?? null,
         attractionId: info.id ?? null,
         activityName: info.name,
-        address: info.address ?? null,
+        city: city ?? null,
+        address,
+        ...(info.lat != null && info.lng != null ? { lat: info.lat, lng: info.lng } : {}),
         rating: info.rating ?? null,
         price: info.price ?? null,
         currency: info.currency ?? 'EUR',
         duration: info.duration ?? null,
         freeCancellation: info.freeCancellation ?? false,
         date: date ?? null,
+        adults: adults ?? null,
+        children: children ?? 0,
         mapsUrl: mapsUrl ?? info.mapsUrl ?? null,
         status: 'reservado',
         activityId,
@@ -194,7 +209,7 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
 
               <div>
                 <p className="body-3 font-bold text-neutral-5 uppercase tracking-wider mb-3">Captura de la reserva</p>
-                <BookingReceiptUpload optional={false} onUpdate={(urls) => setReceiptUrls(urls)} />
+                <BookingReceiptUpload onUpdate={(urls) => setReceiptUrls(urls)} />
               </div>
             </div>
 
@@ -254,6 +269,18 @@ export default function ActivityDetailModal({ activity, tripId, trip, bookingPar
                       <div>
                         <p className="body-3 text-neutral-4 mb-0.5">Fecha</p>
                         <p className="body-2-semibold text-neutral-7">{fmtDate(date)}</p>
+                      </div>
+                    )}
+                    {adults > 0 && (
+                      <div>
+                        <p className="body-3 text-neutral-4 mb-0.5">Adultos</p>
+                        <p className="body-2-semibold text-neutral-7">{adults}</p>
+                      </div>
+                    )}
+                    {children > 0 && (
+                      <div>
+                        <p className="body-3 text-neutral-4 mb-0.5">Niños</p>
+                        <p className="body-2-semibold text-neutral-7">{children}</p>
                       </div>
                     )}
                     {info.freeCancellation && (

@@ -3,8 +3,10 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useTripDetail } from './hooks/useTripDetail';
-import { addActivity, removeMemberFromTrip } from '../../../services/tripService';
+import { useWeather } from './hooks/useWeather';
+import { addActivity, deleteActivity, removeMemberFromTrip } from '../../../services/tripService';
 import ConfirmModal from '../../ui/ConfirmModal';
+import AddActivityModal from './components/itinerary/AddActivityModal';
 import TripDetailHeader from './components/TripDetailHeader';
 import TripDetailTabs from './components/TripDetailTabs';
 import ItineraryTab from './components/tabs/ItineraryTab';
@@ -50,7 +52,7 @@ export default function TripDetail() {
   const { tripId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [activeTab, setActiveTab] = useState(location.state?.activeTab ?? 'itinerario');
   const [initialBooking, setInitialBooking]     = useState(null);
   const [initialRouteData, setInitialRouteData] = useState(null);
@@ -80,22 +82,30 @@ export default function TripDetail() {
     setMembers,
   } = useTripDetail(tripId);
 
-  const handleAddActivity = async (date) => {
-    // Por ahora añade una actividad de ejemplo. En el futuro se abrirá un modal.
-    const newActivity = {
-      date,
-      startTime: '10:00',
-      endTime: '11:00',
-      name: 'Nueva actividad',
-      type: 'actividad',
-      notes: '',
-      status: 'pendiente',
-    };
+  const { weatherByDate, locationByDate, currentWeather } = useWeather(trip?.destination, trip?.stops);
+
+  const [addActivityModal, setAddActivityModal] = useState({ open: false, date: null });
+
+  const handleAddActivity = (date) => {
+    setAddActivityModal({ open: true, date });
+  };
+
+  const handleSaveActivity = async (activityData) => {
     try {
-      const id = await addActivity(tripId, newActivity);
-      setActivities((prev) => [...prev, { id, ...newActivity }]);
+      const id = await addActivity(tripId, activityData);
+      setActivities((prev) => [...prev, { id, ...activityData }]);
+      setAddActivityModal({ open: false, date: null });
     } catch (err) {
       console.error('[TripDetail] Error al añadir actividad:', err);
+    }
+  };
+
+  const handleDeleteActivity = async (activityId) => {
+    try {
+      await deleteActivity(tripId, activityId);
+      setActivities((prev) => prev.filter((a) => a.id !== activityId));
+    } catch (err) {
+      console.error('[TripDetail] Error al eliminar actividad:', err);
     }
   };
 
@@ -125,10 +135,13 @@ export default function TripDetail() {
           tripDays={tripDays}
           tripId={tripId}
           onAddActivity={handleAddActivity}
+          onDeleteActivity={handleDeleteActivity}
           onInvite={isCreator ? () => setActiveTab('invitaciones') : null}
           initialActiveBooking={initialBooking}
           initialRouteData={initialRouteData}
           onBookingOpened={() => { setInitialBooking(null); setInitialRouteData(null); }}
+          weatherByDate={weatherByDate}
+          locationByDate={locationByDate}
         />
       );
     }
@@ -140,7 +153,10 @@ export default function TripDetail() {
           members={members}
           isCreator={isCreator}
           onLeaveTrip={isCreator ? null : () => setShowLeaveModal(true)}
-          onMemberRemoved={(uid) => setMembers((prev) => prev.filter((m) => m.uid !== uid))}
+          onMemberRemoved={(uid) => setMembers((prev) => {
+            if (!prev.some((m) => m.uid === uid)) return prev;
+            return prev.filter((m) => m.uid !== uid);
+          })}
         />
       );
     }
@@ -163,6 +179,15 @@ export default function TripDetail() {
 
   return (
     <div className="max-w-7xl mx-auto flex flex-col gap-4">
+      {addActivityModal.open && (
+        <AddActivityModal
+          date={addActivityModal.date}
+          creator={profile ? { uid: user.uid, name: profile.displayName || profile.username || user.email } : null}
+          existingActivities={addActivityModal.date ? (activitiesByDate[addActivityModal.date] || []) : []}
+          onClose={() => setAddActivityModal({ open: false, date: null })}
+          onSave={handleSaveActivity}
+        />
+      )}
       {showLeaveModal && (
         <ConfirmModal
           title="Salir del viaje"
@@ -185,7 +210,7 @@ export default function TripDetail() {
       </button>
 
       {/* Header del viaje */}
-      <TripDetailHeader trip={trip} members={members} />
+      <TripDetailHeader trip={trip} members={members} currentWeather={currentWeather} />
 
       {/* Pestañas */}
       <TripDetailTabs activeTab={activeTab} onTabChange={setActiveTab} />

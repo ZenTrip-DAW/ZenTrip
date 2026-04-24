@@ -230,6 +230,25 @@ export async function addActivity(tripId, activity) {
     ...activity,
     createdAt: serverTimestamp(),
   });
+
+  // --- ACTUALIZAR FECHAS DEL VIAJE SI NO HAY PARADAS ---
+  const tripSnap = await getDoc(doc(db, 'trips', tripId));
+  const trip = tripSnap.exists() ? tripSnap.data() : null;
+  if (trip && (!trip.stops || trip.stops.length === 0)) {
+    // Obtener todas las actividades y bookings para calcular el rango
+    const acts = await getDocs(collection(db, 'trips', tripId, 'activities'));
+    const bookings = await getDocs(collection(db, 'trips', tripId, 'bookings'));
+    const fechas = [];
+    acts.forEach((d) => { if (d.data().date) fechas.push(d.data().date); });
+    bookings.forEach((d) => { if (d.data().date) fechas.push(d.data().date); });
+    if (activity.date) fechas.push(activity.date);
+    if (fechas.length > 0) {
+      const sorted = fechas.sort();
+      const startDate = sorted[0];
+      const endDate = sorted[sorted.length - 1];
+      await updateDoc(doc(db, 'trips', tripId), { startDate, endDate });
+    }
+  }
   return docRef.id;
 }
 
@@ -242,6 +261,25 @@ export async function addBooking(tripId, booking) {
     ...booking,
     createdAt: serverTimestamp(),
   });
+
+  // --- ACTUALIZAR FECHAS DEL VIAJE SI NO HAY PARADAS ---
+  const tripSnap = await getDoc(doc(db, 'trips', tripId));
+  const trip = tripSnap.exists() ? tripSnap.data() : null;
+  if (trip && (!trip.stops || trip.stops.length === 0)) {
+    // Obtener todas las actividades y bookings para calcular el rango
+    const acts = await getDocs(collection(db, 'trips', tripId, 'activities'));
+    const bookings = await getDocs(collection(db, 'trips', tripId, 'bookings'));
+    const fechas = [];
+    acts.forEach((d) => { if (d.data().date) fechas.push(d.data().date); });
+    bookings.forEach((d) => { if (d.data().date) fechas.push(d.data().date); });
+    if (booking.date) fechas.push(booking.date);
+    if (fechas.length > 0) {
+      const sorted = fechas.sort();
+      const startDate = sorted[0];
+      const endDate = sorted[sorted.length - 1];
+      await updateDoc(doc(db, 'trips', tripId), { startDate, endDate });
+    }
+  }
   return docRef.id;
 }
 
@@ -256,6 +294,72 @@ export async function updateBooking(tripId, bookingId, data) {
 
 export async function deleteBooking(tripId, bookingId) {
   await deleteDoc(doc(db, 'trips', tripId, 'bookings', bookingId));
+}
+
+// Elimina una reserva de vuelo junto con su actividad y las paradas que creó.
+export async function deleteFlightBooking(tripId, bookingId) {
+  const bookingSnap = await getDoc(doc(db, 'trips', tripId, 'bookings', bookingId));
+  const booking = bookingSnap.exists() ? bookingSnap.data() : {};
+
+  await deleteDoc(doc(db, 'trips', tripId, 'bookings', bookingId));
+
+  const activityIds = booking.activityIds ?? (booking.activityId ? [booking.activityId] : []);
+  for (const actId of activityIds) {
+    try { await deleteDoc(doc(db, 'trips', tripId, 'activities', actId)); } catch { /* actividad ya eliminada */ }
+  }
+
+  const stopIds = booking.stopIds ?? (booking.stopId ? [booking.stopId] : []);
+  if (stopIds.length === 0) return;
+
+  // Mantener paradas referenciadas por otras reservas de vuelo
+  const remaining = await getBookings(tripId);
+  const otherRefs = new Set(
+    remaining.flatMap((b) => b.stopIds ?? (b.stopId ? [b.stopId] : []))
+  );
+
+  const currentStops = await getStops(tripId);
+
+  // Para paradas compartidas (otros vuelos la referencian): recalcular fechas desde los vuelos restantes
+  const normName = (s) =>
+    (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(',')[0].trim();
+
+  const recalcDates = (stopName, bookingList) => {
+    let minStart = '';
+    let maxEnd = '';
+    for (const b of bookingList) {
+      if (!(b.stopIds ?? (b.stopId ? [b.stopId] : [])).some((id) => stopIds.includes(id))) continue;
+      // Buscar la ciudad en los segmentos del vuelo
+      const bSegs = b.segments ?? [];
+      const arrSeg = bSegs.find((seg) =>
+        normName(seg.arrivalAirport?.cityName ?? seg.arrivalAirport?.code ?? '') === normName(stopName)
+      );
+      const depSeg = bSegs.find((seg) =>
+        normName(seg.departureAirport?.cityName ?? seg.departureAirport?.code ?? '') === normName(stopName)
+      );
+      const s = arrSeg?.arrivalTime?.slice(0, 10) || '';
+      const e = depSeg?.departureTime?.slice(0, 10) || '';
+      if (s && (!minStart || s < minStart)) minStart = s;
+      if (e && (!maxEnd   || e > maxEnd))   maxEnd   = e;
+    }
+    return { startDate: minStart, endDate: maxEnd };
+  };
+
+  const keptStops = currentStops
+    .filter((s) => !stopIds.includes(s.id) || otherRefs.has(s.id))
+    .map((s) => {
+      if (!stopIds.includes(s.id) || !otherRefs.has(s.id)) return s;
+      // Parada compartida: recalcular fechas desde los vuelos que aún la referencian
+      const { startDate, endDate } = recalcDates(s.name, remaining);
+      return { ...s, startDate: startDate || s.startDate, endDate: endDate || s.endDate };
+    });
+
+  if (keptStops.length !== currentStops.length || JSON.stringify(keptStops) !== JSON.stringify(currentStops)) {
+    if (keptStops.length > 0) {
+      await updateStops(tripId, keptStops);
+    } else {
+      await updateDoc(doc(db, 'trips', tripId), { stops: [], destination: '', updatedAt: serverTimestamp() });
+    }
+  }
 }
 
 export async function sendBookingNotifications(tripId, { bookerUid, bookerName, hotelName, tripName }) {
@@ -287,7 +391,7 @@ export async function getStops(tripId) {
 }
 
 export async function updateStops(tripId, stops) {
-  // Si tienen fecha se ordenan por fecha; sin fecha, por order manual. El último = destino.
+  // Si tienen fecha se ordenan por startDate; sin fecha, por order manual.
   const sorted = [...stops].sort((a, b) => {
     const aDate = a.startDate || '';
     const bDate = b.startDate || '';
@@ -296,7 +400,15 @@ export async function updateStops(tripId, stops) {
     if (bDate) return 1;
     return (a.order ?? 0) - (b.order ?? 0);
   }).map((s, i) => ({ ...s, order: i + 1 }));
-  const destination = sorted.length > 0 ? sorted[sorted.length - 1].name : '';
+  // Destination = parada con endDate más tardío (no la última por startDate).
+  // Esto evita que una parada interna (ej. Chiang Mai mayo 3-8 dentro de Bangkok mayo 2-10)
+  // sobreescriba el destino final del viaje.
+  const destination = sorted.reduce((best, s) => {
+    if (!best) return s;
+    const sKey = s.endDate || s.startDate || '';
+    const bestKey = best.endDate || best.startDate || '';
+    return sKey > bestKey ? s : best;
+  }, null)?.name ?? (sorted.length > 0 ? sorted[sorted.length - 1].name : '');
   await updateDoc(doc(db, 'trips', tripId), {
     stops: sorted,
     destination,
@@ -309,6 +421,73 @@ export async function addStop(tripId, stop, { insertBeforeLast = false } = {}) {
   const existing = await getStops(tripId);
   const sorted = [...existing].sort((a, b) => a.order - b.order);
   const maxOrder = sorted.length > 0 ? sorted[sorted.length - 1].order : 0;
+
+  // Normaliza nombre para comparación: sin acentos, minúsculas, primera parte antes de coma
+  const normName = (s) =>
+    (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(',')[0].trim();
+  const newName = normName(stop.name || '');
+
+  // Si ya existe una parada con el mismo nombre → actualizar fechas en lugar de duplicar.
+  // Esto evita el caso Bangkok→Bangkok cuando el vuelo llega al destino ya configurado del viaje.
+  const matchIdx = newName
+    ? sorted.findIndex((s) => normName(s.name) === newName)
+    : -1;
+  if (matchIdx >= 0) {
+    const updated = sorted.map((s, i) => {
+      if (i !== matchIdx) return s;
+      // Expandir rango: min(startDate) y max(endDate) para cubrir a todos los viajeros del grupo
+      const ns = stop.startDate;
+      const ne = stop.endDate;
+      const cs = s.startDate;
+      const ce = s.endDate;
+      return {
+        ...s,
+        startDate: ns && cs ? (ns < cs ? ns : cs) : ns || cs || '',
+        endDate:   ne && ce ? (ne > ce ? ne : ce) : ne || ce || '',
+      };
+    });
+    await updateStops(tripId, updated);
+    return updated[matchIdx];
+  }
+
+  // Si la nueva parada cae DENTRO del rango de una parada existente → partirla en tres tramos.
+  // Ej: Bangkok(1-10) + Chiang Mai(3-8) → Bangkok(1-3), Chiang Mai(3-8), Bangkok(8-10)
+  // GUARD: solo si la parada anfitriona la referencia un único vuelo.
+  // Si varios miembros del grupo tienen vuelos a esa ciudad (union expand), el stop es compartido
+  // y partirlo corrupmería los datos de otros miembros al borrar su vuelo.
+  if (stop.startDate && stop.endDate) {
+    const hostIdx = sorted.findIndex((s) =>
+      s.startDate && s.endDate &&
+      stop.startDate >= s.startDate &&
+      stop.endDate <= s.endDate
+    );
+    if (hostIdx >= 0) {
+      const host = sorted[hostIdx];
+      const allBookings = await getBookings(tripId);
+      const sharedCount = allBookings.filter((b) =>
+        (b.stopIds ?? (b.stopId ? [b.stopId] : [])).includes(host.id)
+      ).length;
+
+      if (sharedCount <= 1) {
+        const others = sorted.filter((_, i) => i !== hostIdx);
+        const newStop = { id: crypto.randomUUID(), name: stop.name || '', startDate: stop.startDate, endDate: stop.endDate, order: 0 };
+        const parts = [];
+        if (host.startDate !== stop.startDate) {
+          parts.push({ ...host, endDate: stop.startDate });
+        }
+        parts.push(newStop);
+        const part2 = host.endDate !== stop.endDate
+          ? { ...host, id: crypto.randomUUID(), startDate: stop.endDate }
+          : null;
+        if (part2) parts.push(part2);
+        await updateStops(tripId, [...others, ...parts]);
+        return part2 ? [newStop, part2] : [newStop];
+      }
+      // sharedCount > 1: la parada es compartida entre varios miembros → no partir,
+      // se añade la parada interna sin tocar el stop anfitrión (las fechas se solaparán
+      // pero es el comportamiento correcto para itinerarios de grupo divergentes)
+    }
+  }
 
   // Si solo hay un destino (ninguna parada), al añadir la primera parada, preserva el destino original
   if (sorted.length === 1) {

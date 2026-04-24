@@ -73,6 +73,8 @@ export default function CarDetailModal({ car, searchParams, tripId, onClose }) {
       );
       if (isDuplicate) { setDuplicate(true); return; }
 
+      const pickUpAddress = car.pickUpLocation?.name || car.pickUpLocation?.city || '';
+
       const activityId = await addActivity(tripId, {
         date: pickUpDate,
         startTime: pickUpTime || '10:00',
@@ -81,7 +83,13 @@ export default function CarDetailModal({ car, searchParams, tripId, onClose }) {
         type: 'car',
         notes: car.pricePerDay != null ? `Reservado · ${car.pricePerDay} ${car.currency}/día · ${car.days} día${car.days !== 1 ? 's' : ''}` : 'Reservado',
         status: 'reservado',
+        address: pickUpAddress,
       });
+
+      // Dirección y coordenadas de recogida y devolución
+      const pickUpCoords = car.pickUpLocation?.coordinates || null;
+      const dropOffAddress = car.dropOffLocation?.name || car.dropOffLocation?.city || '';
+      const dropOffCoords = car.dropOffLocation?.coordinates || null;
 
       await addBooking(tripId, {
         type: 'car',
@@ -100,6 +108,11 @@ export default function CarDetailModal({ car, searchParams, tripId, onClose }) {
         status: 'reservado',
         bookingUrl: 'https://cars.booking.com',
         activityId,
+        // NUEVOS CAMPOS
+        pickUpAddress,
+        pickUpCoords,
+        dropOffAddress,
+        dropOffCoords,
         createdBy: {
           uid: user.uid,
           name: profile?.displayName || profile?.firstName || user.email,
