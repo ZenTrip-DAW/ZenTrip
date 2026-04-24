@@ -6,6 +6,7 @@ import { useTripDetail } from './hooks/useTripDetail';
 import { useWeather } from './hooks/useWeather';
 import { addActivity, removeMemberFromTrip } from '../../../services/tripService';
 import ConfirmModal from '../../ui/ConfirmModal';
+import AddActivityModal from './components/itinerary/AddActivityModal';
 import TripDetailHeader from './components/TripDetailHeader';
 import TripDetailTabs from './components/TripDetailTabs';
 import ItineraryTab from './components/tabs/ItineraryTab';
@@ -51,7 +52,7 @@ export default function TripDetail() {
   const { tripId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [activeTab, setActiveTab] = useState(location.state?.activeTab ?? 'itinerario');
   const [initialBooking, setInitialBooking]     = useState(null);
   const [initialRouteData, setInitialRouteData] = useState(null);
@@ -83,20 +84,17 @@ export default function TripDetail() {
 
   const { weatherByDate, locationByDate, currentWeather } = useWeather(trip?.destination, trip?.stops);
 
-  const handleAddActivity = async (date) => {
-    // Por ahora añade una actividad de ejemplo. En el futuro se abrirá un modal.
-    const newActivity = {
-      date,
-      startTime: '10:00',
-      endTime: '11:00',
-      name: 'Nueva actividad',
-      type: 'actividad',
-      notes: '',
-      status: 'pendiente',
-    };
+  const [addActivityModal, setAddActivityModal] = useState({ open: false, date: null });
+
+  const handleAddActivity = (date) => {
+    setAddActivityModal({ open: true, date });
+  };
+
+  const handleSaveActivity = async (activityData) => {
     try {
-      const id = await addActivity(tripId, newActivity);
-      setActivities((prev) => [...prev, { id, ...newActivity }]);
+      const id = await addActivity(tripId, activityData);
+      setActivities((prev) => [...prev, { id, ...activityData }]);
+      setAddActivityModal({ open: false, date: null });
     } catch (err) {
       console.error('[TripDetail] Error al añadir actividad:', err);
     }
@@ -168,6 +166,14 @@ export default function TripDetail() {
 
   return (
     <div className="max-w-7xl mx-auto flex flex-col gap-4">
+      {addActivityModal.open && (
+        <AddActivityModal
+          date={addActivityModal.date}
+          creator={profile ? { uid: user.uid, name: profile.displayName || profile.username || user.email } : null}
+          onClose={() => setAddActivityModal({ open: false, date: null })}
+          onSave={handleSaveActivity}
+        />
+      )}
       {showLeaveModal && (
         <ConfirmModal
           title="Salir del viaje"
