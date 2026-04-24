@@ -1,16 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function ImageLoadGate({ src, alt = '', children }) {
   const [loaded, setLoaded] = useState(false);
+  const imgRef = useRef(null);
 
   useEffect(() => {
     setLoaded(false);
+  }, [src]);
+
+  useEffect(() => {
+    if (imgRef.current?.complete) setLoaded(true);
   }, [src]);
 
   return (
     <>
       {src && (
         <img
+          ref={imgRef}
           src={src}
           alt={alt}
           aria-hidden="true"
