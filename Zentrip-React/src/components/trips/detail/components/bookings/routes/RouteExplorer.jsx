@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useJsApiLoader, GoogleMap, DirectionsRenderer } from '@react-google-maps/api';
-import { Plus, X, Navigation, Clock, Route, MapPin, Car, Shuffle, Footprints, Bike, Bus, Save, Check } from 'lucide-react';
+import { Plus, X, Navigation, Clock, Route, MapPin, Car, Shuffle, Footprints, Bike, Bus, Save, Check, Pencil } from 'lucide-react';
 import BookingBanner from '../BookingBanner';
 import ImageLoadGate from '../../../../../shared/ImageLoadGate';
 import { addBooking, updateBooking, getBookings } from '../../../../../../services/tripService';
@@ -48,6 +48,7 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
   const [saved, setSaved] = useState(false);
   const [saveMode, setSaveMode] = useState(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [showEditPanel, setShowEditPanel] = useState(initialData?.editMode ?? false);
   const [bookings, setBookings] = useState([]);
   const bookingsLoadedRef = useRef(false);
   const mapRef = useRef(null);
@@ -137,6 +138,10 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
     shouldAutoCalculateRef.current = false;
     handleCalculate();
   }, [isLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (isDirty && existingId) setShowEditPanel(true);
+  }, [isDirty, existingId]);
 
   // Al editar manualmente un campo, limpia la etiqueta de actividad y marca como modificado
   const handleChange = useCallback((id, value) => {
@@ -367,6 +372,56 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
             </div>
           )}
 
+          {/* Cabecera: nombre de ruta guardada + edición */}
+          {existingId && (
+            saved ? (
+              <p className="body-3 text-auxiliary-green-5 flex items-center gap-1.5">
+                <Check className="w-4 h-4" />
+                {saveMode === 'updated' ? 'Cambios guardados en Reservas → Rutas' : 'Nueva ruta guardada en Reservas → Rutas'}
+              </p>
+            ) : showEditPanel ? (
+              <div className="flex flex-col gap-2 border border-neutral-2 rounded-xl px-4 py-3">
+                <input
+                  autoFocus
+                  value={routeName}
+                  onChange={(e) => { setRouteName(e.target.value); setIsDirty(true); }}
+                  placeholder={initialData?.name || 'Nombre de la ruta'}
+                  className="w-full body-2 text-neutral-7 outline-none placeholder:text-neutral-3 border-b border-neutral-1 pb-2"
+                  onKeyDown={(e) => { if (e.key === 'Enter' && isDirty) handleUpdateRoute(); }}
+                />
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleUpdateRoute}
+                    disabled={!isDirty}
+                    className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-primary-3 hover:bg-primary-4 text-white rounded-lg body-3 font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <Check className="w-3.5 h-3.5" /> Guardar cambios
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveRoute}
+                    className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 border border-neutral-2 hover:border-secondary-3 text-neutral-5 hover:text-secondary-5 rounded-lg body-3 font-semibold transition"
+                  >
+                    <Save className="w-3.5 h-3.5" /> Guardar como nueva ruta
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <p className="body-2-semibold text-neutral-7 truncate">{routeName || initialData?.name || 'Ruta guardada'}</p>
+                <button
+                  type="button"
+                  title="Editar nombre / guardar cambios"
+                  onClick={() => setShowEditPanel(true)}
+                  className="cursor-pointer shrink-0 p-1 rounded-full text-neutral-3 hover:text-secondary-5 hover:bg-secondary-1 transition"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )
+          )}
+
           {/* Panel de paradas y configuración */}
           <div className="bg-white border border-neutral-1 rounded-2xl p-4 sm:p-5 shadow-sm">
             <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
@@ -413,7 +468,7 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
             </div>
             {waypoints.some((w) => w.fromActivity) && (
               <p className="body-3 text-amber-500 mb-4 flex items-center gap-1.5">
-                <span>⚠</span> Confirma o ajusta las direcciones en el desplegable de Google
+                <span>⚠</span> Confirma o ajusta las direcciones con ayuda del desplegable
               </p>
             )}
 
@@ -487,43 +542,14 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
                 </div>
               </div>
 
-              {/* Guardar ruta */}
-              {tripId && (
+              {/* Guardar ruta nueva */}
+              {tripId && !existingId && (
                 saved ? (
                   <p className="body-3 text-auxiliary-green-5 flex items-center gap-1.5">
                     <Check className="w-4 h-4" />
-                    {saveMode === 'updated' ? 'Cambios guardados en Reservas → Rutas' : 'Nueva ruta guardada en Reservas → Rutas'}
+                    Nueva ruta guardada en Reservas → Rutas
                   </p>
-                ) : existingId && !isDirty ? null : existingId && isDirty ? (
-                  /* Editando ruta guardada → mostrar actualizar o guardar como nueva */
-                  <div className="flex flex-col gap-2 border border-neutral-2 rounded-xl px-4 py-3">
-                    <input
-                      value={routeName}
-                      onChange={(e) => setRouteName(e.target.value)}
-                      placeholder={initialData?.name || 'Nombre de la ruta'}
-                      className="w-full body-2 text-neutral-7 outline-none placeholder:text-neutral-3 border-b border-neutral-1 pb-2"
-                      onKeyDown={(e) => { if (e.key === 'Enter') handleUpdateRoute(); }}
-                    />
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        type="button"
-                        onClick={handleUpdateRoute}
-                        className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-primary-3 hover:bg-primary-4 text-white rounded-lg body-3 font-semibold transition"
-                      >
-                        <Check className="w-3.5 h-3.5" /> Guardar cambios
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleSaveRoute}
-                        className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 border border-neutral-2 hover:border-secondary-3 text-neutral-5 hover:text-secondary-5 rounded-lg body-3 font-semibold transition"
-                      >
-                        <Save className="w-3.5 h-3.5" /> Guardar como nueva ruta
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  /* Ruta nueva → botón colapsado → expandir para poner nombre */
-                  savingRoute ? (
+                ) : savingRoute ? (
                     <div className="flex items-center gap-2 border border-neutral-2 rounded-xl px-4 py-3">
                       <input
                         autoFocus
@@ -550,7 +576,6 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
                       Guardar ruta en Reservas
                     </button>
                   )
-                )
               )}
             </div>
           )}

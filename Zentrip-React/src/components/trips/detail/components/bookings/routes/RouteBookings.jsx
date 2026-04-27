@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Car, Footprints, Bike, Bus, Route, Clock, Trash2, Check, X, Pencil, ExternalLink } from 'lucide-react';
-import { getBookings, deleteBooking, updateBooking } from '../../../../../../services/tripService';
+import { Car, Footprints, Bike, Bus, Route, Clock, Trash2, Pencil, Eye } from 'lucide-react';
+import { getBookings, deleteBooking } from '../../../../../../services/tripService';
 import BookingBanner from '../BookingBanner';
 import ImageLoadGate from '../../../../../shared/ImageLoadGate';
 
@@ -17,24 +17,10 @@ function formatDayLong(iso) {
   return `${DAY_NAMES_SHORT[date.getDay()]}, ${date.getDate()} de ${MONTHS_LONG[date.getMonth()]} ${date.getFullYear()}`;
 }
 
-function RouteCard({ booking, tripId, onDeleted, onRenamed, onOpenRoute }) {
-  const [editing, setEditing] = useState(false);
-  const [name, setName]       = useState(booking.name || '');
+function RouteCard({ booking, tripId, onDeleted, onOpenRoute }) {
   const [deleting, setDeleting] = useState(false);
 
   const ModeIcon = MODE_ICON[booking.travelMode] || Route;
-
-  const handleSaveName = async () => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    try {
-      await updateBooking(tripId, booking.id, { name: trimmed });
-      onRenamed(booking.id, trimmed);
-      setEditing(false);
-    } catch (err) {
-      console.error('[RouteBookings] Error renaming:', err);
-    }
-  };
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -48,44 +34,21 @@ function RouteCard({ booking, tripId, onDeleted, onRenamed, onOpenRoute }) {
   };
 
   return (
-    <div className="bg-white border border-neutral-1 rounded-2xl p-4 flex flex-col gap-3 shadow-sm">
+    <div
+      onClick={() => onOpenRoute(booking)}
+      className="cursor-pointer bg-white border border-neutral-1 rounded-2xl p-4 flex flex-col gap-3 shadow-sm hover:border-neutral-2 hover:shadow-md transition"
+    >
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          {editing ? (
-            <div className="flex items-center gap-2">
-              <input
-                autoFocus
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSaveName();
-                  if (e.key === 'Escape') { setName(booking.name); setEditing(false); }
-                }}
-                className="flex-1 body-2-semibold text-neutral-7 border-b border-primary-3 outline-none bg-transparent"
-              />
-              <button type="button" onClick={handleSaveName} className="cursor-pointer text-auxiliary-green-5 hover:text-auxiliary-green-6 transition shrink-0">
-                <Check className="w-4 h-4" />
-              </button>
-              <button type="button" onClick={() => { setName(booking.name); setEditing(false); }} className="cursor-pointer text-neutral-3 hover:text-neutral-5 transition shrink-0">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <p className="body-2-semibold text-neutral-7 truncate">{booking.name || 'Ruta guardada'}</p>
-              <button type="button" onClick={() => setEditing(true)} className="cursor-pointer text-neutral-3 hover:text-neutral-5 transition shrink-0">
-                <Pencil className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
+          <p className="body-2-semibold text-neutral-7 truncate">{booking.name || 'Ruta guardada'}</p>
           {booking.date && (
             <p className="body-3 text-neutral-4 mt-0.5">{formatDayLong(booking.date)}</p>
           )}
         </div>
         <button
           type="button"
-          onClick={handleDelete}
+          onClick={(e) => { e.stopPropagation(); handleDelete(); }}
           disabled={deleting}
           className="cursor-pointer shrink-0 p-1.5 rounded-full text-neutral-3 hover:text-feedback-error hover:bg-feedback-error-bg transition disabled:opacity-40"
         >
@@ -113,7 +76,7 @@ function RouteCard({ booking, tripId, onDeleted, onRenamed, onOpenRoute }) {
         )}
       </div>
 
-      {/* Waypoints y itinerario */}
+      {/* Waypoints */}
       {booking.waypoints?.length > 0 && (
         <div className="flex flex-col gap-0.5">
           {booking.waypoints.map((wp, i) => {
@@ -132,15 +95,25 @@ function RouteCard({ booking, tripId, onDeleted, onRenamed, onOpenRoute }) {
         </div>
       )}
 
-      {/* Abrir en Itinerario */}
-      <button
-        type="button"
-        onClick={() => onOpenRoute(booking)}
-        className="cursor-pointer w-full flex items-center justify-center gap-1.5 h-9 rounded-xl border border-secondary-2 text-secondary-5 body-3 font-semibold hover:bg-secondary-1 transition"
-      >
-        <ExternalLink className="w-3.5 h-3.5" />
-        Ver en Itinerario
-      </button>
+      {/* Acciones */}
+      <div className="flex gap-2 mt-1" onClick={(e) => e.stopPropagation()}>
+        <button
+          type="button"
+          onClick={() => onOpenRoute(booking)}
+          className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 h-8 rounded-xl border border-neutral-2 text-neutral-5 body-3 font-semibold hover:bg-neutral-1 transition"
+        >
+          <Eye className="w-3.5 h-3.5" />
+          Ver ruta
+        </button>
+        <button
+          type="button"
+          onClick={() => onOpenRoute({ ...booking, editMode: true })}
+          className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 h-8 rounded-xl border border-secondary-2 text-secondary-5 body-3 font-semibold hover:bg-secondary-1 transition"
+        >
+          <Pencil className="w-3.5 h-3.5" />
+          Editar ruta
+        </button>
+      </div>
     </div>
   );
 }
@@ -163,8 +136,7 @@ export default function RouteBookings({ tripId, onOpenRoute }) {
       .finally(() => setLoading(false));
   }, [tripId]);
 
-  const handleDeleted = (id)        => setBookings((prev) => prev.filter((b) => b.id !== id));
-  const handleRenamed = (id, name)  => setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, name } : b)));
+  const handleDeleted = (id) => setBookings((prev) => prev.filter((b) => b.id !== id));
 
   return (
     <ImageLoadGate src="/img/background/bookings/attraction.jpg" alt="Rutas guardadas">
@@ -207,7 +179,6 @@ export default function RouteBookings({ tripId, onOpenRoute }) {
                     booking={b}
                     tripId={tripId}
                     onDeleted={handleDeleted}
-                    onRenamed={handleRenamed}
                     onOpenRoute={onOpenRoute}
                   />
                 ))}
