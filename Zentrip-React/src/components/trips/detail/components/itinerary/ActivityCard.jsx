@@ -16,10 +16,13 @@ const TYPE_TO_SUBTAB = {
 
 export default function ActivityCard({ activity, members = [], onDelete, onView, onEdit, onGoToReservas }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const isManual = activity.source === 'manual';
   const typeCfg = TYPE_CONFIG[activity.type] || TYPE_CONFIG.actividad;
-  const statusCfg = activity.status && activity.source !== 'manual' ? STATUS_CONFIG[activity.status] : null;
-  const isDeletable = activity.source === 'manual';
-  const subtab = activity.source !== 'manual' ? TYPE_TO_SUBTAB[activity.type] : null;
+  const badgeLabel = isManual ? 'Plan' : typeCfg.label;
+  const badgeClass = isManual ? 'bg-primary-1 text-primary-4' : (typeCfg.badgeClass || 'bg-primary-1 text-primary-3');
+  const statusCfg = activity.status && !isManual ? STATUS_CONFIG[activity.status] : null;
+  const isDeletable = isManual;
+  const subtab = !isManual ? TYPE_TO_SUBTAB[activity.type] : null;
 
   return (
     <div className="flex gap-2 min-w-0">
@@ -33,7 +36,7 @@ export default function ActivityCard({ activity, members = [], onDelete, onView,
 
       {/* Línea de tiempo */}
       <div className="flex flex-col items-center shrink-0">
-        <div className={`w-3 h-3 rounded-full shrink-0 mt-1.5 ${typeCfg.dotClass}`} />
+        <div className={`w-3 h-3 rounded-full shrink-0 mt-1.5 ${activity.source === 'manual' ? 'bg-primary-3' : 'bg-auxiliary-green-5'}`} />
         <div className="w-px flex-1 bg-neutral-1 mt-1" />
       </div>
 
@@ -72,8 +75,8 @@ export default function ActivityCard({ activity, members = [], onDelete, onView,
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
               <h4 className="body-bold text-secondary-5 wrap-break-word">{activity.name}</h4>
               <div className="flex items-center flex-wrap gap-1.5 sm:shrink-0">
-                <span className="body-3 px-2 py-0.5 rounded-full font-semibold bg-primary-1 text-primary-3 whitespace-nowrap">
-                  {typeCfg.label}
+                <span className={`body-3 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap ${badgeClass}`}>
+                  {badgeLabel}
                 </span>
                 {statusCfg && (
                   <span className={`body-3 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap ${statusCfg.className}`}>

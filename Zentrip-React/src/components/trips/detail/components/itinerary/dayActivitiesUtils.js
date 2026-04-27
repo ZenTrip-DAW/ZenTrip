@@ -12,13 +12,15 @@ export function formatDayHeader(isoStr) {
 }
 
 export const TYPE_CONFIG = {
-  actividad:   { label: 'Actividad',    dotClass: 'bg-primary-3' },
-  restaurante: { label: 'Restaurante',  dotClass: 'bg-auxiliary-green-5' },
-  hotel:       { label: 'Hotel',        dotClass: 'bg-secondary-3' },
-  vuelo:       { label: 'Vuelo',        dotClass: 'bg-secondary-5' },
-  tren:        { label: 'Tren',         dotClass: 'bg-neutral-5' },
-  coche:       { label: 'Coche',        dotClass: 'bg-neutral-4' },
-  ruta:        { label: 'Ruta',         dotClass: 'bg-amber-500' },
+  actividad:   { label: 'Actividad',    badgeClass: 'bg-violet-100 text-violet-600' },
+  restaurante: { label: 'Restaurante',  badgeClass: 'bg-orange-100 text-orange-600' },
+  restaurant:  { label: 'Restaurante',  badgeClass: 'bg-orange-100 text-orange-600' },
+  hotel:       { label: 'Hotel',        badgeClass: 'bg-blue-100 text-blue-600' },
+  vuelo:       { label: 'Vuelo',        badgeClass: 'bg-cyan-100 text-cyan-700' },
+  tren:        { label: 'Tren',         badgeClass: 'bg-indigo-100 text-indigo-600' },
+  coche:       { label: 'Coche',        badgeClass: 'bg-amber-100 text-amber-600' },
+  car:         { label: 'Coche',        badgeClass: 'bg-amber-100 text-amber-600' },
+  ruta:        { label: 'Ruta',         badgeClass: 'bg-emerald-100 text-emerald-600' },
 };
 
 export const STATUS_CONFIG = {
