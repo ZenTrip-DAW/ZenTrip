@@ -38,7 +38,7 @@ export default function ReservasTab({ trip, members, tripId, initialSubTab = 'ho
       return <ActivityBookings tripId={tripId} members={members} onGoBook={onGoBook} />;
     }
     if (activeSubTab === 'rutas') {
-      return <RouteBookings tripId={tripId} onOpenRoute={onOpenRoute} />;
+      return <RouteBookings tripId={tripId} onOpenRoute={onOpenRoute} onGoBook={onGoBook} />;
     }
     const tab = SUBTABS.find((t) => t.key === activeSubTab);
     return <PlaceholderTab label={tab?.label ?? 'Próximamente'} emoji="🚧" />;

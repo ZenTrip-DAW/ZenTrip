@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Car, Footprints, Bike, Bus, Route, Clock, Trash2, Pencil, Eye } from 'lucide-react';
+import { Car, Footprints, Bike, Bus, Route, Clock, Trash2, Pencil, Eye, Map } from 'lucide-react';
 import { getBookings, deleteBooking } from '../../../../../../services/tripService';
 import BookingBanner from '../BookingBanner';
 import ImageLoadGate from '../../../../../shared/ImageLoadGate';
@@ -118,7 +118,24 @@ function RouteCard({ booking, tripId, onDeleted, onOpenRoute }) {
   );
 }
 
-export default function RouteBookings({ tripId, onOpenRoute }) {
+function CtaButton({ onGoBook }) {
+  return (
+    <button
+      onClick={() => onGoBook?.('rutas')}
+      className="cursor-pointer w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-dashed border-primary-2 hover:border-primary-3 hover:bg-primary-1 transition group"
+    >
+      <div className="w-9 h-9 rounded-full bg-primary-1 group-hover:bg-primary-2 flex items-center justify-center transition shrink-0">
+        <Map className="w-4 h-4 text-primary-4" />
+      </div>
+      <div className="text-left">
+        <p className="body-3 font-bold text-primary-4">Calcular ruta</p>
+        <p className="body-3 text-neutral-4">Ir al explorador de rutas del itinerario</p>
+      </div>
+    </button>
+  );
+}
+
+export default function RouteBookings({ tripId, onOpenRoute, onGoBook }) {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading]   = useState(true);
 
@@ -154,9 +171,12 @@ export default function RouteBookings({ tripId, onOpenRoute }) {
           <span className="w-6 h-6 border-2 border-primary-3/30 border-t-primary-3 rounded-full animate-spin" />
         </div>
       ) : bookings.length === 0 ? (
-        <div className="p-8 text-center">
-          <p className="body text-neutral-4 mb-1">Sin rutas guardadas</p>
-          <p className="body-3 text-neutral-3">Calcula una ruta desde el itinerario y guárdala aquí</p>
+        <div className="p-8 flex flex-col items-center gap-4">
+          <div className="text-center">
+            <p className="body text-neutral-4 mb-1">Sin rutas guardadas</p>
+            <p className="body-3 text-neutral-3">Calcula una ruta desde el itinerario y guárdala aquí</p>
+          </div>
+          <CtaButton onGoBook={onGoBook} />
         </div>
       ) : (
         <div className="p-4 sm:p-6 flex flex-col gap-6">
@@ -185,6 +205,7 @@ export default function RouteBookings({ tripId, onOpenRoute }) {
               </div>
             </div>
           ))}
+          <CtaButton onGoBook={onGoBook} />
         </div>
         )}
       </div>
