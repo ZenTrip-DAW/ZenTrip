@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ExternalLink, Users } from 'lucide-react';
 import { deleteBooking, deleteActivity } from '../../../../../../services/tripService';
 import ReceiptManagerModal from '../ReceiptManagerModal';
@@ -58,7 +58,11 @@ function CancelModal({ booking, tripId, onConfirm, onClose }) {
   );
 }
 
-export default function ActivityBookingCard({ booking, tripId, members = [], onCancelled }) {
+export default function ActivityBookingCard({ booking, tripId, members = [], onCancelled, highlighted = false }) {
+  const cardRef = useRef(null);
+  useEffect(() => {
+    if (highlighted) cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [highlighted]);
   const [showCancel, setShowCancel] = useState(false);
   const [showReceipts, setShowReceipts] = useState(false);
   const [receiptUrls, setReceiptUrls] = useState(booking.receiptUrls ?? []);
@@ -66,7 +70,7 @@ export default function ActivityBookingCard({ booking, tripId, members = [], onC
 
   return (
     <>
-      <div className="bg-white border border-neutral-1 rounded-xl px-4 py-3">
+      <div ref={cardRef} className={`bg-white border rounded-xl px-4 py-3 transition ${highlighted ? 'border-primary-3 ring-2 ring-primary-3 ring-offset-1' : 'border-neutral-1'}`}>
         <div className="flex items-start gap-3 mb-3">
           <span className="text-2xl shrink-0">🎯</span>
           <div className="flex-1 min-w-0">

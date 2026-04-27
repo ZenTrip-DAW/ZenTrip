@@ -72,13 +72,15 @@ export default function FlightsExplorer({ tripContext: tripContextProp, embedded
     const resolveToAirport = async (raw) => {
       if (!raw) return { id: '', label: '', code: '' };
       const originalName = raw.split(',')[0].trim();
-      const english = await resolveToEnglish(originalName) ?? originalName;
-      try {
-        const res = await getFlightDestinations(english);
-        const items = (res?.data ?? [])
+
+      const fetchItems = async (query) => {
+        const res = await getFlightDestinations(query);
+        return (res?.data ?? [])
           .filter((i) => i.type === 'CITY' || i.type === 'AIRPORT')
           .map((i) => ({ ...i, cityName: originalName || i.cityName || i.name || i.code }));
-        if (items.length === 0) return { id: '', label: '', code: '', cityName: originalName, noAirport: true };
+      };
+
+      const pickBest = (items) => {
         const airports = items.filter((i) => i.type === 'AIRPORT');
         const city = items.find((i) => i.type === 'CITY');
         const match = (city && airports.length > 1) ? city : (airports[0] ?? city ?? items[0]);
@@ -86,9 +88,22 @@ export default function FlightsExplorer({ tripContext: tripContextProp, embedded
           ? `${match.cityName} (todos los aeropuertos)`
           : `${match.cityName} (${match.code})`;
         return { id: match.id, label: lbl, code: match.code, cityName: match.cityName, type: match.type };
-      } catch {
-        return { id: '', label: originalName, code: '', cityName: originalName };
-      }
+      };
+
+      try {
+        // Try with the original name first — avoids the Nominatim round-trip for most cities
+        const items = await fetchItems(originalName);
+        if (items.length > 0) return pickBest(items);
+
+        // Fallback: translate to English and retry
+        const english = await resolveToEnglish(originalName) ?? originalName;
+        if (english !== originalName) {
+          const translatedItems = await fetchItems(english);
+          if (translatedItems.length > 0) return pickBest(translatedItems);
+        }
+      } catch { /* fall through */ }
+
+      return { id: '', label: '', code: '', cityName: originalName };
     };
 
     const stops = [...(tripContext.stops ?? [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
@@ -109,12 +124,9 @@ export default function FlightsExplorer({ tripContext: tripContextProp, embedded
         resolveToAirport(tripContext.origin),
         resolveToAirport(tripContext.destination),
       ]).then(([fromAirport, toAirport]) => {
-        const warnings = [];
-        if (fromAirport.noAirport) warnings.push(fromAirport.cityName);
-        else if (fromAirport.id) setFrom(fromAirport);
-        if (toAirport.noAirport) warnings.push(toAirport.cityName);
-        else if (toAirport.id) setTo(toAirport);
-        if (warnings.length > 0) setNoAirportWarnings(warnings);
+        if (fromAirport.id) setFrom(fromAirport);
+        if (toAirport.id) setTo(toAirport);
+        setNoAirportWarnings([]);
       });
       if (tripContext.startDate >= today) setDepartDate(tripContext.startDate);
       if (tripContext.endDate >= (tripContext.startDate || today)) setReturnDate(tripContext.endDate);

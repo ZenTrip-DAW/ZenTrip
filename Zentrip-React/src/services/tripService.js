@@ -252,6 +252,10 @@ export async function addActivity(tripId, activity) {
   return docRef.id;
 }
 
+export async function updateActivity(tripId, activityId, data) {
+  await updateDoc(doc(db, 'trips', tripId, 'activities', activityId), data);
+}
+
 export async function deleteActivity(tripId, activityId) {
   await deleteDoc(doc(db, 'trips', tripId, 'activities', activityId));
 }

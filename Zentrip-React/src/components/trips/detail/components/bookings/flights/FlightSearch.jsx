@@ -8,7 +8,7 @@ import ImageLoadGate from '../../../../../shared/ImageLoadGate';
 import { SectionLabel, TipCard } from './FlightAtoms';
 import { todayStr, getFirstDep, TIPS } from './flightBookingUtils';
 
-export default function FlightSearch({ members = [], tripId, onGoBook }) {
+export default function FlightSearch({ members = [], tripId, highlightBookingId, onGoBook }) {
   const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
 
@@ -59,6 +59,7 @@ export default function FlightSearch({ members = [], tripId, onGoBook }) {
                 tripId={tripId}
                 members={members}
                 defaultExpanded={true}
+                highlighted={b.id === highlightBookingId}
                 onCancelled={() => removeBooking(b.id)}
               />
             ))}
@@ -75,7 +76,7 @@ export default function FlightSearch({ members = [], tripId, onGoBook }) {
       {/* CTA buscar */}
       <button
         onClick={() => onGoBook?.('vuelos')}
-        className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-dashed border-primary-2 hover:border-primary-3 hover:bg-primary-1 transition group"
+        className="cursor-pointer w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-dashed border-primary-2 hover:border-primary-3 hover:bg-primary-1 transition group"
       >
         <div className="w-9 h-9 rounded-full bg-primary-1 group-hover:bg-primary-2 flex items-center justify-center transition shrink-0">
           <Plane className="w-4 h-4 text-primary-4" />

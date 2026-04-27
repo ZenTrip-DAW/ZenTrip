@@ -13,7 +13,7 @@ function EmptyDay() {
   );
 }
 
-export default function DayActivities({ selectedDay, activitiesByDate, onAddActivity, onDeleteActivity, weatherData, location, members = [] }) {
+export default function DayActivities({ selectedDay, activitiesByDate, onAddActivity, onViewActivity, onEditActivity, onDeleteActivity, onGoToReservas, weatherData, location, members = [] }) {
   if (!selectedDay) {
     return (
       <div className="bg-white rounded-2xl border border-neutral-1 p-6 flex flex-col items-center justify-center py-16 gap-2">
@@ -65,6 +65,9 @@ export default function DayActivities({ selectedDay, activitiesByDate, onAddActi
               activity={act}
               members={members}
               onDelete={onDeleteActivity}
+              onView={onViewActivity}
+              onEdit={onEditActivity}
+              onGoToReservas={onGoToReservas}
             />
           ))}
         </div>

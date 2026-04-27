@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Users } from 'lucide-react';
 import { fmtDate } from './carUtils';
 import { deleteBooking, deleteActivity } from '../../../../../../services/tripService';
@@ -66,7 +66,11 @@ function CancelBookingModal({ booking, tripId, onConfirm, onClose }) {
   );
 }
 
-export default function CarBookingCard({ booking, tripId, members = [], onCancelled }) {
+export default function CarBookingCard({ booking, tripId, members = [], onCancelled, highlighted = false }) {
+  const cardRef = useRef(null);
+  useEffect(() => {
+    if (highlighted) cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [highlighted]);
   const [showCancel, setShowCancel] = useState(false);
   const [showReceipts, setShowReceipts] = useState(false);
   const [receiptUrls, setReceiptUrls] = useState(booking.receiptUrls ?? []);
@@ -74,7 +78,7 @@ export default function CarBookingCard({ booking, tripId, members = [], onCancel
 
   return (
     <>
-      <div className="bg-auxiliary-green-1 border border-auxiliary-green-3 rounded-xl px-4 py-3">
+      <div ref={cardRef} className={`bg-auxiliary-green-1 border rounded-xl px-4 py-3 transition ${highlighted ? 'border-primary-3 ring-2 ring-primary-3 ring-offset-1' : 'border-auxiliary-green-3'}`}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
             <span className="text-xl">🚗</span>
