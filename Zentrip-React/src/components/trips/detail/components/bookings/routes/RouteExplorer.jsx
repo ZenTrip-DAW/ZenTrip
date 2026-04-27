@@ -266,7 +266,7 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
           const order = result.routes[0].waypoint_order;
           const mids = filled.slice(1, -1);
           const reordered = [filled[0], ...order.map((i) => mids[i]), filled[filled.length - 1]];
-          setWaypoints(reordered.map((w) => newWp(w.value)));
+          setWaypoints(reordered.map((w) => newWp(w.value, w.fromActivity, w.label)));
           setDirections(result);
           setRouteInfo(buildRouteInfo(result.routes[0].legs));
         } else {
