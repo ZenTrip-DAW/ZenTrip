@@ -17,7 +17,7 @@ const TYPE_TO_SUBTAB = {
 export default function ActivityCard({ activity, members = [], onDelete, onView, onEdit, onGoToReservas }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const typeCfg = TYPE_CONFIG[activity.type] || TYPE_CONFIG.actividad;
-  const statusCfg = activity.status ? STATUS_CONFIG[activity.status] : null;
+  const statusCfg = activity.status && activity.source !== 'manual' ? STATUS_CONFIG[activity.status] : null;
   const isDeletable = activity.source === 'manual';
   const subtab = activity.source !== 'manual' ? TYPE_TO_SUBTAB[activity.type] : null;
 
