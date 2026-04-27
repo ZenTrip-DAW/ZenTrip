@@ -110,7 +110,7 @@ function ReceiptGallery({ urls, onClose }) {
   );
 }
 
-export default function FlightBookingCard({ booking, tripId, members = [], onCancelled, defaultExpanded = true }) {
+export default function FlightBookingCard({ booking, tripId, members = [], onCancelled, defaultExpanded = true, highlighted = false }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [showCancel, setShowCancel] = useState(false);
   const [showReceipts, setShowReceipts] = useState(false);
@@ -127,7 +127,7 @@ export default function FlightBookingCard({ booking, tripId, members = [], onCan
 
   return (
     <>
-      <div className="bg-white border border-secondary-2 rounded-2xl overflow-hidden">
+      <div className={`bg-white border rounded-2xl overflow-hidden transition ${highlighted ? 'border-primary-3 ring-2 ring-primary-3 ring-offset-1' : 'border-secondary-2'}`}>
 
         {/* Cabecera clicable */}
         <button

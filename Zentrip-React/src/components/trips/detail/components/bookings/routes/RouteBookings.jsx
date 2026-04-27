@@ -17,7 +17,7 @@ function formatDayLong(iso) {
   return `${DAY_NAMES_SHORT[date.getDay()]}, ${date.getDate()} de ${MONTHS_LONG[date.getMonth()]} ${date.getFullYear()}`;
 }
 
-function RouteCard({ booking, tripId, onDeleted, onOpenRoute }) {
+function RouteCard({ booking, tripId, highlighted = false, onDeleted, onOpenRoute }) {
   const [deleting, setDeleting] = useState(false);
 
   const ModeIcon = MODE_ICON[booking.travelMode] || Route;
@@ -36,7 +36,7 @@ function RouteCard({ booking, tripId, onDeleted, onOpenRoute }) {
   return (
     <div
       onClick={() => onOpenRoute(booking)}
-      className="cursor-pointer bg-white border border-neutral-1 rounded-2xl p-4 flex flex-col gap-3 shadow-sm hover:border-neutral-2 hover:shadow-md transition"
+      className={`cursor-pointer bg-white border rounded-2xl p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition ${highlighted ? 'border-primary-3 ring-2 ring-primary-3 ring-offset-1' : 'border-neutral-1 hover:border-neutral-2'}`}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
@@ -135,7 +135,7 @@ function CtaButton({ onGoBook }) {
   );
 }
 
-export default function RouteBookings({ tripId, onOpenRoute, onGoBook }) {
+export default function RouteBookings({ tripId, highlightBookingId, onOpenRoute, onGoBook }) {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading]   = useState(true);
 
@@ -198,6 +198,7 @@ export default function RouteBookings({ tripId, onOpenRoute, onGoBook }) {
                     key={b.id}
                     booking={b}
                     tripId={tripId}
+                    highlighted={b.id === highlightBookingId}
                     onDeleted={handleDeleted}
                     onOpenRoute={onOpenRoute}
                   />

@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { X, MapPin, Clock, FileText, Tag, UserCircle, AlertCircle, AlertTriangle } from 'lucide-react';
+import { X, MapPin, Clock, FileText, Tag, UserCircle, AlertCircle, AlertTriangle, Pencil } from 'lucide-react';
 import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
 import Button from '../../../../ui/Button';
 
@@ -26,12 +26,16 @@ function timesOverlap(newStart, newEnd, existStart, existEnd) {
   return newStart < existEnd && newEnd > existStart;
 }
 
-export default function AddActivityModal({ date, creator, existingActivities = [], onClose, onSave }) {
-  const [name, setName] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [address, setAddress] = useState('');
-  const [notes, setNotes] = useState('');
+// mode: 'create' | 'view' | 'edit'
+export default function AddActivityModal({ date, creator, existingActivities = [], onClose, onSave, onUpdate, mode = 'create', initialActivity = null }) {
+  const isView = mode === 'view';
+  const isEdit = mode === 'edit';
+
+  const [name, setName] = useState(initialActivity?.name ?? '');
+  const [startTime, setStartTime] = useState(initialActivity?.startTime ?? '');
+  const [endTime, setEndTime] = useState(initialActivity?.endTime ?? '');
+  const [address, setAddress] = useState(initialActivity?.address ?? '');
+  const [notes, setNotes] = useState(initialActivity?.notes ?? '');
   const [saving, setSaving] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [showOverlapWarn, setShowOverlapWarn] = useState(false);
@@ -65,24 +69,35 @@ export default function AddActivityModal({ date, creator, existingActivities = [
 
   const isValid = !Object.values(errors).some(Boolean);
 
-  const hasOverlap = isValid && existingActivities.some(
+  const otherActivities = existingActivities.filter((a) => a.id !== initialActivity?.id);
+  const hasOverlap = isValid && otherActivities.some(
     (act) => act.startTime && act.endTime && timesOverlap(startTime, endTime, act.startTime, act.endTime)
   );
 
   const doSave = async () => {
     setSaving(true);
-    await onSave({
-      date,
-      name: name.trim(),
-      startTime,
-      endTime,
-      address: address.trim(),
-      notes: notes.trim() || null,
-      type: 'actividad',
-      status: 'pendiente',
-      source: 'manual',
-      createdBy: creator ?? null,
-    });
+    if (isEdit) {
+      await onUpdate(initialActivity.id, {
+        name: name.trim(),
+        startTime,
+        endTime,
+        address: address.trim(),
+        notes: notes.trim() || null,
+      });
+    } else {
+      await onSave({
+        date,
+        name: name.trim(),
+        startTime,
+        endTime,
+        address: address.trim(),
+        notes: notes.trim() || null,
+        type: 'actividad',
+        status: 'pendiente',
+        source: 'manual',
+        createdBy: creator ?? null,
+      });
+    }
     setSaving(false);
   };
 
@@ -97,6 +112,7 @@ export default function AddActivityModal({ date, creator, existingActivities = [
   const inputBase = 'border rounded-xl px-3 py-2 body-2 text-secondary-5 placeholder:text-neutral-3 focus:outline-none focus:ring-2 transition-colors';
   const inputOk = `${inputBase} border-neutral-2 focus:ring-primary-3/40`;
   const inputErr = `${inputBase} border-feedback-error focus:ring-feedback-error/30 bg-feedback-error-bg/30`;
+  const inputReadOnly = `${inputBase} border-neutral-1 bg-neutral-1 text-neutral-5 cursor-default`;
   const fieldClass = (field) => (submitted && errors[field] ? inputErr : inputOk);
 
   const addressInput = (
@@ -106,8 +122,11 @@ export default function AddActivityModal({ date, creator, existingActivities = [
       onChange={(e) => setAddress(e.target.value)}
       placeholder="Busca una dirección..."
       className={`w-full ${fieldClass('address')}`}
+      readOnly={isView}
     />
   );
+
+  const titleMap = { create: 'Nueva actividad', view: 'Detalle de actividad', edit: 'Editar actividad' };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -140,61 +159,91 @@ export default function AddActivityModal({ date, creator, existingActivities = [
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="title-h3-desktop text-secondary-5">Nueva actividad</h2>
-          <button type="button" onClick={onClose} className="text-neutral-3 hover:text-neutral-5 transition-colors">
-            <X className="w-5 h-5" />
-          </button>
+          <h2 className="title-h3-desktop text-secondary-5">{titleMap[mode]}</h2>
+          <div className="flex items-center gap-1">
+            {isView && (
+              <button
+                type="button"
+                title="Editar actividad"
+                onClick={() => onUpdate('__switch_to_edit__')}
+                className="cursor-pointer p-1.5 rounded-full text-neutral-3 hover:text-secondary-5 hover:bg-secondary-1 transition"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+            )}
+            <button type="button" onClick={onClose} className="text-neutral-3 hover:text-neutral-5 transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+        <form onSubmit={isView ? (e) => e.preventDefault() : handleSubmit} noValidate className="flex flex-col gap-4">
           {/* Nombre */}
           <div className="flex flex-col gap-1.5">
             <label className="body-3 font-semibold text-neutral-5 flex items-center gap-1.5">
               <Tag className="w-3.5 h-3.5 text-primary-3" />
-              Nombre <span className="text-feedback-error">*</span>
+              Nombre {!isView && <span className="text-feedback-error">*</span>}
             </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value.slice(0, NAME_MAX + 1))}
-              placeholder="Ej. Visita al museo"
-              className={fieldClass('name')}
-            />
-            <div className="flex items-start justify-between gap-2">
-              {submitted ? <FieldError message={errors.name} /> : <span />}
-              <span className={`body-3 shrink-0 ${name.length >= NAME_MAX ? 'text-feedback-error' : 'text-neutral-3'}`}>
-                {name.length}/{NAME_MAX}
-              </span>
-            </div>
+            {isView ? (
+              <p className={`${inputReadOnly} px-3 py-2`}>{name || '—'}</p>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value.slice(0, NAME_MAX + 1))}
+                  placeholder="Ej. Visita al museo"
+                  className={fieldClass('name')}
+                />
+                <div className="flex items-start justify-between gap-2">
+                  {submitted ? <FieldError message={errors.name} /> : <span />}
+                  <span className={`body-3 shrink-0 ${name.length >= NAME_MAX ? 'text-feedback-error' : 'text-neutral-3'}`}>
+                    {name.length}/{NAME_MAX}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Horario */}
           <div className="flex flex-col gap-1.5">
             <label className="body-3 font-semibold text-neutral-5 flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 text-primary-3" />
-              Horario <span className="text-feedback-error">*</span>
+              Horario {!isView && <span className="text-feedback-error">*</span>}
             </label>
             <div className="flex gap-3 items-start">
               <div className="flex-1 flex flex-col gap-1">
                 <span className="body-3 text-neutral-3">Inicio</span>
-                <input
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  className={fieldClass('startTime')}
-                />
-                {submitted && <FieldError message={errors.startTime} />}
+                {isView ? (
+                  <p className={`${inputReadOnly} px-3 py-2`}>{startTime || '—'}</p>
+                ) : (
+                  <>
+                    <input
+                      type="time"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      className={fieldClass('startTime')}
+                    />
+                    {submitted && <FieldError message={errors.startTime} />}
+                  </>
+                )}
               </div>
               <span className="body-3 text-neutral-3 mt-8">—</span>
               <div className="flex-1 flex flex-col gap-1">
                 <span className="body-3 text-neutral-3">Fin</span>
-                <input
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className={fieldClass('endTime')}
-                />
-                {submitted && <FieldError message={errors.endTime} />}
+                {isView ? (
+                  <p className={`${inputReadOnly} px-3 py-2`}>{endTime || '—'}</p>
+                ) : (
+                  <>
+                    <input
+                      type="time"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      className={fieldClass('endTime')}
+                    />
+                    {submitted && <FieldError message={errors.endTime} />}
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -203,14 +252,16 @@ export default function AddActivityModal({ date, creator, existingActivities = [
           <div className="flex flex-col gap-1.5">
             <label className="body-3 font-semibold text-neutral-5 flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-primary-3" />
-              Dirección <span className="text-feedback-error">*</span>
+              Dirección {!isView && <span className="text-feedback-error">*</span>}
             </label>
-            {isLoaded ? (
+            {isView ? (
+              <p className={`${inputReadOnly} px-3 py-2 wrap-break-word`}>{address || '—'}</p>
+            ) : isLoaded ? (
               <Autocomplete onLoad={(ac) => { acRef.current = ac; }} onPlaceChanged={handlePlaceChanged}>
                 {addressInput}
               </Autocomplete>
             ) : addressInput}
-            {submitted && <FieldError message={errors.address} />}
+            {!isView && submitted && <FieldError message={errors.address} />}
           </div>
 
           {/* Notas */}
@@ -219,37 +270,48 @@ export default function AddActivityModal({ date, creator, existingActivities = [
               <FileText className="w-3.5 h-3.5 text-primary-3" />
               Notas
             </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value.slice(0, NOTES_MAX))}
-              placeholder="Cualquier detalle adicional..."
-              rows={3}
-              className={`${inputOk} resize-none`}
-            />
-            <span className={`body-3 text-right ${notes.length >= NOTES_MAX ? 'text-feedback-error' : 'text-neutral-3'}`}>
-              {notes.length}/{NOTES_MAX}
-            </span>
+            {isView ? (
+              <p className={`${inputReadOnly} px-3 py-2 wrap-break-word`}>{notes || '—'}</p>
+            ) : (
+              <>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value.slice(0, NOTES_MAX))}
+                  placeholder="Cualquier detalle adicional..."
+                  rows={3}
+                  className={`${inputOk} resize-none`}
+                />
+                <span className={`body-3 text-right ${notes.length >= NOTES_MAX ? 'text-feedback-error' : 'text-neutral-3'}`}>
+                  {notes.length}/{NOTES_MAX}
+                </span>
+              </>
+            )}
           </div>
 
           {/* Creado por */}
-          {creator && (
+          {(creator || initialActivity?.createdBy?.name) && (
             <div className="flex items-center gap-2 py-2 px-3 bg-neutral-1 rounded-xl">
               <UserCircle className="w-4 h-4 text-neutral-4 shrink-0" />
               <span className="body-3 text-neutral-4">
-                Creado por <span className="font-semibold text-secondary-5">{creator.name}</span>
+                {isView ? 'Creado por' : 'Creado por'}{' '}
+                <span className="font-semibold text-secondary-5">
+                  {initialActivity?.createdBy?.name ?? creator?.name}
+                </span>
               </span>
             </div>
           )}
 
           {/* Acciones */}
-          <div className="flex gap-3 mt-1">
-            <Button type="button" variant="ghost" className="flex-1 w-auto!" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button type="submit" variant="orange" className="flex-1 w-auto!" disabled={saving}>
-              {saving ? 'Guardando...' : 'Añadir'}
-            </Button>
-          </div>
+          {!isView && (
+            <div className="flex gap-3 mt-1">
+              <Button type="button" variant="ghost" className="flex-1 w-auto!" onClick={onClose}>
+                Cancelar
+              </Button>
+              <Button type="submit" variant="orange" className="flex-1 w-auto!" disabled={saving}>
+                {saving ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Añadir'}
+              </Button>
+            </div>
+          )}
         </form>
       </div>
     </div>

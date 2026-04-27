@@ -61,12 +61,12 @@ export function useTripDetail(tripId) {
                 bk.type === 'vuelo' ? (bk.destinationAddress || '') :
                 bk.type === 'car'   ? (bk.pickUpAddress || '') :
                 (bk.address || '');
-              const extra = {};
+              const extra = { bookingId: bk.id };
               if (!act.address && addr) extra.address = addr;
               if (!act.city && bk.city) extra.city = bk.city;
               if (act.lat == null && bk.lat != null) extra.lat = bk.lat;
               if (act.lng == null && bk.lng != null) extra.lng = bk.lng;
-              return Object.keys(extra).length ? { ...act, ...extra } : act;
+              return { ...act, ...extra };
             });
           }
           setActivities(acts);

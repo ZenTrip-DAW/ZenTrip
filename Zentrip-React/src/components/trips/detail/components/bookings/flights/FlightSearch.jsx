@@ -8,7 +8,7 @@ import ImageLoadGate from '../../../../../shared/ImageLoadGate';
 import { SectionLabel, TipCard } from './FlightAtoms';
 import { todayStr, getFirstDep, TIPS } from './flightBookingUtils';
 
-export default function FlightSearch({ members = [], tripId, onGoBook }) {
+export default function FlightSearch({ members = [], tripId, highlightBookingId, onGoBook }) {
   const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
 
@@ -59,6 +59,7 @@ export default function FlightSearch({ members = [], tripId, onGoBook }) {
                 tripId={tripId}
                 members={members}
                 defaultExpanded={true}
+                highlighted={b.id === highlightBookingId}
                 onCancelled={() => removeBooking(b.id)}
               />
             ))}

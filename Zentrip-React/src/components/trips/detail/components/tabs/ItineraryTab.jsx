@@ -29,11 +29,14 @@ export default function ItinerarioTab({
   tripDays,
   tripId,
   onAddActivity,
+  onViewActivity,
+  onEditActivity,
   onDeleteActivity,
   onInvite,
   initialActiveBooking = null,
   initialRouteData = null,
   onBookingOpened,
+  onGoToReservas,
   weatherByDate = {},
   locationByDate = {},
 }) {
@@ -150,7 +153,10 @@ export default function ItinerarioTab({
                     selectedDay={selectedDay}
                     activitiesByDate={activitiesByDate}
                     onAddActivity={onAddActivity}
+                    onViewActivity={onViewActivity}
+                    onEditActivity={onEditActivity}
                     onDeleteActivity={onDeleteActivity}
+                    onGoToReservas={onGoToReservas}
                     weatherData={selectedDay ? weatherByDate[selectedDay] : null}
                     location={selectedDay ? (locationByDate[selectedDay] || trip?.destination) : trip?.destination}
                     members={members}

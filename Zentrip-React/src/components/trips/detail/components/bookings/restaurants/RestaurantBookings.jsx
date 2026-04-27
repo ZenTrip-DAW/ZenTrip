@@ -7,7 +7,7 @@ import ImageLoadGate from '../../../../../shared/ImageLoadGate';
 import { useAuth } from '../../../../../../context/AuthContext';
 import { getBookings } from '../../../../../../services/tripService';
 
-export default function RestaurantBookings({ tripId, members = [], onGoBook }) {
+export default function RestaurantBookings({ tripId, members = [], highlightBookingId, onGoBook }) {
   const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
 
@@ -47,6 +47,7 @@ export default function RestaurantBookings({ tripId, members = [], onGoBook }) {
                   booking={b}
                   tripId={tripId}
                   members={members}
+                  highlighted={b.id === highlightBookingId}
                   onCancelled={(id) => setBookings((prev) => prev.filter((x) => x.id !== id))}
                 />
               ))}

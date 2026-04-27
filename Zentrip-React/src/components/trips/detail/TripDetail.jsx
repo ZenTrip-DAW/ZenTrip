@@ -4,7 +4,7 @@ import { ChevronLeft } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useTripDetail } from './hooks/useTripDetail';
 import { useWeather } from './hooks/useWeather';
-import { addActivity, deleteActivity, removeMemberFromTrip } from '../../../services/tripService';
+import { addActivity, updateActivity, deleteActivity, removeMemberFromTrip } from '../../../services/tripService';
 import ConfirmModal from '../../ui/ConfirmModal';
 import AddActivityModal from './components/itinerary/AddActivityModal';
 import TripDetailHeader from './components/TripDetailHeader';
@@ -54,13 +54,21 @@ export default function TripDetail() {
   const location = useLocation();
   const { user, profile } = useAuth();
   const [activeTab, setActiveTab] = useState(location.state?.activeTab ?? 'itinerario');
-  const [initialBooking, setInitialBooking]     = useState(null);
-  const [initialRouteData, setInitialRouteData] = useState(null);
-  const [showLeaveModal, setShowLeaveModal]     = useState(false);
+  const [initialBooking, setInitialBooking]         = useState(null);
+  const [initialRouteData, setInitialRouteData]     = useState(null);
+  const [initialBookingSubTab, setInitialBookingSubTab]   = useState('hoteles');
+  const [highlightBookingId, setHighlightBookingId]       = useState(null);
+  const [showLeaveModal, setShowLeaveModal]         = useState(false);
 
   const handleGoBook = (bookingKey) => {
     setInitialBooking(bookingKey);
     setActiveTab('itinerario');
+  };
+
+  const handleGoToReservas = (subTab, bookingId = null) => {
+    setInitialBookingSubTab(subTab);
+    setHighlightBookingId(bookingId);
+    setActiveTab('reservas');
   };
 
   const handleOpenRoute = (routeData) => {
@@ -84,19 +92,41 @@ export default function TripDetail() {
 
   const { weatherByDate, locationByDate, currentWeather } = useWeather(trip?.destination, trip?.stops);
 
-  const [addActivityModal, setAddActivityModal] = useState({ open: false, date: null });
+  const [addActivityModal, setAddActivityModal] = useState({ open: false, date: null, mode: 'create', activity: null });
 
   const handleAddActivity = (date) => {
-    setAddActivityModal({ open: true, date });
+    setAddActivityModal({ open: true, date, mode: 'create', activity: null });
+  };
+
+  const handleViewActivity = (activity) => {
+    setAddActivityModal({ open: true, date: activity.date, mode: 'view', activity });
+  };
+
+  const handleEditActivity = (activity) => {
+    setAddActivityModal({ open: true, date: activity.date, mode: 'edit', activity });
   };
 
   const handleSaveActivity = async (activityData) => {
     try {
       const id = await addActivity(tripId, activityData);
       setActivities((prev) => [...prev, { id, ...activityData }]);
-      setAddActivityModal({ open: false, date: null });
+      setAddActivityModal({ open: false, date: null, mode: 'create', activity: null });
     } catch (err) {
       console.error('[TripDetail] Error al añadir actividad:', err);
+    }
+  };
+
+  const handleUpdateActivity = async (activityId, data) => {
+    if (activityId === '__switch_to_edit__') {
+      setAddActivityModal((prev) => ({ ...prev, mode: 'edit' }));
+      return;
+    }
+    try {
+      await updateActivity(tripId, activityId, data);
+      setActivities((prev) => prev.map((a) => a.id === activityId ? { ...a, ...data } : a));
+      setAddActivityModal({ open: false, date: null, mode: 'create', activity: null });
+    } catch (err) {
+      console.error('[TripDetail] Error al editar actividad:', err);
     }
   };
 
@@ -135,11 +165,14 @@ export default function TripDetail() {
           tripDays={tripDays}
           tripId={tripId}
           onAddActivity={handleAddActivity}
+          onViewActivity={handleViewActivity}
+          onEditActivity={handleEditActivity}
           onDeleteActivity={handleDeleteActivity}
           onInvite={isCreator ? () => setActiveTab('invitaciones') : null}
           initialActiveBooking={initialBooking}
           initialRouteData={initialRouteData}
           onBookingOpened={() => { setInitialBooking(null); setInitialRouteData(null); }}
+          onGoToReservas={handleGoToReservas}
           weatherByDate={weatherByDate}
           locationByDate={locationByDate}
         />
@@ -166,6 +199,8 @@ export default function TripDetail() {
           trip={trip}
           members={members}
           tripId={tripId}
+          initialSubTab={initialBookingSubTab}
+          highlightBookingId={highlightBookingId}
           onGoBook={handleGoBook}
           onOpenRoute={handleOpenRoute}
         />
@@ -182,10 +217,13 @@ export default function TripDetail() {
       {addActivityModal.open && (
         <AddActivityModal
           date={addActivityModal.date}
+          mode={addActivityModal.mode}
+          initialActivity={addActivityModal.activity}
           creator={profile ? { uid: user.uid, name: profile.displayName || profile.username || user.email } : null}
           existingActivities={addActivityModal.date ? (activitiesByDate[addActivityModal.date] || []) : []}
-          onClose={() => setAddActivityModal({ open: false, date: null })}
+          onClose={() => setAddActivityModal({ open: false, date: null, mode: 'create', activity: null })}
           onSave={handleSaveActivity}
+          onUpdate={handleUpdateActivity}
         />
       )}
       {showLeaveModal && (

@@ -1,12 +1,25 @@
 import { useState } from 'react';
-import { Trash2, UserCircle, Users } from 'lucide-react';
+import { Trash2, Pencil, UserCircle, Users } from 'lucide-react';
 import { TYPE_CONFIG, STATUS_CONFIG } from './dayActivitiesUtils';
 
-export default function ActivityCard({ activity, members = [], onDelete }) {
+const TYPE_TO_SUBTAB = {
+  hotel:       'hoteles',
+  vuelo:       'vuelos',
+  ruta:        'rutas',
+  restaurante: 'restaurantes',
+  restaurant:  'restaurantes',
+  actividad:   'actividades',
+  coche:       'coches',
+  car:         'coches',
+  tren:        'trenes',
+};
+
+export default function ActivityCard({ activity, members = [], onDelete, onView, onEdit, onGoToReservas }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const typeCfg = TYPE_CONFIG[activity.type] || TYPE_CONFIG.actividad;
   const statusCfg = activity.status ? STATUS_CONFIG[activity.status] : null;
   const isDeletable = activity.source === 'manual';
+  const subtab = activity.source !== 'manual' ? TYPE_TO_SUBTAB[activity.type] : null;
 
   return (
     <div className="flex gap-2 min-w-0">
@@ -25,7 +38,14 @@ export default function ActivityCard({ activity, members = [], onDelete }) {
       </div>
 
       {/* Tarjeta */}
-      <div className={`flex-1 min-w-0 rounded-2xl border p-3 sm:p-4 mb-3 ${activity.status === 'reservado' ? 'bg-auxiliary-green-1 border-auxiliary-green-3' : 'bg-white border-neutral-1'}`}>
+      <div
+        onClick={() => {
+          if (confirmDelete) return;
+          if (subtab) { onGoToReservas?.(subtab, activity.bookingId); return; }
+          if (isDeletable) onView?.(activity);
+        }}
+        className={`flex-1 min-w-0 rounded-2xl border p-3 sm:p-4 mb-3 ${subtab || isDeletable ? 'cursor-pointer hover:shadow-md hover:border-neutral-2' : ''} transition ${activity.status === 'reservado' ? 'bg-auxiliary-green-1 border-auxiliary-green-3' : 'bg-white border-neutral-1'}`}
+      >
         {confirmDelete ? (
           <div className="flex flex-col gap-2">
             <p className="body-3 text-neutral-5 font-semibold">¿Eliminar esta actividad?</p>
@@ -60,14 +80,24 @@ export default function ActivityCard({ activity, members = [], onDelete }) {
                   </span>
                 )}
                 {isDeletable && (
-                  <button
-                    type="button"
-                    onClick={() => setConfirmDelete(true)}
-                    className="p-1 rounded-full text-neutral-3 hover:text-feedback-error hover:bg-feedback-error-bg transition-colors shrink-0"
-                    title="Eliminar actividad"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); onEdit?.(activity); }}
+                      className="cursor-pointer p-1 rounded-full text-neutral-3 hover:text-secondary-5 hover:bg-secondary-1 transition-colors shrink-0"
+                      title="Editar actividad"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
+                      className="cursor-pointer p-1 rounded-full text-neutral-3 hover:text-feedback-error hover:bg-feedback-error-bg transition-colors shrink-0"
+                      title="Eliminar actividad"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </>
                 )}
               </div>
               <h4 className="body-bold text-secondary-5 wrap-break-word">{activity.name}</h4>

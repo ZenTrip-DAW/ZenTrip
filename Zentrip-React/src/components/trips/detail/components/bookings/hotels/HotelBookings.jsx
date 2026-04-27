@@ -8,7 +8,7 @@ import ImageLoadGate from '../../../../../shared/ImageLoadGate';
 import { useAuth } from '../../../../../../context/AuthContext';
 import { getBookings } from '../../../../../../services/tripService';
 
-export default function HotelBookings({ tripId, onGoBook }) {
+export default function HotelBookings({ tripId, highlightBookingId, onGoBook }) {
   const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -47,6 +47,7 @@ export default function HotelBookings({ tripId, onGoBook }) {
                 key={b.id}
                 booking={b}
                 tripId={tripId}
+                highlighted={b.id === highlightBookingId}
                 onDetails={setSelectedBooking}
                 onCancelled={(id) => setBookings((prev) => prev.filter((x) => x.id !== id))}
               />

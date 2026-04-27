@@ -53,14 +53,14 @@ function CancelBookingModal({ booking, tripId, onConfirm, onClose }) {
   );
 }
 
-export default function HotelBookingCard({ booking, tripId, onDetails, onCancelled }) {
+export default function HotelBookingCard({ booking, tripId, highlighted = false, onDetails, onCancelled }) {
   const [showCancel, setShowCancel] = useState(false);
   const [showReceipts, setShowReceipts] = useState(false);
   const [receiptUrls, setReceiptUrls] = useState(booking.receiptUrls ?? []);
 
   return (
     <>
-      <div className="bg-auxiliary-green-1 border border-auxiliary-green-3 rounded-xl px-4 py-3">
+      <div className={`bg-auxiliary-green-1 border rounded-xl px-4 py-3 transition ${highlighted ? 'border-primary-3 ring-2 ring-primary-3 ring-offset-1' : 'border-auxiliary-green-3'}`}>
         <button
           type="button"
           onClick={() => onDetails?.(booking)}

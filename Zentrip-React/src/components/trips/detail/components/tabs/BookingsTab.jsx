@@ -18,27 +18,27 @@ const SUBTABS = [
   { key: 'restaurantes', label: 'Restaurantes',  Icon: Utensils,available: true  },
 ];
 
-export default function ReservasTab({ trip, members, tripId, initialSubTab = 'hoteles', onGoBook, onOpenRoute }) {
+export default function ReservasTab({ trip, members, tripId, initialSubTab = 'hoteles', highlightBookingId, onGoBook, onOpenRoute }) {
   const [activeSubTab, setActiveSubTab] = useState(initialSubTab);
 
   const renderContent = () => {
     if (activeSubTab === 'hoteles') {
-      return <HotelBookings trip={trip} members={members} tripId={tripId} onGoBook={onGoBook} />;
+      return <HotelBookings trip={trip} members={members} tripId={tripId} highlightBookingId={highlightBookingId} onGoBook={onGoBook} />;
     }
     if (activeSubTab === 'coches') {
-      return <CarBookings tripId={tripId} members={members} onGoBook={onGoBook} />;
+      return <CarBookings tripId={tripId} members={members} highlightBookingId={highlightBookingId} onGoBook={onGoBook} />;
     }
     if (activeSubTab === 'vuelos') {
-      return <FlightSearch members={members} tripId={tripId} onGoBook={onGoBook} />;
+      return <FlightSearch members={members} tripId={tripId} highlightBookingId={highlightBookingId} onGoBook={onGoBook} />;
     }
     if (activeSubTab === 'restaurantes') {
-      return <RestaurantBookings tripId={tripId} members={members} onGoBook={onGoBook} />;
+      return <RestaurantBookings tripId={tripId} members={members} highlightBookingId={highlightBookingId} onGoBook={onGoBook} />;
     }
     if (activeSubTab === 'actividades') {
-      return <ActivityBookings tripId={tripId} members={members} onGoBook={onGoBook} />;
+      return <ActivityBookings tripId={tripId} members={members} highlightBookingId={highlightBookingId} onGoBook={onGoBook} />;
     }
     if (activeSubTab === 'rutas') {
-      return <RouteBookings tripId={tripId} onOpenRoute={onOpenRoute} onGoBook={onGoBook} />;
+      return <RouteBookings tripId={tripId} highlightBookingId={highlightBookingId} onOpenRoute={onOpenRoute} onGoBook={onGoBook} />;
     }
     const tab = SUBTABS.find((t) => t.key === activeSubTab);
     return <PlaceholderTab label={tab?.label ?? 'Próximamente'} emoji="🚧" />;
