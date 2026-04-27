@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Car, Footprints, Bike, Bus, Route, Clock, Trash2, Pencil, Eye, Map } from 'lucide-react';
 import { getBookings, deleteBooking } from '../../../../../../services/tripService';
 import BookingBanner from '../BookingBanner';
@@ -19,6 +19,10 @@ function formatDayLong(iso) {
 
 function RouteCard({ booking, tripId, highlighted = false, onDeleted, onOpenRoute }) {
   const [deleting, setDeleting] = useState(false);
+  const cardRef = useRef(null);
+  useEffect(() => {
+    if (highlighted) cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [highlighted]);
 
   const ModeIcon = MODE_ICON[booking.travelMode] || Route;
 
@@ -36,6 +40,7 @@ function RouteCard({ booking, tripId, highlighted = false, onDeleted, onOpenRout
   return (
     <div
       onClick={() => onOpenRoute(booking)}
+      ref={cardRef}
       className={`cursor-pointer bg-white border rounded-2xl p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition ${highlighted ? 'border-primary-3 ring-2 ring-primary-3 ring-offset-1' : 'border-neutral-1 hover:border-neutral-2'}`}
     >
       {/* Header */}

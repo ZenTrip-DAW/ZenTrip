@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { fmtDate } from './hotelUtils';
 import { deleteBooking, deleteActivity } from '../../../../../../services/tripService';
 import ReceiptManagerModal from '../ReceiptManagerModal';
@@ -57,10 +57,14 @@ export default function HotelBookingCard({ booking, tripId, highlighted = false,
   const [showCancel, setShowCancel] = useState(false);
   const [showReceipts, setShowReceipts] = useState(false);
   const [receiptUrls, setReceiptUrls] = useState(booking.receiptUrls ?? []);
+  const cardRef = useRef(null);
+  useEffect(() => {
+    if (highlighted) cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [highlighted]);
 
   return (
     <>
-      <div className={`bg-auxiliary-green-1 border rounded-xl px-4 py-3 transition ${highlighted ? 'border-primary-3 ring-2 ring-primary-3 ring-offset-1' : 'border-auxiliary-green-3'}`}>
+      <div ref={cardRef} className={`bg-auxiliary-green-1 border rounded-xl px-4 py-3 transition ${highlighted ? 'border-primary-3 ring-2 ring-primary-3 ring-offset-1' : 'border-auxiliary-green-3'}`}>
         <button
           type="button"
           onClick={() => onDetails?.(booking)}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Plane, Users, X, ExternalLink, Calendar, Clock, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { deleteFlightBooking } from '../../../../../../services/tripService';
 import ReceiptManagerModal from '../ReceiptManagerModal';
@@ -111,6 +111,10 @@ function ReceiptGallery({ urls, onClose }) {
 }
 
 export default function FlightBookingCard({ booking, tripId, members = [], onCancelled, defaultExpanded = true, highlighted = false }) {
+  const cardRef = useRef(null);
+  useEffect(() => {
+    if (highlighted) cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [highlighted]);
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [showCancel, setShowCancel] = useState(false);
   const [showReceipts, setShowReceipts] = useState(false);
@@ -127,7 +131,7 @@ export default function FlightBookingCard({ booking, tripId, members = [], onCan
 
   return (
     <>
-      <div className={`bg-white border rounded-2xl overflow-hidden transition ${highlighted ? 'border-primary-3 ring-2 ring-primary-3 ring-offset-1' : 'border-secondary-2'}`}>
+      <div ref={cardRef} className={`bg-white border rounded-2xl overflow-hidden transition ${highlighted ? 'border-primary-3 ring-2 ring-primary-3 ring-offset-1' : 'border-secondary-2'}`}>
 
         {/* Cabecera clicable */}
         <button
