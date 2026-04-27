@@ -3,17 +3,17 @@ import { getFlightDestinations } from '../../../../../../services/flightService'
 import { resolveToEnglish } from '../../../../../../services/geocodingService';
 import { IcPlaneFly } from './flightIcons';
 
-export default function AirportInput({ label, displayValue, onSelect, placeholder }) {
+export default function AirportInput({ label, displayValue, onSelect, placeholder, onlyAirports = false, fixedDropdown = false }) {
   const [query, setQuery] = useState(displayValue);
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [dropPos, setDropPos] = useState(null);
   const timerRef = useRef(null);
   const wrapRef = useRef(null);
 
   useEffect(() => { setQuery(displayValue); }, [displayValue]);
 
-  // Cierra el dropdown al hacer clic fuera
   useEffect(() => {
     const handler = (e) => {
       if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
@@ -21,6 +21,40 @@ export default function AirportInput({ label, displayValue, onSelect, placeholde
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  // Mientras el dropdown está abierto, actualiza su posición cada frame para seguir al input
+  useEffect(() => {
+    if (!fixedDropdown || !open) return;
+    let rafId;
+    let lastTop, lastLeft, lastWidth;
+    const tick = () => {
+      if (wrapRef.current) {
+        const rect = wrapRef.current.getBoundingClientRect();
+        // Cierra si el input queda oculto tras la cabecera fija o fuera del viewport
+        if (rect.top < 72 || rect.bottom > window.innerHeight) {
+          setOpen(false);
+          return;
+        }
+        const top = Math.round(rect.bottom + 4);
+        const left = Math.round(rect.left);
+        const width = Math.round(rect.width);
+        if (top !== lastTop || left !== lastLeft || width !== lastWidth) {
+          lastTop = top; lastLeft = left; lastWidth = width;
+          setDropPos({ top, left, width });
+        }
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [fixedDropdown, open]);
+
+  const updateDropPos = () => {
+    if (fixedDropdown && wrapRef.current) {
+      const rect = wrapRef.current.getBoundingClientRect();
+      setDropPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+    }
+  };
 
   const handleChange = (e) => {
     const val = e.target.value;
@@ -35,15 +69,14 @@ export default function AirportInput({ label, displayValue, onSelect, placeholde
         const lc = (s) => (s ?? '').toLowerCase();
         const originalCity = val.trim().charAt(0).toUpperCase() + val.trim().slice(1);
         const res = await getFlightDestinations(val);
-        let all = (res?.data ?? []).filter((i) => i.type === 'CITY' || i.type === 'AIRPORT');
+        let all = (res?.data ?? []).filter((i) => onlyAirports ? i.type === 'AIRPORT' : (i.type === 'CITY' || i.type === 'AIRPORT'));
 
-        // Si no hay resultados en el idioma original, intenta buscar en inglés
         if (all.length === 0) {
           const english = await resolveToEnglish(val);
           if (english && lc(english) !== lc(val)) {
             const res2 = await getFlightDestinations(english);
             all = (res2?.data ?? [])
-              .filter((i) => i.type === 'CITY' || i.type === 'AIRPORT')
+              .filter((i) => onlyAirports ? i.type === 'AIRPORT' : (i.type === 'CITY' || i.type === 'AIRPORT'))
               .map((i) => ({ ...i, cityName: originalCity }));
           }
         } else {
@@ -53,12 +86,11 @@ export default function AirportInput({ label, displayValue, onSelect, placeholde
           });
         }
 
-        // Ciudades primero, luego aeropuertos individuales
-        const sorted = [
-          ...all.filter((i) => i.type === 'CITY'),
-          ...all.filter((i) => i.type === 'AIRPORT'),
-        ];
+        const sorted = onlyAirports
+          ? all
+          : [...all.filter((i) => i.type === 'CITY'), ...all.filter((i) => i.type === 'AIRPORT')];
         setSuggestions(sorted);
+        updateDropPos();
         setOpen(sorted.length > 0);
       } catch {
         setSuggestions([]);
@@ -82,15 +114,15 @@ export default function AirportInput({ label, displayValue, onSelect, placeholde
 
   return (
     <div ref={wrapRef} className="flex-1 relative">
-      <label className="absolute -top-2 left-3 bg-white px-1 body-3 text-neutral-4 z-10">{label}</label>
+      {label && <label className="absolute -top-2 left-3 bg-white px-1 body-3 text-neutral-4 z-10">{label}</label>}
       <div className="flex items-center gap-2 border border-neutral-2 rounded-xl px-3 py-3 focus-within:border-secondary-3 transition-colors">
         <IcPlaneFly size={15} color="#A19694" />
         <input
           value={query}
           onChange={handleChange}
-          onFocus={() => suggestions.length > 0 && setOpen(true)}
+          onFocus={() => { if (suggestions.length > 0) { updateDropPos(); setOpen(true); } }}
           placeholder={placeholder}
-          className="flex-1 body-2 text-neutral-7 placeholder:text-neutral-3 bg-transparent border-none outline-none"
+          className="flex-1 min-w-0 body-2 text-neutral-7 placeholder:text-neutral-3 bg-transparent border-none outline-none"
         />
         {loading && (
           <div className="w-4 h-4 border-2 border-secondary-3 border-t-transparent rounded-full animate-spin shrink-0" />
@@ -98,7 +130,10 @@ export default function AirportInput({ label, displayValue, onSelect, placeholde
       </div>
 
       {open && suggestions.length > 0 && (
-        <div className="absolute top-[calc(100%+4px)] left-0 right-0 z-50 bg-white border border-neutral-1 rounded-2xl shadow-xl overflow-hidden max-h-64 overflow-y-auto">
+        <div
+          style={fixedDropdown && dropPos ? { top: dropPos.top, left: dropPos.left, width: dropPos.width } : {}}
+          className={`${fixedDropdown ? 'fixed' : 'absolute top-[calc(100%+4px)] left-0 right-0'} z-200 bg-white border border-neutral-1 rounded-2xl shadow-xl overflow-hidden max-h-64 overflow-y-auto`}
+        >
           {suggestions.map((item) => (
             <button
               key={item.id}

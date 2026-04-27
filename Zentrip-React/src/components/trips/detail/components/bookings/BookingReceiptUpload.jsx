@@ -1,14 +1,19 @@
 import { useRef, useState } from 'react';
-import { X, Plus } from 'lucide-react';
-import { uploadImage, validateImageFile } from '../../../../../services/cloudinaryService';
+import { X, Plus, FileText } from 'lucide-react';
+import { uploadImage, uploadFile, validateImageFile, validateFile } from '../../../../../services/cloudinaryService';
 
 const MAX = 3;
+
+function isPdfUrl(url) {
+  return url?.toLowerCase().includes('.pdf') || url?.includes('/raw/upload/');
+}
 
 export default function BookingReceiptUpload({
   initialUrls = [],
   onUpdate,
   label = 'Capturas de la reserva',
   optional = true,
+  allowPdf = false,
 }) {
   const fileInputRef = useRef(null);
   const [urls, setUrls] = useState(initialUrls);
@@ -21,9 +26,10 @@ export default function BookingReceiptUpload({
 
   const handleFile = (f) => {
     if (!f) return;
-    const err = validateImageFile(f);
+    const err = allowPdf ? validateFile(f) : validateImageFile(f);
     if (err) { setError(err); return; }
-    setPending({ file: f, preview: URL.createObjectURL(f) });
+    const isPdf = allowPdf && (f.type === 'application/pdf' || f.name?.toLowerCase().endsWith('.pdf'));
+    setPending({ file: f, isPdf, preview: isPdf ? null : URL.createObjectURL(f), name: f.name });
     setError(null);
   };
 
@@ -32,14 +38,14 @@ export default function BookingReceiptUpload({
     setUploading(true);
     setError(null);
     try {
-      const url = await uploadImage(pending.file);
+      const url = allowPdf ? await uploadFile(pending.file) : await uploadImage(pending.file);
       const next = [...urls, url];
       setUrls(next);
       setPending(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
       onUpdate?.(next);
     } catch (err) {
-      setError(err?.message || 'No se pudo subir la imagen.');
+      setError(err?.message || 'No se pudo subir el archivo.');
     } finally {
       setUploading(false);
     }
@@ -67,12 +73,19 @@ export default function BookingReceiptUpload({
         <span className="body-3 text-neutral-3">{urls.length}/{MAX}</span>
       </div>
 
-      {/* Existing images */}
+      {/* Existing files */}
       {urls.length > 0 && (
         <div className="grid grid-cols-3 gap-2">
           {urls.map((url, i) => (
             <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-neutral-2 bg-neutral-1">
-              <img src={url} alt={`Captura ${i + 1}`} className="w-full h-full object-cover" />
+              {isPdfUrl(url) ? (
+                <a href={url} target="_blank" rel="noopener noreferrer" className="w-full h-full flex flex-col items-center justify-center gap-1 text-neutral-4 hover:text-secondary-4 transition">
+                  <FileText className="w-7 h-7" />
+                  <span className="text-[10px] font-semibold">PDF</span>
+                </a>
+              ) : (
+                <img src={url} alt={`Archivo ${i + 1}`} className="w-full h-full object-cover" />
+              )}
               <button
                 type="button"
                 onClick={() => handleRemove(i)}
@@ -88,7 +101,14 @@ export default function BookingReceiptUpload({
       {/* Pending preview */}
       {pending && (
         <div className="relative rounded-xl overflow-hidden border border-neutral-2 h-36">
-          <img src={pending.preview} alt="Vista previa" className="w-full h-full object-cover" />
+          {pending.isPdf ? (
+            <div className="w-full h-full bg-neutral-1 flex flex-col items-center justify-center gap-1.5 text-neutral-5">
+              <FileText className="w-8 h-8 text-secondary-3" />
+              <span className="body-3 text-center px-3 truncate max-w-full">{pending.name}</span>
+            </div>
+          ) : (
+            <img src={pending.preview} alt="Vista previa" className="w-full h-full object-cover" />
+          )}
           <div className="absolute inset-0 bg-neutral-7/30 flex items-center justify-center">
             <button
               type="button"
@@ -101,7 +121,7 @@ export default function BookingReceiptUpload({
                   <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Subiendo…
                 </span>
-              ) : 'Subir captura'}
+              ) : 'Subir archivo'}
             </button>
           </div>
           {!uploading && (
@@ -128,8 +148,8 @@ export default function BookingReceiptUpload({
         >
           <Plus className="w-4 h-4 text-neutral-3 pointer-events-none" />
           <span className="body-3 text-neutral-4 pointer-events-none">
-            <span className="text-secondary-3 font-medium">Añadir imagen</span>
-            <span className="text-neutral-3"> · JPG, PNG, WebP · máx. 5 MB</span>
+            <span className="text-secondary-3 font-medium">Añadir archivo</span>
+            <span className="text-neutral-3"> · {allowPdf ? 'JPG, PNG, PDF' : 'JPG, PNG, WebP'} · máx. 8 MB</span>
           </span>
         </div>
       )}
@@ -137,7 +157,7 @@ export default function BookingReceiptUpload({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept={allowPdf ? 'image/*,.pdf,application/pdf' : 'image/*'}
         className="hidden"
         onChange={(e) => handleFile(e.target.files[0])}
       />

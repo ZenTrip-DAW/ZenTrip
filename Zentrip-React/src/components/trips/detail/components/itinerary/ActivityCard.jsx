@@ -17,9 +17,10 @@ const TYPE_TO_SUBTAB = {
 export default function ActivityCard({ activity, members = [], onDelete, onView, onEdit, onGoToReservas }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const isManual = activity.source === 'manual';
+  const isGenericPlan = isManual && activity.type === 'actividad';
   const typeCfg = TYPE_CONFIG[activity.type] || TYPE_CONFIG.actividad;
-  const badgeLabel = isManual ? 'Plan' : typeCfg.label;
-  const badgeClass = isManual ? 'bg-primary-1 text-primary-4' : (typeCfg.badgeClass || 'bg-primary-1 text-primary-3');
+  const badgeLabel = isGenericPlan ? 'Plan' : typeCfg.label;
+  const badgeClass = isGenericPlan ? 'bg-primary-1 text-primary-4' : (typeCfg.badgeClass || 'bg-primary-1 text-primary-3');
   const statusCfg = activity.status && !isManual ? STATUS_CONFIG[activity.status] : null;
   const isDeletable = isManual;
   const subtab = !isManual ? TYPE_TO_SUBTAB[activity.type] : null;
@@ -36,7 +37,7 @@ export default function ActivityCard({ activity, members = [], onDelete, onView,
 
       {/* Línea de tiempo */}
       <div className="flex flex-col items-center shrink-0">
-        <div className={`w-3 h-3 rounded-full shrink-0 mt-1.5 ${activity.source === 'manual' ? 'bg-primary-3' : 'bg-auxiliary-green-5'}`} />
+        <div className={`w-3 h-3 rounded-full shrink-0 mt-1.5 ${isGenericPlan ? 'bg-primary-3' : 'bg-auxiliary-green-5'}`} />
         <div className="w-px flex-1 bg-neutral-1 mt-1" />
       </div>
 
