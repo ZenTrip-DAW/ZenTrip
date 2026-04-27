@@ -139,10 +139,10 @@ export default function RouteBookings({ tripId, onOpenRoute }) {
   const handleDeleted = (id) => setBookings((prev) => prev.filter((b) => b.id !== id));
 
   return (
-    <ImageLoadGate src="/img/background/bookings/attraction.jpg" alt="Rutas guardadas">
+    <ImageLoadGate src="/img/background/bookings/routes.jpg" alt="Rutas guardadas">
       <div className="rounded-2xl overflow-hidden">
         <BookingBanner
-          src="/img/background/bookings/attraction.jpg"
+          src="/img/background/bookings/routes.jpg"
           objectPosition="center 60%"
           alt="Rutas guardadas"
           title="Tus rutas guardadas"
