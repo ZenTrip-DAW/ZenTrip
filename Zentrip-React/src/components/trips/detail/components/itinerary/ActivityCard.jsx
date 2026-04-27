@@ -69,8 +69,9 @@ export default function ActivityCard({ activity, members = [], onDelete, onView,
           </div>
         ) : (
           <>
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center flex-wrap gap-1.5 justify-end">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+              <h4 className="body-bold text-secondary-5 wrap-break-word">{activity.name}</h4>
+              <div className="flex items-center flex-wrap gap-1.5 sm:shrink-0">
                 <span className="body-3 px-2 py-0.5 rounded-full font-semibold bg-primary-1 text-primary-3 whitespace-nowrap">
                   {typeCfg.label}
                 </span>
@@ -100,7 +101,6 @@ export default function ActivityCard({ activity, members = [], onDelete, onView,
                   </>
                 )}
               </div>
-              <h4 className="body-bold text-secondary-5 wrap-break-word">{activity.name}</h4>
             </div>
             {activity.notes && (
               <p className="body-3 text-neutral-4 mt-1 wrap-break-word">{activity.notes}</p>
