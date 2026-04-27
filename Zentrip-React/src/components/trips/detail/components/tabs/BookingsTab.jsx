@@ -29,7 +29,7 @@ export default function ReservasTab({ trip, members, tripId, initialSubTab = 'ho
       return <CarBookings tripId={tripId} members={members} onGoBook={onGoBook} />;
     }
     if (activeSubTab === 'vuelos') {
-      return <FlightSearch members={members} tripId={tripId} onGoBook={setActiveSubTab} />;
+      return <FlightSearch members={members} tripId={tripId} onGoBook={onGoBook} />;
     }
     if (activeSubTab === 'restaurantes') {
       return <RestaurantBookings tripId={tripId} members={members} onGoBook={onGoBook} />;
