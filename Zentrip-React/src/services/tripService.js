@@ -1,4 +1,4 @@
-import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
+import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, limit, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 import { db, auth } from '../config/firebaseConfig';
 import { apiClient } from './apiClient';
 import { deleteCloudinaryPhoto } from './cloudinaryService';
@@ -98,13 +98,23 @@ export async function saveTripDraft(uid, form, existingDraftId = null) {
 }
 
 export async function deleteTrip(tripId) {
-  const subcollections = ['members', 'activities', 'bookings', 'galleryFolders', 'galleryPhotos'];
+  const subcollections = ['members', 'activities', 'bookings', 'galleryFolders', 'galleryPhotos', 'luggage'];
   await Promise.all(
     subcollections.map(async (sub) => {
       const snap = await getDocs(collection(db, 'trips', tripId, sub));
       await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
     })
   );
+
+  const groupSnap = await getDocs(collection(db, 'trips', tripId, 'luggageGroup'));
+  await Promise.all(
+    groupSnap.docs.map(async (doc_) => {
+      const selectionsSnap = await getDocs(collection(db, 'trips', tripId, 'luggageGroup', doc_.id, 'selections'));
+      await Promise.all(selectionsSnap.docs.map((d) => deleteDoc(d.ref)));
+      await deleteDoc(doc_.ref);
+    })
+  );
+
   await deleteDoc(doc(db, 'trips', tripId));
 }
 
@@ -643,4 +653,98 @@ export async function deleteGalleryPhoto(tripId, photoId, publicId) {
   if (publicId) {
     await deleteCloudinaryPhoto(publicId).catch(() => {});
   }
+}
+
+export async function getUserLuggage(tripId, uid) {
+  const snap = await getDocs(
+    query(collection(db, 'trips', tripId, 'luggage'), where('userId', '==', uid))
+  );
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function getGroupLuggage(tripId) {
+  const snap = await getDocs(collection(db, 'trips', tripId, 'luggageGroup'));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function addUserLuggageItem(tripId, uid, item) {
+  const docRef = await addDoc(collection(db, 'trips', tripId, 'luggage'), {
+    userId: uid,
+    item,
+    packed: false,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function updateUserLuggageItemPacked(tripId, itemId, packed) {
+  if (!tripId || !itemId) throw new Error('Trip id and item id are required.');
+  await updateDoc(doc(db, 'trips', tripId, 'luggage', itemId), {
+    packed: Boolean(packed),
+  });
+}
+
+export async function deleteUserLuggageItem(tripId, itemId) {
+  if (!tripId || !itemId) throw new Error('Trip id and item id are required.');
+  await deleteDoc(doc(db, 'trips', tripId, 'luggage', itemId));
+}
+
+export async function addGroupLuggageItem(tripId, uid, userName, item) {
+  const docRef = await addDoc(collection(db, 'trips', tripId, 'luggageGroup'), {
+    item,
+    createdAt: serverTimestamp(),
+  });
+
+  await addDoc(collection(db, 'trips', tripId, 'luggageGroup', docRef.id, 'selections'), {
+    userId: uid,
+    userName,
+    selectedAt: serverTimestamp(),
+  });
+
+  return docRef.id;
+}
+
+export async function addUserToGroupLuggageItem(tripId, itemId, uid, userName) {
+  await addDoc(collection(db, 'trips', tripId, 'luggageGroup', itemId, 'selections'), {
+    userId: uid,
+    userName,
+    selectedAt: serverTimestamp(),
+  });
+}
+
+export async function removeUserFromGroupLuggageItem(tripId, itemId, uid) {
+  const snap = await getDocs(
+    query(collection(db, 'trips', tripId, 'luggageGroup', itemId, 'selections'), where('userId', '==', uid))
+  );
+
+  for (const doc_ of snap.docs) {
+    await deleteDoc(doc_.ref);
+  }
+}
+
+export async function removeOneGroupLuggageSelection(tripId, itemId, uid) {
+  const userSnap = await getDocs(
+    query(
+      collection(db, 'trips', tripId, 'luggageGroup', itemId, 'selections'),
+      where('userId', '==', uid),
+      limit(1)
+    )
+  );
+
+  const docToDelete = userSnap.docs[0];
+  if (docToDelete) {
+    await deleteDoc(docToDelete.ref);
+    return true;
+  }
+  return false;
+}
+
+export async function deleteGroupLuggageItem(tripId, itemId) {
+  const selectionsSnap = await getDocs(collection(db, 'trips', tripId, 'luggageGroup', itemId, 'selections'));
+
+  for (const doc_ of selectionsSnap.docs) {
+    await deleteDoc(doc_.ref);
+  }
+
+  await deleteDoc(doc(db, 'trips', tripId, 'luggageGroup', itemId));
 }

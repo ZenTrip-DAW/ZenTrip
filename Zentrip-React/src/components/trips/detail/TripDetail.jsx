@@ -13,6 +13,7 @@ import ItineraryTab from './components/tabs/ItineraryTab';
 import BookingsTab from './components/tabs/BookingsTab';
 import InvitationsTab from './components/tabs/InvitationsTab';
 import GalleryTab from './components/tabs/GalleryTab';
+import LuggageTab from './components/tabs/LuggageTab';
 import PlaceholderTab from './components/tabs/PlaceholderTab';
 
 
@@ -44,7 +45,6 @@ function ErrorState({ message, onBack }) {
 const TAB_PLACEHOLDERS = {
   votaciones:  <PlaceholderTab label="Votaciones"  emoji="🗳️" />,
   presupuesto: <PlaceholderTab label="Presupuesto" emoji="💰" />,
-  equipaje:    <PlaceholderTab label="Equipaje"    emoji="🧳" />,
   chat:        <PlaceholderTab label="Chat"        emoji="💬" />,
 };
 
@@ -208,6 +208,9 @@ export default function TripDetail() {
     }
     if (activeTab === 'galeria') {
       return <GalleryTab tripId={tripId} />;
+    }
+    if (activeTab === 'equipaje') {
+      return <LuggageTab tripId={tripId} members={members} />;
     }
     return TAB_PLACEHOLDERS[activeTab] ?? null;
   };
