@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, MapPin, Clock, FileText, Tag, UserCircle, AlertCircle, AlertTriangle, Pencil, Image, CalendarDays, Plane, Hotel, Utensils, Car, Train } from 'lucide-react';
+import { getPdfSignedUrl } from '../../../../../services/cloudinaryService';
 import AirportInput from '../bookings/flights/AirportInput';
 import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
 import Button from '../../../../ui/Button';
@@ -49,7 +50,13 @@ function getMemberNames(selectedMembers, members) {
 }
 
 function isPdfUrl(url) {
-  return url?.toLowerCase().includes('.pdf') || url?.includes('/raw/upload/');
+  return url?.startsWith('pdf::') ||
+    url?.toLowerCase().includes('.pdf') ||
+    url?.includes('/raw/upload/');
+}
+
+function getPrivatePdfId(url) {
+  return url?.startsWith('pdf::') ? url.slice(5) : null;
 }
 
 // mode: 'create' | 'view' | 'edit'
@@ -89,6 +96,20 @@ export default function AddActivityModal({
   const [submitted, setSubmitted] = useState(false);
   const [showOverlapWarn, setShowOverlapWarn] = useState(false);
   const [viewingUrl, setViewingUrl] = useState(null);
+  const [pdfLoading, setPdfLoading] = useState(null);
+
+  const openPdf = async (entry) => {
+    const privateId = getPrivatePdfId(entry);
+    setPdfLoading(entry);
+    try {
+      const url = privateId ? await getPdfSignedUrl(privateId) : entry;
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch {
+      // silently ignore — the user will see nothing happened
+    } finally {
+      setPdfLoading(null);
+    }
+  };
   const acRef = useRef(null);
   const addressRef = useRef(null);
 
@@ -475,16 +496,18 @@ export default function AddActivityModal({
                     {receiptUrls.map((url, i) => {
                       const isPdf = isPdfUrl(url);
                       return isPdf ? (
-                        <a
+                        <button
                           key={i}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="aspect-square rounded-lg border border-neutral-2 bg-neutral-1 flex flex-col items-center justify-center gap-1 text-neutral-4 hover:text-secondary-4 hover:border-secondary-3 transition"
+                          type="button"
+                          onClick={() => openPdf(url)}
+                          disabled={pdfLoading === url}
+                          className="aspect-square rounded-lg border border-neutral-2 bg-neutral-1 flex flex-col items-center justify-center gap-1 text-neutral-4 hover:text-secondary-4 hover:border-secondary-3 transition disabled:opacity-50"
                         >
-                          <FileText className="w-7 h-7" />
+                          {pdfLoading === url
+                            ? <span className="w-5 h-5 border-2 border-neutral-3 border-t-secondary-3 rounded-full animate-spin" />
+                            : <FileText className="w-7 h-7" />}
                           <span className="text-[10px] font-semibold">PDF</span>
-                        </a>
+                        </button>
                       ) : (
                         <button
                           key={i}

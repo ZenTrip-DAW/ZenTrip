@@ -115,7 +115,7 @@ export default function PassengerSelector({ members = [], value = 'all', onChang
       {mode === 'allExcept' && (
         <div className="flex flex-col gap-1.5">
           <p className="body-3 text-neutral-4 mb-1">
-            Marca a quien <span className="font-semibold text-neutral-6">no</span> va en este vuelo:
+            Marca a quien <span className="font-semibold text-neutral-6">no</span> va:
           </p>
           {accepted.length === 0 && (
             <p className="body-3 text-neutral-3 italic">No hay miembros aceptados aún.</p>
