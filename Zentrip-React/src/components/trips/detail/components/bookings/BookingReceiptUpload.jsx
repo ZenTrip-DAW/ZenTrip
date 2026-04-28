@@ -1,19 +1,14 @@
 import { useRef, useState } from 'react';
-import { X, Plus, FileText } from 'lucide-react';
-import { uploadImage, uploadFile, validateImageFile, validateFile } from '../../../../../services/cloudinaryService';
+import { X, Plus } from 'lucide-react';
+import { uploadImage, validateImageFile } from '../../../../../services/cloudinaryService';
 
 const MAX = 3;
-
-function isPdfUrl(url) {
-  return url?.toLowerCase().includes('.pdf') || url?.includes('/raw/upload/');
-}
 
 export default function BookingReceiptUpload({
   initialUrls = [],
   onUpdate,
   label = 'Capturas de la reserva',
   optional = true,
-  allowPdf = false, // forzamos solo imágenes
 }) {
   const fileInputRef = useRef(null);
   const [urls, setUrls] = useState(initialUrls);

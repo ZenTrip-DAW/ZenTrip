@@ -48,16 +48,6 @@ function getMemberNames(selectedMembers, members) {
   return [];
 }
 
-function isPdfUrl(url) {
-  return url?.startsWith('pdf::') ||
-    url?.toLowerCase().includes('.pdf') ||
-    url?.includes('/raw/upload/');
-}
-
-function getPrivatePdfId(url) {
-  return url?.startsWith('pdf::') ? url.slice(5) : null;
-}
-
 // mode: 'create' | 'view' | 'edit'
 export default function AddActivityModal({
   date, creator, existingActivities = [], members = [],
@@ -102,19 +92,7 @@ export default function AddActivityModal({
   const [submitted, setSubmitted] = useState(false);
   const [showOverlapWarn, setShowOverlapWarn] = useState(false);
   const [viewingUrl, setViewingUrl] = useState(null);
-  const [pdfLoading, setPdfLoading] = useState(null);
 
- 
-  const openPdf = async (entry) => {
-    setPdfLoading(entry);
-    try {
-      window.open(entry, '_blank', 'noopener,noreferrer');
-    } catch {
-      // silently ignore — the user will see nothing happened
-    } finally {
-      setPdfLoading(null);
-    }
-  };
   const acRef = useRef(null);
   const addressRef = useRef(null);
 
@@ -511,32 +489,16 @@ export default function AddActivityModal({
                     Comprobantes
                   </label>
                   <div className="grid grid-cols-3 gap-2">
-                    {receiptUrls.map((url, i) => {
-                      const isPdf = isPdfUrl(url);
-                      return isPdf ? (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => openPdf(url)}
-                          disabled={pdfLoading === url}
-                          className="aspect-square rounded-lg border border-neutral-2 bg-neutral-1 flex flex-col items-center justify-center gap-1 text-neutral-4 hover:text-secondary-4 hover:border-secondary-3 transition disabled:opacity-50"
-                        >
-                          {pdfLoading === url
-                            ? <span className="w-5 h-5 border-2 border-neutral-3 border-t-secondary-3 rounded-full animate-spin" />
-                            : <FileText className="w-7 h-7" />}
-                          <span className="text-[10px] font-semibold">PDF</span>
-                        </button>
-                      ) : (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => setViewingUrl(url)}
-                          className="aspect-square rounded-lg overflow-hidden border border-neutral-2 bg-neutral-1 block hover:opacity-90 transition"
-                        >
-                          <img src={url} alt={`Comprobante ${i + 1}`} className="w-full h-full object-cover" />
-                        </button>
-                      );
-                    })}
+                    {receiptUrls.map((url, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setViewingUrl(url)}
+                        className="aspect-square rounded-lg overflow-hidden border border-neutral-2 bg-neutral-1 block hover:opacity-90 transition"
+                      >
+                        <img src={url} alt={`Comprobante ${i + 1}`} className="w-full h-full object-cover" />
+                      </button>
+                    ))}
                   </div>
                 </div>
               )
@@ -545,7 +507,6 @@ export default function AddActivityModal({
                 initialUrls={receiptUrls}
                 onUpdate={(urls) => setReceiptUrls(urls)}
                 label="Documentos y comprobantes"
-                allowPdf
               />
             )}
 
