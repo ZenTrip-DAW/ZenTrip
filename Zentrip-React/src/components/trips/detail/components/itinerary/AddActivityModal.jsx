@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, MapPin, Clock, FileText, Tag, UserCircle, AlertCircle, AlertTriangle, Pencil, Image, CalendarDays, Plane, Hotel, Utensils, Car, Train } from 'lucide-react';
-import { getPdfSignedUrl } from '../../../../../services/cloudinaryService';
 import AirportInput from '../bookings/flights/AirportInput';
 import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
 import Button from '../../../../ui/Button';
@@ -83,12 +82,19 @@ export default function AddActivityModal({
   const [address, setAddress] = useState(
     initialActivity?.type === 'vuelo' ? '' : (initialActivity?.address ?? '')
   );
+  // Guardar objeto con cityName y code para vuelo
   const [origin, setOrigin] = useState(
-    initialActivity?.type === 'vuelo' ? parseFlightAddress(initialActivity?.address).origin : ''
+    initialActivity?.type === 'vuelo'
+      ? parseFlightAddress(initialActivity?.address).origin
+      : ''
   );
+  const [originObj, setOriginObj] = useState(null);
   const [destination, setDestination] = useState(
-    initialActivity?.type === 'vuelo' ? parseFlightAddress(initialActivity?.address).destination : ''
+    initialActivity?.type === 'vuelo'
+      ? parseFlightAddress(initialActivity?.address).destination
+      : ''
   );
+  const [destinationObj, setDestinationObj] = useState(null);
   const [notes, setNotes] = useState(initialActivity?.notes ?? '');
   const [selectedMembers, setSelectedMembers] = useState(initialActivity?.members ?? 'all');
   const [receiptUrls, setReceiptUrls] = useState(initialActivity?.receiptUrls ?? []);
@@ -98,12 +104,11 @@ export default function AddActivityModal({
   const [viewingUrl, setViewingUrl] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(null);
 
+ 
   const openPdf = async (entry) => {
-    const privateId = getPrivatePdfId(entry);
     setPdfLoading(entry);
     try {
-      const url = privateId ? await getPdfSignedUrl(privateId) : entry;
-      window.open(url, '_blank', 'noopener,noreferrer');
+      window.open(entry, '_blank', 'noopener,noreferrer');
     } catch {
       // silently ignore — the user will see nothing happened
     } finally {
@@ -150,8 +155,15 @@ export default function AddActivityModal({
     else if (place?.name) setAddress(place.name);
   };
 
+  // Formato consistente: Ciudad (COD) → Ciudad (COD)
+  const formatAirport = (obj, fallback) => {
+    if (!obj) return fallback?.trim() || '';
+    const city = obj.cityName || obj.label || obj.name || obj.code || fallback || '';
+    const code = obj.code || '';
+    return city && code ? `${city} (${code})` : city || code || fallback || '';
+  };
   const finalAddress = isVuelo
-    ? [origin.trim(), destination.trim()].filter(Boolean).join(' → ')
+    ? [formatAirport(originObj, origin), formatAirport(destinationObj, destination)].filter(Boolean).join(' → ')
     : address.trim();
 
   const errors = {
@@ -415,7 +427,10 @@ export default function AddActivityModal({
                         placeholder="Ej. Madrid, Barajas…"
                         onlyAirports
                         fixedDropdown
-                        onSelect={(a) => setOrigin(a.label || a.cityName || '')}
+                        onSelect={(a) => {
+                          setOrigin(a.label || a.cityName || '');
+                          setOriginObj(a);
+                        }}
                       />
                     </div>
                     <div className="flex flex-col gap-1">
@@ -425,7 +440,10 @@ export default function AddActivityModal({
                         placeholder="Ej. Valencia, Manises…"
                         onlyAirports
                         fixedDropdown
-                        onSelect={(a) => setDestination(a.label || a.cityName || '')}
+                        onSelect={(a) => {
+                          setDestination(a.label || a.cityName || '');
+                          setDestinationObj(a);
+                        }}
                       />
                     </div>
                   </div>
