@@ -19,63 +19,6 @@ export function validateImageFile(file) {
   return null;
 }
 
-export function validateFile(file) {
-  if (!file) return 'No se ha seleccionado ningún archivo.';
-
-  const isImage = file.type?.startsWith('image/');
-  const isPdf = file.type === 'application/pdf' || file.name?.toLowerCase().endsWith('.pdf');
-
-  if (!isImage && !isPdf) {
-    return 'El archivo debe ser una imagen o PDF.';
-  }
-
-  if (file.size > MAX_UPLOAD_MB * 1024 * 1024) {
-    return `El archivo no puede superar ${MAX_UPLOAD_MB} MB.`;
-  }
-
-  return null;
-}
-
-export async function uploadFile(file) {
-  if (!CLOUDINARY_CLOUD || !CLOUDINARY_PRESET) {
-    throw new Error('Cloudinary config is missing. Check VITE_CLOUDINARY_CLOUD and VITE_CLOUDINARY_PRESET.');
-  }
-
-  const isPdf = file.type === 'application/pdf' || file.name?.toLowerCase().endsWith('.pdf');
-  const endpoint = isPdf ? 'raw' : 'image';
-
-  const data = new FormData();
-  data.append('file', file);
-  data.append('upload_preset', CLOUDINARY_PRESET);
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
-
-  let res;
-  try {
-    res = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/${endpoint}/upload`,
-      { method: 'POST', body: data, signal: controller.signal }
-    );
-  } catch (err) {
-    if (err?.name === 'AbortError') throw new Error('La subida tardó demasiado. Revisa tu conexión e inténtalo de nuevo.');
-    throw new Error('No se pudo conectar con el servicio de archivos. Inténtalo de nuevo.');
-  } finally {
-    clearTimeout(timeoutId);
-  }
-
-  if (!res.ok) {
-    let msg = '';
-    try { msg = (await res.json())?.error?.message || ''; } catch {}
-    throw new Error(msg || 'Error al subir el archivo.');
-  }
-
-  const json = await res.json();
-  if (!json?.secure_url) throw new Error('La respuesta del servidor no es válida.');
-
-  return json.secure_url;
-}
-
 export async function uploadImage(file) {
   const result = await uploadImageWithOptions(file);
   return result.secureUrl;

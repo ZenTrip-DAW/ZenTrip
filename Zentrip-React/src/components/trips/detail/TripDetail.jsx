@@ -225,7 +225,7 @@ export default function TripDetail() {
           creator={profile ? { uid: user.uid, name: profile.displayName || profile.username || user.email } : null}
           existingActivities={addActivityModal.date ? (activitiesByDate[addActivityModal.date] || []) : []}
           members={members}
-          onClose={() => setAddActivityModal({ open: false, date: null, mode: 'create', activity: null })}
+onClose={() => setAddActivityModal({ open: false, date: null, mode: 'create', activity: null })}
           onSave={handleSaveActivity}
           onUpdate={handleUpdateActivity}
         />

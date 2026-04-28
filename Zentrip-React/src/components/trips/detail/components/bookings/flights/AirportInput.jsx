@@ -109,7 +109,7 @@ export default function AirportInput({ label, displayValue, onSelect, placeholde
     setQuery(lbl);
     setSuggestions([]);
     setOpen(false);
-    onSelect({ id: item.id, label: lbl, code: item.code, cityName: displayName, type: item.type });
+    onSelect({ id: item.id, label: lbl, code: item.code, cityName: displayName, name: item.name, type: item.type });
   };
 
   return (
