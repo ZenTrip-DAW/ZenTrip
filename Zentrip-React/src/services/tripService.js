@@ -692,6 +692,7 @@ export async function deleteUserLuggageItem(tripId, itemId) {
 export async function addGroupLuggageItem(tripId, uid, userName, item) {
   const docRef = await addDoc(collection(db, 'trips', tripId, 'luggageGroup'), {
     item,
+    createdBy: uid,
     createdAt: serverTimestamp(),
   });
 

@@ -25,6 +25,10 @@ export default function LuggageTab({ tripId }) {
   const [message, setMessage] = useState('');
   const [personalItemDraft, setPersonalItemDraft] = useState('');
   const [groupItemDraft, setGroupItemDraft] = useState('');
+  const [activeModal, setActiveModal] = useState(null);
+  const [modalSelection, setModalSelection] = useState(new Set());
+  const [dismissedPersonalRecents, setDismissedPersonalRecents] = useState(new Set());
+  const [pendingRecentRemoval, setPendingRecentRemoval] = useState(null);
 
   const userName = profile?.displayName || profile?.firstName || user?.email || 'Usuario';
 
@@ -35,6 +39,18 @@ export default function LuggageTab({ tripId }) {
     'Medicinas',
     'Ropa interior',
     'Neceser',
+    'Gafas de sol',
+    'Pijama',
+    'Desodorante',
+    'Gel/Champú',
+    'Tapones para oídos',
+    'Bañador',
+    'Pañuelo',
+    'Chubasquero',
+    'Cargador portátil',
+    'Llaves',
+    'Tarjeta sanitaria',
+    'Toalla pequeña',
   ];
 
   const groupSuggestions = [
@@ -44,7 +60,43 @@ export default function LuggageTab({ tripId }) {
     'Protector solar',
     'Toalla de playa',
     'Altavoz',
+    'Regleta',
+    'Cargador múltiple',
+    'Paraguas',
+    'Cartas/juego',
+    'Nevera portátil',
+    'Manta',
   ];
+
+  const getItemTime = (value) => {
+    if (!value) return 0;
+    if (value instanceof Date) return value.getTime();
+    if (typeof value === 'object' && typeof value.seconds === 'number') return value.seconds * 1000;
+    return 0;
+  };
+
+  const getRecentLabels = (items, max = 40) => {
+    const ranked = items
+      .map((item, index) => ({
+        label: item.item,
+        key: item.item?.trim().toLowerCase(),
+        time: getItemTime(item.createdAt),
+        index,
+      }))
+      .filter((entry) => entry.key);
+
+    ranked.sort((a, b) => (b.time - a.time) || (b.index - a.index));
+
+    const seen = new Set();
+    const result = [];
+    for (const entry of ranked) {
+      if (seen.has(entry.key)) continue;
+      seen.add(entry.key);
+      result.push(entry.label);
+      if (result.length >= max) break;
+    }
+    return result;
+  };
 
   useEffect(() => {
     if (!tripId || !user?.uid) return;
@@ -159,7 +211,7 @@ export default function LuggageTab({ tripId }) {
       const id = await addGroupLuggageItem(tripId, user.uid, userName, trimmed);
       setGroupItems((prev) => [
         ...prev,
-        { id, item: trimmed, createdAt: new Date(), selections: [{ userId: user.uid, userName }] },
+        { id, item: trimmed, createdAt: new Date(), createdBy: user.uid, selections: [{ userId: user.uid, userName }] },
       ]);
       setGroupItemDraft('');
       setMessage('Item añadido a la maleta grupal.');
@@ -180,7 +232,7 @@ export default function LuggageTab({ tripId }) {
       const id = await addGroupLuggageItem(tripId, user.uid, userName, item);
       setGroupItems((prev) => [
         ...prev,
-        { id, item, createdAt: new Date(), selections: [{ userId: user.uid, userName }] },
+        { id, item, createdAt: new Date(), createdBy: user.uid, selections: [{ userId: user.uid, userName }] },
       ]);
       setMessage('Item añadido a la maleta grupal.');
       setTimeout(() => setMessage(''), 3000);
@@ -191,14 +243,6 @@ export default function LuggageTab({ tripId }) {
       setSubmitting(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="bg-white rounded-2xl border border-neutral-1 p-6 flex justify-center items-center py-12">
-        <div className="w-8 h-8 border-2 border-neutral-2 border-t-secondary-4 rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   const personalMap = new Map();
   for (const item of personalItems) {
@@ -225,6 +269,48 @@ export default function LuggageTab({ tripId }) {
     }
   }
   const groupedGroupItems = Array.from(groupMap.values());
+
+  const personalRecentItems = getRecentLabels(personalItems);
+  const groupRecentSourceItems = groupItems.filter((item) => (item.selections || []).some((s) => s.userId === user?.uid));
+  const groupRecentMap = new Map();
+  for (const item of groupRecentSourceItems) {
+    const key = item.item?.trim().toLowerCase();
+    if (!key) continue;
+    const time = getItemTime(item.createdAt);
+    if (!groupRecentMap.has(key)) {
+      groupRecentMap.set(key, { key, label: item.item, time, creators: new Set(), creatorIds: new Set() });
+    }
+    const entry = groupRecentMap.get(key);
+    entry.time = Math.max(entry.time, time);
+    if (item.createdBy) entry.creators.add(item.createdBy);
+    if (item.createdBy === user?.uid) entry.creatorIds.add(item.id);
+  }
+  const groupRecentEntries = Array.from(groupRecentMap.values()).sort((a, b) => (b.time - a.time));
+  const groupRecentItems = groupRecentEntries.map((entry) => entry.label);
+  const groupRecentCreatorsByLabel = Object.fromEntries(
+    groupRecentEntries.map((entry) => [entry.label, entry.creators])
+  );
+  const groupRecentIdsByLabel = Object.fromEntries(
+    groupRecentEntries.map((entry) => [entry.label, Array.from(entry.creatorIds)])
+  );
+
+  const personalSuggestionsSet = new Set(
+    personalSuggestions.map((item) => item.trim().toLowerCase())
+  );
+
+  const personalRecents = personalRecentItems.filter(
+    (item) => !dismissedPersonalRecents.has(item)
+  );
+
+  const groupRecents = groupRecentItems;
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl border border-neutral-1 p-6 flex justify-center items-center py-12">
+        <div className="w-8 h-8 border-2 border-neutral-2 border-t-secondary-4 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const handleToggleGroupItemGroup = async (group) => {
     if (submitting) return;
@@ -314,12 +400,136 @@ export default function LuggageTab({ tripId }) {
     }
   };
 
+  const toggleModalItem = (item) => {
+    setModalSelection((prev) => {
+      const next = new Set(prev);
+      if (next.has(item)) next.delete(item);
+      else next.add(item);
+      return next;
+    });
+  };
+
+  const closeModal = () => {
+    setActiveModal(null);
+    setModalSelection(new Set());
+  };
+
+  const handleRemovePersonalRecent = (item) => {
+    if (personalSuggestionsSet.has(item.trim().toLowerCase())) return;
+    setPendingRecentRemoval({ item, scope: 'personal' });
+  };
+
+  const handleRemoveGroupRecent = (item) => {
+    setPendingRecentRemoval({ item, scope: 'group' });
+  };
+
+  const confirmRemovePersonalRecent = async () => {
+    if (!pendingRecentRemoval) return;
+    const { item, scope } = pendingRecentRemoval;
+    if (scope === 'personal') {
+      setDismissedPersonalRecents((prev) => {
+        const next = new Set(prev);
+        next.add(item);
+        return next;
+      });
+    }
+    if (scope === 'group') {
+      const idsToRemove = groupRecentIdsByLabel[item] || [];
+      if (idsToRemove.length > 0) {
+        try {
+          await Promise.all(idsToRemove.map((id) => deleteGroupLuggageItem(tripId, id)));
+          setGroupItems((prev) => prev.filter((entry) => !idsToRemove.includes(entry.id)));
+        } catch (err) {
+          console.error('Error eliminando item grupal:', err);
+          setMessage(`Error: ${err.message || 'Error al eliminar item.'}`);
+        }
+      }
+    }
+    setPendingRecentRemoval(null);
+  };
+
+  const applyModalSelection = (onSelect) => {
+    for (const item of modalSelection) {
+      onSelect(item);
+    }
+    closeModal();
+  };
+
+  const renderModal = (title, items, onSelect, accent = 'secondary', onRemove, canRemove) => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-neutral-7/60" onClick={closeModal} />
+      <div className="relative z-10 w-full max-w-md rounded-2xl border border-secondary-2 bg-white shadow-2xl p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="title-h3-desktop text-neutral-7">{title}</h3>
+          <button
+            type="button"
+            onClick={closeModal}
+            className="w-8 h-8 rounded-full border border-secondary-2 text-secondary-5 hover:bg-secondary-1 flex items-center justify-center"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        {items.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-neutral-2 bg-neutral-1/40 py-8 text-center">
+            <p className="body-3 text-neutral-4">No hay elementos todavía.</p>
+          </div>
+        ) : (
+          <div className="max-h-72 overflow-y-auto pr-1">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {items.map((item) => (
+                <div key={item} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => toggleModalItem(item)}
+                    className={`w-full px-3 py-2 pr-10 rounded-xl border text-[12px] font-semibold transition text-left break-all ${modalSelection.has(item)
+                      ? 'border-secondary-3 bg-secondary-1 text-secondary-6'
+                      : 'border-secondary-2 text-secondary-5 hover:bg-secondary-1'}`}
+                  >
+                    <span className="line-clamp-2">{item}</span>
+                  </button>
+                  {onRemove && (!canRemove || canRemove(item)) && (
+                    <button
+                      type="button"
+                      onClick={() => onRemove(item)}
+                      className="absolute right-2 top-2 text-neutral-5 hover:text-feedback-error-strong"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {items.length > 0 && (
+          <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeModal}
+                className="h-9 px-3 rounded-xl border border-neutral-2 text-neutral-5 text-xs font-semibold hover:bg-neutral-1 transition"
+              >
+                Cerrar
+              </button>
+            <button
+              type="button"
+              onClick={() => applyModalSelection(onSelect)}
+              disabled={modalSelection.size === 0}
+              className={`h-9 px-3 rounded-xl text-white text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed ${accent === 'primary' ? 'bg-primary-3 hover:bg-primary-4' : 'bg-secondary-4 hover:bg-secondary-5'}`}
+            >
+              Añadir
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="bg-white rounded-2xl border border-neutral-1 p-4 sm:p-6 flex flex-col gap-5 shadow-sm">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Maleta Personal */}
         <div>
-          <h2 className="title-h3-desktop text-secondary-5 mb-4">🧳 Mi maleta personal</h2>
+          <h2 className="title-h3-desktop text-secondary-5 mb-4">Mi maleta personal</h2>
 
           <form onSubmit={handleAddPersonalItem} className="flex gap-2 mb-4">
             <input
@@ -340,17 +550,20 @@ export default function LuggageTab({ tripId }) {
           </form>
 
           <div className="flex flex-wrap gap-2 mb-4">
-            {personalSuggestions.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => handleAddPersonalSuggestion(item)}
-                disabled={submitting}
-                className="px-3 py-1.5 rounded-full border border-neutral-2 text-neutral-5 body-4 hover:bg-neutral-1 transition disabled:opacity-50"
-              >
-                {item}
-              </button>
-            ))}
+            <button
+              type="button"
+              onClick={() => setActiveModal('personal-suggestions')}
+              className="px-3 py-1.5 rounded-full border border-secondary-2 text-secondary-5 body-4 hover:bg-secondary-1 transition"
+            >
+              Sugerencias
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveModal('personal-recents')}
+              className="px-3 py-1.5 rounded-full border border-secondary-2 text-secondary-5 body-4 hover:bg-secondary-1 transition"
+            >
+              Recientes
+            </button>
           </div>
 
           {groupedPersonalItems.length === 0 ? (
@@ -375,8 +588,8 @@ export default function LuggageTab({ tripId }) {
                     disabled={submitting}
                     className="flex items-center gap-2 flex-1 text-left"
                   >
-                    <span className={`w-2.5 h-2.5 rounded-full ${allPacked ? 'bg-secondary-4' : 'bg-neutral-2'}`} />
-                    <span className={`body-3 ${allPacked ? 'text-secondary-5' : 'text-neutral-6'}`}>
+                     
+                    <span className={`body-3 ${allPacked ? 'text-secondary-5' : 'text-neutral-6'} line-clamp-2 break-all`}>
                       {group.label}
                     </span>
                     {count > 1 && (
@@ -402,7 +615,7 @@ export default function LuggageTab({ tripId }) {
 
         {/* Maleta Grupal */}
         <div>
-          <h2 className="title-h3-desktop text-secondary-5 mb-4">👥 Maleta grupal</h2>
+          <h2 className="title-h3-desktop text-secondary-5 mb-4"> Maleta grupal</h2>
 
           <form onSubmit={handleAddGroupItem} className="flex gap-2 mb-4">
             <input
@@ -423,17 +636,20 @@ export default function LuggageTab({ tripId }) {
           </form>
 
           <div className="flex flex-wrap gap-2 mb-4">
-            {groupSuggestions.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => handleAddGroupSuggestion(item)}
-                disabled={submitting}
-                className="px-3 py-1.5 rounded-full border border-neutral-2 text-neutral-5 body-4 hover:bg-neutral-1 transition disabled:opacity-50"
-              >
-                {item}
-              </button>
-            ))}
+            <button
+              type="button"
+              onClick={() => setActiveModal('group-suggestions')}
+              className="px-3 py-1.5 rounded-full border border-primary-2 text-primary-4 body-4 hover:bg-primary-1 transition"
+            >
+              Sugerencias
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveModal('group-recents')}
+              className="px-3 py-1.5 rounded-full border border-primary-2 text-primary-4 body-4 hover:bg-primary-1 transition"
+            >
+              Recientes
+            </button>
           </div>
 
           {groupedGroupItems.length === 0 ? (
@@ -463,7 +679,7 @@ export default function LuggageTab({ tripId }) {
                   >
                     <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className={`body-3 font-semibold ${userSelected ? 'text-primary-4' : 'text-neutral-6'}`}>
+                        <p className={`body-3 font-semibold ${userSelected ? 'text-primary-4' : 'text-neutral-6'} line-clamp-2 break-all`}>
                           {group.label}
                         </p>
                         {selectionCount > 0 && (
@@ -499,6 +715,57 @@ export default function LuggageTab({ tripId }) {
       {message && (
         <div className="rounded-xl border border-neutral-1 bg-white px-3 py-2 body-3 text-neutral-5 shadow-sm">
           {message}
+        </div>
+      )}
+
+      {activeModal === 'personal-suggestions' &&
+        renderModal('Sugerencias personales', personalSuggestions, handleAddPersonalSuggestion, 'secondary')}
+      {activeModal === 'personal-recents' &&
+        renderModal(
+          'Recientes personales',
+          personalRecents,
+          handleAddPersonalSuggestion,
+          'secondary',
+          handleRemovePersonalRecent,
+          (item) => !personalSuggestionsSet.has(item.trim().toLowerCase())
+        )}
+      {activeModal === 'group-suggestions' &&
+        renderModal('Sugerencias grupales', groupSuggestions, handleAddGroupSuggestion, 'primary')}
+      {activeModal === 'group-recents' &&
+        renderModal(
+          'Recientes grupales',
+          groupRecents,
+          handleAddGroupSuggestion,
+          'primary',
+          handleRemoveGroupRecent,
+          (item) => groupRecentCreatorsByLabel[item]?.has(user?.uid)
+        )}
+
+      {pendingRecentRemoval && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-neutral-7/60" onClick={() => setPendingRecentRemoval(null)} />
+          <div className="relative z-10 w-full max-w-sm rounded-2xl border border-neutral-1 bg-white shadow-2xl p-5">
+            <h3 className="title-h3-desktop text-neutral-7">Eliminar reciente</h3>
+            <p className="body-3 text-neutral-5 mt-2">
+              ¿Quieres eliminar "{pendingRecentRemoval.item}" de recientes?
+            </p>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setPendingRecentRemoval(null)}
+                className="h-9 px-3 rounded-xl border border-neutral-2 text-neutral-5 text-xs font-semibold hover:bg-neutral-1 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmRemovePersonalRecent}
+                className="h-9 px-3 rounded-xl bg-feedback-error-strong text-white text-xs font-semibold hover:bg-feedback-error transition"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
