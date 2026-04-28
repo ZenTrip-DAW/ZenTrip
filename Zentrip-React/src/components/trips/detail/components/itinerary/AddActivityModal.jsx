@@ -5,7 +5,6 @@ import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
 import Button from '../../../../ui/Button';
 import PassengerSelector from '../../../shared/PassengerSelector';
 import BookingReceiptUpload from '../bookings/BookingReceiptUpload';
-
 const LIBRARIES = ['places'];
 const NOTES_MAX = 300;
 const NAME_MAX = 50;
@@ -127,7 +126,7 @@ export default function AddActivityModal({
     return () => cancelAnimationFrame(rafId);
   }, [isLoaded]);
 
-  const handlePlaceChanged = () => {
+const handlePlaceChanged = () => {
     const place = acRef.current?.getPlace();
     if (place?.formatted_address) setAddress(place.formatted_address);
     else if (place?.name) setAddress(place.name);
@@ -171,11 +170,18 @@ export default function AddActivityModal({
   const doSave = async () => {
     setSaving(true);
     const status = activityType === 'actividad' ? 'pendiente' : 'reservado';
+    const arrivalName = isVuelo && destinationObj
+      ? (destinationObj.name || destinationObj.cityName || destination.trim() || null)
+      : null;
+    const flightExtra = arrivalName
+      ? { arrivalAirportAddress: arrivalName, arrivalAirportName: arrivalName }
+      : {};
     if (isEdit) {
       await onUpdate(initialActivity.id, {
         name: name.trim(), startTime, endTime,
         address: finalAddress, notes: notes.trim() || null,
         type: activityType, status, members: selectedMembers, receiptUrls,
+        ...flightExtra,
       });
     } else {
       await onSave({
@@ -183,6 +189,7 @@ export default function AddActivityModal({
         address: finalAddress, notes: notes.trim() || null,
         type: activityType, status, source: 'manual',
         createdBy: creator ?? null, members: selectedMembers, receiptUrls,
+        ...flightExtra,
       });
     }
     setSaving(false);
