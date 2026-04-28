@@ -131,6 +131,21 @@ function getTotalPages(view, tripDays) {
   return (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1;
 }
 
+function getOngoingPageIndex(view, tripDays, dateStr) {
+  if (tripDays.length === 0) return 0;
+  if (view === 'week1') {
+    const days = generateExtendedDays(tripDays);
+    const idx = days.findIndex((d) => d.dateStr === dateStr);
+    return idx >= 0 ? Math.floor(idx / 7) : 0;
+  }
+  if (view === 'week2') {
+    const days = generateWeek2Days(tripDays);
+    const idx = days.findIndex((d) => d.dateStr === dateStr);
+    return idx >= 0 ? Math.floor(idx / 14) : 0;
+  }
+  return 0;
+}
+
 function DayTile({ dayInfo, isSelected, count, weather, onSelect, isMonthView = false }) {
   const { dateStr, inTrip } = dayInfo;
   const inMonth = dayInfo.inMonth !== undefined ? dayInfo.inMonth : true;
@@ -211,6 +226,15 @@ function DayNameHeader() {
 export default function DayCalendar({ tripDays, selectedDay, onSelectDay, activitiesByDate = {}, weatherByDate = {} }) {
   const [view, setView] = React.useState('week1');
   const [offset, setOffset] = React.useState(0);
+
+  React.useEffect(() => {
+    if (tripDays.length === 0) return;
+    if (view !== 'week1' && view !== 'week2') return;
+    const todayIso = toISO(new Date());
+    if (!tripDays.includes(todayIso)) return;
+    const pageIndex = getOngoingPageIndex(view, tripDays, todayIso);
+    setOffset(pageIndex);
+  }, [tripDays, view]);
 
   const tripSet = new Set(tripDays);
   const totalPages = getTotalPages(view, tripDays);
