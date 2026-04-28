@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getDocs, collection } from 'firebase/firestore';
-import { Plus, Trash2, X } from 'lucide-react';
+import { Plus, Trash2, X, Users, Check } from 'lucide-react';
 import { db } from '../../../../../config/firebaseConfig';
 import { useAuth } from '../../../../../context/AuthContext';
 import {
@@ -209,12 +209,14 @@ export default function LuggageTab({ tripId }) {
     setSubmitting(true);
     try {
       const id = await addGroupLuggageItem(tripId, user.uid, userName, trimmed);
+      const personalId = await addUserLuggageItem(tripId, user.uid, trimmed);
       setGroupItems((prev) => [
         ...prev,
         { id, item: trimmed, createdAt: new Date(), createdBy: user.uid, selections: [{ userId: user.uid, userName }] },
       ]);
+      setPersonalItems((prev) => [...prev, { id: personalId, item: trimmed, userId: user.uid, packed: false, createdAt: new Date() }]);
       setGroupItemDraft('');
-      setMessage('Item añadido a la maleta grupal.');
+      setMessage('Item añadido a las maletas.');
       setTimeout(() => setMessage(''), 3000);
     } catch (err) {
       console.error('Error añadiendo item grupal:', err);
@@ -230,11 +232,13 @@ export default function LuggageTab({ tripId }) {
     setSubmitting(true);
     try {
       const id = await addGroupLuggageItem(tripId, user.uid, userName, item);
+      const personalId = await addUserLuggageItem(tripId, user.uid, item);
       setGroupItems((prev) => [
         ...prev,
         { id, item, createdAt: new Date(), createdBy: user.uid, selections: [{ userId: user.uid, userName }] },
       ]);
-      setMessage('Item añadido a la maleta grupal.');
+      setPersonalItems((prev) => [...prev, { id: personalId, item, userId: user.uid, packed: false, createdAt: new Date() }]);
+      setMessage('Item añadido a las maletas.');
       setTimeout(() => setMessage(''), 3000);
     } catch (err) {
       console.error('Error añadiendo item grupal:', err);
@@ -271,7 +275,7 @@ export default function LuggageTab({ tripId }) {
   const groupedGroupItems = Array.from(groupMap.values());
 
   const personalRecentItems = getRecentLabels(personalItems);
-  const groupRecentSourceItems = groupItems.filter((item) => (item.selections || []).some((s) => s.userId === user?.uid));
+  const groupRecentSourceItems = groupItems.filter((item) => (item.selections || []).some((s) => s.userId === user?.uid) || item.createdBy === user?.uid);
   const groupRecentMap = new Map();
   for (const item of groupRecentSourceItems) {
     const key = item.item?.trim().toLowerCase();
@@ -336,14 +340,21 @@ export default function LuggageTab({ tripId }) {
             return { ...entry, selections };
           })
         );
+        const personalItemToRemove = personalItems.find((item) => item.item?.trim().toLowerCase() === group.label?.trim().toLowerCase() && item.userId === user.uid);
+        if (personalItemToRemove) {
+          await deleteUserLuggageItem(tripId, personalItemToRemove.id);
+          setPersonalItems((prev) => prev.filter((item) => item.id !== personalItemToRemove.id));
+        }
       } else {
         await addUserToGroupLuggageItem(tripId, targetItemId, user.uid, userName);
+        const personalId = await addUserLuggageItem(tripId, user.uid, group.label);
         setGroupItems((prev) =>
           prev.map((entry) => {
             if (entry.id !== targetItemId) return entry;
             return { ...entry, selections: [...(entry.selections || []), { userId: user.uid, userName }] };
           })
         );
+        setPersonalItems((prev) => [...prev, { id: personalId, item: group.label, userId: user.uid, packed: false, createdAt: new Date() }]);
       }
     } catch (err) {
       console.error('Error actualizando item grupal:', err);
@@ -588,15 +599,17 @@ export default function LuggageTab({ tripId }) {
                     disabled={submitting}
                     className="flex items-center gap-2 flex-1 text-left"
                   >
-                     
-                    <span className={`body-3 ${allPacked ? 'text-secondary-5' : 'text-neutral-6'} line-clamp-2 break-all`}>
-                      {group.label}
-                    </span>
-                    {count > 1 && (
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full min-w-5 text-center leading-none bg-secondary-2 text-secondary-6">
-                        x{count}
+                    {allPacked && <Check className="w-5 h-5 shrink-0 text-secondary-4" />}
+                    <div className="flex items-center gap-2 w-full">
+                      <span className={`body-3 ${allPacked ? 'text-secondary-5' : 'text-neutral-6'} line-clamp-2 break-all flex-1 min-w-0`}>
+                        {group.label}
                       </span>
-                    )}
+                      {count > 1 && (
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 text-center leading-none bg-secondary-2 text-secondary-6">
+                          x{count}
+                        </span>
+                      )}
+                    </div>
                   </button>
                   <button
                     type="button"
@@ -679,19 +692,20 @@ export default function LuggageTab({ tripId }) {
                   >
                     <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className={`body-3 font-semibold ${userSelected ? 'text-primary-4' : 'text-neutral-6'} line-clamp-2 break-all`}>
-                          {group.label}
-                        </p>
-                        {selectionCount > 0 && (
-                          <div className="mt-1.5 flex flex-col gap-1">
-                            {uniqueUsers.map((name, idx) => (
-                              <div key={idx} className="text-[11px] font-semibold text-primary-4">
-                                {name}
-                              </div>
-                            ))}
-                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full w-fit leading-none bg-primary-1 text-primary-4">
+                        <div className="flex items-center gap-2">
+                          <p className={`body-3 font-semibold ${userSelected ? 'text-primary-4' : 'text-neutral-6'} line-clamp-2 break-all flex-1 min-w-0`}>
+                            {group.label}
+                          </p>
+                          {selectionCount > 0 && (
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 leading-none bg-primary-1 text-primary-4">
                               x{selectionCount}
                             </span>
+                          )}
+                        </div>
+                        {selectionCount > 0 && (
+                          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-secondary-5">
+                            <Users className="w-4 h-4 shrink-0" />
+                            {uniqueUsers.join(', ')}
                           </div>
                         )}
                       </div>
@@ -730,13 +744,13 @@ export default function LuggageTab({ tripId }) {
           (item) => !personalSuggestionsSet.has(item.trim().toLowerCase())
         )}
       {activeModal === 'group-suggestions' &&
-        renderModal('Sugerencias grupales', groupSuggestions, handleAddGroupSuggestion, 'primary')}
+        renderModal('Sugerencias grupales', groupSuggestions, handleAddGroupSuggestion, 'secondary')}
       {activeModal === 'group-recents' &&
         renderModal(
           'Recientes grupales',
           groupRecents,
           handleAddGroupSuggestion,
-          'primary',
+          'secondary',
           handleRemoveGroupRecent,
           (item) => groupRecentCreatorsByLabel[item]?.has(user?.uid)
         )}
