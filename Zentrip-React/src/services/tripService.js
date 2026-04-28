@@ -749,3 +749,19 @@ export async function deleteGroupLuggageItem(tripId, itemId) {
 
   await deleteDoc(doc(db, 'trips', tripId, 'luggageGroup', itemId));
 }
+
+export async function updateGroupLuggageItemPacked(tripId, itemId, uid, packed) {
+  if (!tripId || !itemId || !uid) throw new Error('Trip id, item id, and user id are required.');
+  const selectionsSnap = await getDocs(
+    query(
+      collection(db, 'trips', tripId, 'luggageGroup', itemId, 'selections'),
+      where('userId', '==', uid)
+    )
+  );
+
+  for (const doc_ of selectionsSnap.docs) {
+    await updateDoc(doc_.ref, {
+      packed: Boolean(packed),
+    });
+  }
+}
