@@ -111,6 +111,13 @@ export function NotificationProvider({ children }) {
     decrementUnseenCount();
   }, [decrementUnseenCount]);
 
+  const markAllRead = useCallback(async () => {
+    await Promise.all(tripNotifications.map((n) => updateDoc(doc(db, 'notifications', n.id), { read: true })));
+    setAcceptedNotifications([]);
+    const unseenInvitations = notifications.filter((n) => !seenInvitationIdsRef.current.has(n.id)).length;
+    setUnseenCount(unseenInvitations);
+  }, [tripNotifications, notifications]);
+
   const addAcceptedNotification = useCallback((data) => {
     const uiId = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
       ? crypto.randomUUID()
@@ -138,6 +145,7 @@ export function NotificationProvider({ children }) {
       decrementUnseenCount,
       markInvitationNotificationSeen,
       markTripNotificationRead,
+      markAllRead,
       acceptedNotifications,
       addAcceptedNotification,
       consumeAcceptedNotification,
