@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Car, Footprints, Bike, Bus, Route, Clock, Trash2, Pencil, Eye, Map } from 'lucide-react';
+import { Car, Footprints, Bike, Bus, Route, Clock, Trash2, Pencil, Eye, Map, ExternalLink } from 'lucide-react';
+import { buildGoogleMapsUrl } from './routeUtils';
 import { getBookings, deleteBooking } from '../../../../../../services/tripService';
 import BookingBanner from '../BookingBanner';
 import ImageLoadGate from '../../../../../shared/ImageLoadGate';
@@ -101,23 +102,39 @@ function RouteCard({ booking, tripId, highlighted = false, onDeleted, onOpenRout
       )}
 
       {/* Acciones */}
-      <div className="flex gap-2 mt-1" onClick={(e) => e.stopPropagation()}>
-        <button
-          type="button"
-          onClick={() => onOpenRoute(booking)}
-          className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 h-8 rounded-xl border border-neutral-2 text-neutral-5 body-3 font-semibold hover:bg-neutral-1 transition"
-        >
-          <Eye className="w-3.5 h-3.5" />
-          Ver ruta
-        </button>
-        <button
-          type="button"
-          onClick={() => onOpenRoute({ ...booking, editMode: true })}
-          className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 h-8 rounded-xl border border-secondary-2 text-secondary-5 body-3 font-semibold hover:bg-secondary-1 transition"
-        >
-          <Pencil className="w-3.5 h-3.5" />
-          Editar ruta
-        </button>
+      <div className="flex flex-col gap-2 mt-auto pt-1" onClick={(e) => e.stopPropagation()}>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => onOpenRoute(booking)}
+            className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 h-8 rounded-xl border border-neutral-2 text-neutral-5 body-3 font-semibold hover:bg-neutral-1 transition"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            Ver ruta
+          </button>
+          <button
+            type="button"
+            onClick={() => onOpenRoute({ ...booking, editMode: true })}
+            className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 h-8 rounded-xl border border-secondary-2 text-secondary-5 body-3 font-semibold hover:bg-secondary-1 transition"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+            Editar ruta
+          </button>
+        </div>
+        {booking.waypoints?.length >= 2 && (() => {
+          const mapsUrl = buildGoogleMapsUrl(booking.waypoints, booking.travelMode);
+          return mapsUrl ? (
+            <a
+              href={mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 h-8 rounded-xl border border-primary-2 text-primary-3 body-3 font-semibold hover:bg-primary-1 transition"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Abrir en Google Maps
+            </a>
+          ) : null;
+        })()}
       </div>
     </div>
   );
