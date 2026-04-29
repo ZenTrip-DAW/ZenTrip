@@ -94,6 +94,20 @@ export function activityToWaypoint(activity) {
   return newWp(extractAddressOrName(activity), true, label);
 }
 
+const GMAPS_TRAVEL_MODE = { DRIVING: 'driving', WALKING: 'walking', BICYCLING: 'bicycling', TRANSIT: 'transit' };
+
+export function buildGoogleMapsUrl(waypointValues, travelMode) {
+  const filled = waypointValues.filter((v) => v?.trim());
+  if (filled.length < 2) return null;
+  const mode = GMAPS_TRAVEL_MODE[travelMode] || 'driving';
+  const origin = encodeURIComponent(filled[0]);
+  const destination = encodeURIComponent(filled[filled.length - 1]);
+  const mids = filled.slice(1, -1);
+  let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=${mode}`;
+  if (mids.length > 0) url += `&waypoints=${mids.map(encodeURIComponent).join('|')}`;
+  return url;
+}
+
 export function buildRouteInfo(allLegs) {
   const totalDist = allLegs.reduce((s, l) => s + l.distance.value, 0);
   const totalDur  = allLegs.reduce((s, l) => s + l.duration.value, 0);

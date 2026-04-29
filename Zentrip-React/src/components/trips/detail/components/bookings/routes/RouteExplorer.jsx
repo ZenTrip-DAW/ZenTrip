@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useJsApiLoader, GoogleMap, DirectionsRenderer } from '@react-google-maps/api';
-import { Plus, X, Navigation, Clock, Route, MapPin, Car, Shuffle, Footprints, Bike, Bus, Save, Check, Pencil } from 'lucide-react';
+import { Plus, X, Navigation, Clock, Route, MapPin, Car, Shuffle, Footprints, Bike, Bus, Save, Check, Pencil, ExternalLink } from 'lucide-react';
 import BookingBanner from '../BookingBanner';
 import ImageLoadGate from '../../../../../shared/ImageLoadGate';
 import { addBooking, updateBooking, getBookings, sendRouteNotifications } from '../../../../../../services/tripService';
@@ -9,7 +9,7 @@ import WaypointRow from './WaypointRow';
 import TransitItinerary from './TransitItinerary';
 import {
   LIBRARIES, MAP_STYLE, STATUS_MSGS, legColor,
-  newWp, activityToWaypoint, formatDayLong, buildRouteInfo,
+  newWp, activityToWaypoint, formatDayLong, buildRouteInfo, buildGoogleMapsUrl,
 } from './routeUtils';
 
 const TRAVEL_MODES = [
@@ -550,6 +550,21 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
                   </div>
                 </div>
               </div>
+
+              {(() => {
+                const mapsUrl = buildGoogleMapsUrl(waypoints.filter((w) => w.value.trim()).map((w) => w.value), travelMode);
+                return mapsUrl ? (
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 body-3 font-semibold text-primary-3 hover:text-primary-4 transition w-fit"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Abrir en Google Maps
+                  </a>
+                ) : null;
+              })()}
 
               {/* Guardar ruta nueva */}
               {tripId && !existingId && (
