@@ -105,7 +105,7 @@ export default function Home() {
           Crear un nuevo viaje
         </button>
 
-        <div className="mt-4 w-full sm:max-w-xs">
+        <div className="mt-8 w-full sm:max-w-xs">
           <HomeCalendar
             activeTripDayMap={activeTripDayMap}
             pastTripDaySet={pastTripDaySet}

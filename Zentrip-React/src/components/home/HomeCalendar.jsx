@@ -52,22 +52,24 @@ export default function HomeCalendar({ activeTripDayMap, pastTripDaySet, activit
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-3 sm:p-4 w-full">
+    <div
+      className="rounded-2xl border border-white/40 bg-white/45 p-3 sm:p-4 w-full"
+    >
       <div className="flex items-center justify-between mb-3">
         <button
           type="button"
           onClick={prevMonth}
-          className="w-7 h-7 rounded-full border border-neutral-1 flex items-center justify-center text-neutral-4 hover:bg-neutral-1 transition-colors"
+          className="w-7 h-7 rounded-full border border-white/50 flex items-center justify-center text-secondary-6 hover:bg-white/30 transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
-        <span className="body-3 font-semibold text-secondary-5">
+        <span className="text-sm font-bold text-neutral-7">
           {MONTHS_LONG[month]} {year}
         </span>
         <button
           type="button"
           onClick={nextMonth}
-          className="w-7 h-7 rounded-full border border-neutral-1 flex items-center justify-center text-neutral-4 hover:bg-neutral-1 transition-colors"
+          className="w-7 h-7 rounded-full border border-white/50 flex items-center justify-center text-secondary-6 hover:bg-white/30 transition-colors"
         >
           <ChevronRight className="w-4 h-4" />
         </button>
@@ -75,7 +77,7 @@ export default function HomeCalendar({ activeTripDayMap, pastTripDaySet, activit
 
       <div className="grid grid-cols-7 mb-1">
         {DAY_NAMES.map((d) => (
-          <div key={d} className="text-center text-[10px] font-semibold text-neutral-4 py-1">
+          <div key={d} className="text-center text-[10px] font-semibold text-secondary-6/70 py-1">
             {d}
           </div>
         ))}
@@ -84,6 +86,7 @@ export default function HomeCalendar({ activeTripDayMap, pastTripDaySet, activit
       <div className="grid grid-cols-7 gap-1">
         {grid.map(({ dateStr, inMonth }) => {
           const isToday = dateStr === todayStr;
+          const isPast = dateStr < todayStr;
           const tripId = activeTripDayMap[dateStr];
           const isActiveTripDay = !!tripId && inMonth;
           const isPastTripDay = !isActiveTripDay && pastTripDaySet.has(dateStr) && inMonth;
@@ -99,22 +102,18 @@ export default function HomeCalendar({ activeTripDayMap, pastTripDaySet, activit
           if (isActiveTripDay) {
             cellClass += isToday
               ? 'bg-secondary-5 cursor-pointer hover:bg-secondary-6'
-              : 'bg-blue-50 border border-blue-200 hover:bg-blue-100 cursor-pointer';
-          } else if (isPastTripDay) {
-            cellClass += 'bg-neutral-1 cursor-default';
+              : 'bg-white/40 border border-white/60 hover:bg-white/55 cursor-pointer';
+          } else if (isPastTripDay || (isPast && !isToday)) {
+            cellClass += 'cursor-default opacity-40';
           } else {
-            cellClass += isToday
-              ? 'cursor-default'
-              : 'cursor-default hover:bg-neutral-1';
+            cellClass += isToday ? 'cursor-default' : 'cursor-default hover:bg-white/20';
           }
 
           let dayNumClass = 'text-xs font-bold leading-none ';
           if (isActiveTripDay) {
-            dayNumClass += isToday ? 'text-white' : 'text-secondary-5';
-          } else if (isPastTripDay) {
-            dayNumClass += 'text-neutral-3';
+            dayNumClass += isToday ? 'text-white' : 'text-secondary-6';
           } else {
-            dayNumClass += isToday ? 'text-primary-3 font-extrabold' : 'text-neutral-5';
+            dayNumClass += isToday ? 'text-primary-3 font-extrabold' : 'text-secondary-6';
           }
 
           return (
