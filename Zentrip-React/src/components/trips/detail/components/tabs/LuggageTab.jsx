@@ -235,10 +235,41 @@ export default function LuggageTab({ tripId }) {
   const handleDeletePersonalGroupItems = async (itemId) => {
     setSubmitting(true);
     try {
+      const itemToDelete = personalItems.find((item) => item.id === itemId);
       await deleteUserLuggageItem(tripId, itemId);
       setPersonalItems((prev) =>
         prev.filter((item) => item.id !== itemId)
       );
+
+      // Si el item estaba en el grupo, remover selección del usuario
+      if (itemToDelete) {
+        const groupItemsWithThisItem = groupItems.filter(
+          (gi) => gi.item?.trim().toLowerCase() === itemToDelete.item?.trim().toLowerCase()
+        );
+
+        if (groupItemsWithThisItem.length > 0) {
+          for (const groupItem of groupItemsWithThisItem) {
+            await removeOneGroupLuggageSelection(tripId, groupItem.id, user.uid);
+          }
+
+          // Actualizar estado de groupItems
+          setGroupItems((prev) =>
+            prev.map((groupItem) => {
+              const isMatchingItem = groupItem.item?.trim().toLowerCase() === itemToDelete.item?.trim().toLowerCase();
+              if (isMatchingItem) {
+                const selections = [...(groupItem.selections || [])];
+                const removeIndex = selections.findIndex((s) => s.userId === user.uid);
+                if (removeIndex >= 0) selections.splice(removeIndex, 1);
+                const newPackedUserIds = new Set(groupItem.packedUserIds);
+                newPackedUserIds.delete(user.uid);
+                return { ...groupItem, selections, packedUserIds: newPackedUserIds };
+              }
+              return groupItem;
+            })
+          );
+        }
+      }
+
       setMessage('Item eliminado de tu maleta.');
       setTimeout(() => setMessage(''), 3000);
     } catch (err) {
@@ -826,7 +857,7 @@ export default function LuggageTab({ tripId }) {
                 const userSelected = group.selections?.some((s) => s.userId === user.uid);
                 const uniqueUserIds = new Set((group.selections || []).map((s) => s.userId));
                 const selectionCount = uniqueUserIds.size;
-                const uniqueUsers = [...new Set((group.selections || []).map((s) => s.userName))];
+                const uniqueSelections = Array.from(new Map((group.selections || []).map((s) => [s.userId, s])).values());
 
                 return (
                   <div
@@ -858,13 +889,13 @@ export default function LuggageTab({ tripId }) {
                           <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-secondary-5 flex-wrap">
                             <Users className="w-4 h-4 shrink-0" />
                             <span className="flex flex-wrap gap-1">
-                              {group.selections?.map((selection, idx) => (
-                                <span key={idx} className="flex items-center gap-0.5">
+                              {uniqueSelections.map((selection, idx) => (
+                                <span key={selection.userId} className="flex items-center gap-0.5">
                                   {selection.userName}
                                   {group.packedUserIds?.has(selection.userId) && (
                                     <Check className="w-3 h-3 text-secondary-4 shrink-0" />
                                   )}
-                                  {idx < group.selections.length - 1 && <span>,</span>}
+                                  {idx < uniqueSelections.length - 1 && <span>,</span>}
                                 </span>
                               ))}
                             </span>
