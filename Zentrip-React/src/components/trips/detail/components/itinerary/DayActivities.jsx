@@ -13,7 +13,7 @@ function EmptyDay() {
   );
 }
 
-export default function DayActivities({ selectedDay, activitiesByDate, onAddActivity, onViewActivity, onEditActivity, onDeleteActivity, onGoToReservas, weatherData, location, members = [] }) {
+export default function DayActivities({ selectedDay, activitiesByDate, onAddActivity, onViewActivity, onEditActivity, onDeleteActivity, onGoToReservas, weatherData, location, members = [], highlightActivityId = null }) {
   const today = new Date().toISOString().split('T')[0];
   const isPast = selectedDay && selectedDay < today;
 
@@ -77,6 +77,7 @@ export default function DayActivities({ selectedDay, activitiesByDate, onAddActi
               onView={onViewActivity}
               onEdit={onEditActivity}
               onGoToReservas={onGoToReservas}
+              highlighted={act.id === highlightActivityId}
             />
           ))}
         </div>

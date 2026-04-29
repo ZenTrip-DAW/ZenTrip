@@ -3,7 +3,7 @@ import { useJsApiLoader, GoogleMap, DirectionsRenderer } from '@react-google-map
 import { Plus, X, Navigation, Clock, Route, MapPin, Car, Shuffle, Footprints, Bike, Bus, Save, Check, Pencil } from 'lucide-react';
 import BookingBanner from '../BookingBanner';
 import ImageLoadGate from '../../../../../shared/ImageLoadGate';
-import { addBooking, updateBooking, getBookings } from '../../../../../../services/tripService';
+import { addBooking, updateBooking, getBookings, sendRouteNotifications } from '../../../../../../services/tripService';
 import { useAuth } from '../../../../../../context/AuthContext';
 import WaypointRow from './WaypointRow';
 import TransitItinerary from './TransitItinerary';
@@ -311,7 +311,7 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
     if (!tripId || !routeInfo) return;
     const name = routeName.trim() || (selectedDay ? formatDayLong(selectedDay) : 'Ruta guardada');
     try {
-      await addBooking(tripId, {
+      const bookingId = await addBooking(tripId, {
         type: 'ruta',
         status: 'reservado',
         createdBy: { uid: user?.uid ?? null, name: user?.displayName || user?.email || null },
@@ -321,6 +321,15 @@ export default function RouteExplorer({ trip, tripId, tripDays = [], activitiesB
       setSavingRoute(false);
       setSaveMode('new');
       setIsDirty(false);
+      if (user?.uid) {
+        sendRouteNotifications(tripId, {
+          creatorUid: user.uid,
+          creatorName: user.displayName || user.email || 'Un miembro',
+          routeName: name,
+          bookingId,
+          tripName: trip?.name,
+        }).catch(() => {});
+      }
     } catch (err) {
       console.error('[RouteExplorer] Error al guardar ruta:', err);
     }
