@@ -4,6 +4,8 @@ import { useAuth } from "../../context/AuthContext";
 import { ROUTES } from "../../config/routes";
 import CategoryBar from "./CategoryBar";
 import SplashScreen from "../shared/SplashScreen";
+import HomeCalendar from "./HomeCalendar";
+import { useHomeCalendarData } from "./hooks/useHomeCalendarData";
 
 const heroImages = [
   '/img/background/home/hero/img_hero_1.jpg',
@@ -21,6 +23,7 @@ export default function Home() {
   const [showInviteError, setShowInviteError] = useState(searchParams.get('inviteError') === 'emailMismatch');
   const [imagenCargada, setImagenCargada] = useState(false);
   const heroImg = useMemo(() => heroImages[Math.floor(Math.random() * heroImages.length)], []);
+  const { activeTripDayMap, pastTripDaySet, activitiesByDate } = useHomeCalendarData();
 
   useEffect(() => {
     if (!showInviteError) return;
@@ -80,7 +83,7 @@ export default function Home() {
         marginBottom: "-1.5rem",
       }}
     >
-      <div className="absolute inset-0" style={{ backgroundColor: "rgba(0,0,0,0.35)" }} />
+      <div className="absolute inset-0" style={{ backgroundColor: "rgba(0,0,0,0.2)" }} />
       <div className="absolute left-5 right-5 top-24 sm:left-10 sm:top-32 sm:right-auto md:left-14 md:top-36 lg:left-16 lg:top-40 max-w-full sm:max-w-md md:max-w-lg lg:max-w-xl text-left">
         <h1 className="title-h1-mobile md:title-h1-desktop text-white">
           ¡Bienvenid@, {registeredName}!
@@ -101,6 +104,14 @@ export default function Home() {
         >
           Crear un nuevo viaje
         </button>
+
+        <div className="mt-4 w-full sm:max-w-xs">
+          <HomeCalendar
+            activeTripDayMap={activeTripDayMap}
+            pastTripDaySet={pastTripDaySet}
+            activitiesByDate={activitiesByDate}
+          />
+        </div>
       </div>
 
       <div className="absolute bottom-0 left-0 right-0">
