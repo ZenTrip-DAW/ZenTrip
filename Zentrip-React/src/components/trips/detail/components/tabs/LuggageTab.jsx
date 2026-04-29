@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { getDocs, collection } from 'firebase/firestore';
+import { getDocs, collection, query, where } from 'firebase/firestore';
 import { Plus, Trash2, X, Users, Check } from 'lucide-react';
 import { db } from '../../../../../config/firebaseConfig';
 import { useAuth } from '../../../../../context/AuthContext';
+import { getUserProfile } from '../../../../../services/profileService';
 import {
   getUserLuggage,
   getGroupLuggage,
@@ -29,6 +30,7 @@ export default function LuggageTab({ tripId }) {
   const [modalSelection, setModalSelection] = useState(new Set());
   const [dismissedPersonalRecents, setDismissedPersonalRecents] = useState(new Set());
   const [pendingRecentRemoval, setPendingRecentRemoval] = useState(null);
+  const [memberProgress, setMemberProgress] = useState([]);
 
   const userName = profile?.displayName || profile?.firstName || user?.email || 'Usuario';
 
@@ -75,6 +77,32 @@ export default function LuggageTab({ tripId }) {
     return 0;
   };
 
+  const getUsersWithItemPacked = async (tripId, itemName, userIds) => {
+    const packedUserIds = new Set();
+
+    for (const userId of userIds) {
+      try {
+        const luggageSnap = await getDocs(
+          query(
+            collection(db, 'trips', tripId, 'luggage'),
+            where('userId', '==', userId),
+            where('item', '==', itemName),
+            where('packed', '==', true)
+          )
+        );
+
+        if (luggageSnap.docs.length > 0) {
+          packedUserIds.add(userId);
+        }
+      } catch (err) {
+        console.error(`Error consultando empaque para usuario ${userId}:`, err);
+      }
+    }
+
+    return packedUserIds;
+  };
+
+
   const getRecentLabels = (items, max = 40) => {
     const ranked = items
       .map((item, index) => ({
@@ -116,11 +144,46 @@ export default function LuggageTab({ tripId }) {
               collection(db, 'trips', tripId, 'luggageGroup', item.id, 'selections')
             );
             const selections = selectionsSnap.docs.map((d) => d.data());
-            return { ...item, selections };
+            const userIds = selections.map((s) => s.userId);
+            const packedUserIds = await getUsersWithItemPacked(tripId, item.item, userIds);
+            return { ...item, selections, packedUserIds };
           })
         );
 
         setGroupItems(groupWithSelections);
+
+        // Calculate member progress
+        const uniqueMembers = new Map();
+        for (const item of groupWithSelections) {
+          if (Array.isArray(item.selections)) {
+            for (const selection of item.selections) {
+              if (!uniqueMembers.has(selection.userId)) {
+                uniqueMembers.set(selection.userId, { userId: selection.userId, userName: selection.userName });
+              }
+            }
+          }
+        }
+
+        const memberProgressData = await Promise.all(
+          Array.from(uniqueMembers.values()).map(async (member) => {
+            const memberLuggage = await getUserLuggage(tripId, member.userId);
+            const packedCount = memberLuggage.filter((item) => item.packed).length;
+            const totalCount = memberLuggage.length;
+            const percentage = totalCount > 0 ? Math.round((packedCount / totalCount) * 100) : 0;
+
+            let profilePhoto = '';
+            try {
+              const memberProfile = await getUserProfile(member.userId);
+              profilePhoto = memberProfile?.profilePhoto || '';
+            } catch (err) {
+              console.error(`Error fetching profile for ${member.userId}:`, err);
+            }
+
+            return { ...member, percentage, totalCount, packedCount, profilePhoto };
+          })
+        );
+
+        setMemberProgress(memberProgressData.sort((a, b) => a.userName.localeCompare(b.userName)));
       } catch (err) {
         console.error('Error cargando equipaje:', err);
         setMessage('Error al cargar el equipaje.');
@@ -190,8 +253,40 @@ export default function LuggageTab({ tripId }) {
     setSubmitting(true);
     try {
       await Promise.all(itemIds.map((id) => updateUserLuggageItemPacked(tripId, id, packed)));
-      setPersonalItems((prev) =>
-        prev.map((item) => (itemIds.includes(item.id) ? { ...item, packed } : item))
+
+      const updatedItems = personalItems.map((item) => (itemIds.includes(item.id) ? { ...item, packed } : item));
+      setPersonalItems(updatedItems);
+
+      // Actualizar packedUserIds en groupItems
+      setGroupItems((prev) =>
+        prev.map((groupItem) => {
+          const itemName = groupItem.item?.trim().toLowerCase();
+          const matchingPersonalItem = updatedItems.find((p) => p.item?.trim().toLowerCase() === itemName && itemIds.includes(p.id));
+
+          if (matchingPersonalItem) {
+            const newPackedUserIds = new Set(groupItem.packedUserIds);
+            if (matchingPersonalItem.packed) {
+              newPackedUserIds.add(user.uid);
+            } else {
+              newPackedUserIds.delete(user.uid);
+            }
+            return { ...groupItem, packedUserIds: newPackedUserIds };
+          }
+          return groupItem;
+        })
+      );
+
+      // Actualizar progress del usuario actual
+      setMemberProgress((prev) =>
+        prev.map((member) => {
+          if (member.userId === user.uid) {
+            const packedCount = updatedItems.filter((item) => item.packed).length;
+            const totalCount = updatedItems.length;
+            const percentage = totalCount > 0 ? Math.round((packedCount / totalCount) * 100) : 0;
+            return { ...member, percentage, packedCount };
+          }
+          return member;
+        })
       );
     } catch (err) {
       console.error('Error actualizando item personal:', err);
@@ -264,12 +359,15 @@ export default function LuggageTab({ tripId }) {
     const key = item.item?.trim().toLowerCase();
     if (!key) continue;
     if (!groupMap.has(key)) {
-      groupMap.set(key, { key, label: item.item, items: [], selections: [] });
+      groupMap.set(key, { key, label: item.item, items: [], selections: [], packedUserIds: new Set() });
     }
     const group = groupMap.get(key);
     group.items.push(item);
     if (Array.isArray(item.selections)) {
       group.selections.push(...item.selections);
+    }
+    if (item.packedUserIds) {
+      item.packedUserIds.forEach((userId) => group.packedUserIds.add(userId));
     }
   }
   const groupedGroupItems = Array.from(groupMap.values());
@@ -537,10 +635,34 @@ export default function LuggageTab({ tripId }) {
 
   return (
     <div className="bg-white rounded-2xl border border-neutral-1 p-4 sm:p-6 flex flex-col gap-5 shadow-sm">
+      <div>
+        <h1 className="title-h3-desktop text-neutral-7">Equipaje</h1>
+        <p className="body-3 text-neutral-5 mt-1">Gestiona tu maleta y ve el progreso del grupo. Los ✓ muestran quién ya lo metió.</p>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Maleta Personal */}
         <div>
           <h2 className="title-h3-desktop text-secondary-5 mb-4">Mi maleta personal</h2>
+
+          {personalItems.length > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="body-4 font-semibold text-neutral-6">Items empaquetados</span>
+                <span className="body-4 font-semibold text-secondary-5">
+                  {Math.round((personalItems.filter(item => item.packed).length / personalItems.length) * 100)}%
+                </span>
+              </div>
+              <div className="w-full h-2 rounded-full bg-neutral-2 overflow-hidden">
+                <div
+                  className="h-full bg-secondary-4 transition-all duration-300"
+                  style={{
+                    width: `${personalItems.length > 0 ? (personalItems.filter(item => item.packed).length / personalItems.length) * 100 : 0}%`
+                  }}
+                />
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleAddPersonalItem} className="flex gap-2 mb-4">
             <input
@@ -630,6 +752,35 @@ export default function LuggageTab({ tripId }) {
         <div>
           <h2 className="title-h3-desktop text-secondary-5 mb-4"> Maleta grupal</h2>
 
+          {personalItems.filter(item => groupItems.some(g => g.item?.trim().toLowerCase() === item.item?.trim().toLowerCase())).length > 0 && (
+            <div className="mb-4">
+              {(() => {
+                const groupItemsInPersonal = personalItems.filter(item =>
+                  groupItems.some(g => g.item?.trim().toLowerCase() === item.item?.trim().toLowerCase())
+                );
+                const packedGroupItems = groupItemsInPersonal.filter(item => item.packed).length;
+                return (
+                  <>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="body-4 font-semibold text-neutral-6">Items empaquetados</span>
+                      <span className="body-4 font-semibold text-primary-4">
+                        {Math.round((packedGroupItems / groupItemsInPersonal.length) * 100)}%
+                      </span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-primary-2 overflow-hidden">
+                      <div
+                        className="h-full bg-primary-4 transition-all duration-300"
+                        style={{
+                          width: `${(packedGroupItems / groupItemsInPersonal.length) * 100}%`
+                        }}
+                      />
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          )}
+
           <form onSubmit={handleAddGroupItem} className="flex gap-2 mb-4">
             <input
               type="text"
@@ -673,7 +824,8 @@ export default function LuggageTab({ tripId }) {
             <div className={`flex flex-col gap-2 ${groupedGroupItems.length > 8 ? 'max-h-96 overflow-y-auto' : ''}`}>
               {groupedGroupItems.map((group) => {
                 const userSelected = group.selections?.some((s) => s.userId === user.uid);
-                const selectionCount = group.selections?.length || 0;
+                const uniqueUserIds = new Set((group.selections || []).map((s) => s.userId));
+                const selectionCount = uniqueUserIds.size;
                 const uniqueUsers = [...new Set((group.selections || []).map((s) => s.userName))];
 
                 return (
@@ -703,9 +855,19 @@ export default function LuggageTab({ tripId }) {
                           )}
                         </div>
                         {selectionCount > 0 && (
-                          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-secondary-5">
+                          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-secondary-5 flex-wrap">
                             <Users className="w-4 h-4 shrink-0" />
-                            {uniqueUsers.join(', ')}
+                            <span className="flex flex-wrap gap-1">
+                              {group.selections?.map((selection, idx) => (
+                                <span key={idx} className="flex items-center gap-0.5">
+                                  {selection.userName}
+                                  {group.packedUserIds?.has(selection.userId) && (
+                                    <Check className="w-3 h-3 text-secondary-4 shrink-0" />
+                                  )}
+                                  {idx < group.selections.length - 1 && <span>,</span>}
+                                </span>
+                              ))}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -725,6 +887,47 @@ export default function LuggageTab({ tripId }) {
           )}
         </div>
       </div>
+
+      {memberProgress.length > 0 && (
+        <div>
+          <h2 className="title-h3-desktop text-neutral-7 mb-4">Progreso de los miembros</h2>
+          <div className="w-full">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              {memberProgress.map((member) => {
+                const initials = member.userName
+                  .split(' ')
+                  .map((word) => word[0])
+                  .join('')
+                  .toUpperCase()
+                  .slice(0, 2);
+
+                return (
+                  <div
+                    key={member.userId}
+                    className="flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl border border-neutral-1 bg-neutral-1/40 hover:bg-neutral-1/60 transition"
+                  >
+                    {member.profilePhoto ? (
+                      <img
+                        src={member.profilePhoto}
+                        alt={member.userName}
+                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover shrink-0"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-secondary-3 flex items-center justify-center shrink-0">
+                        <span className="text-xs sm:text-sm font-bold text-secondary-6">{initials}</span>
+                      </div>
+                    )}
+                    <div className="flex flex-col items-center gap-1 w-full min-w-0">
+                      <p className="body-4 sm:body-3 font-semibold text-neutral-6 text-center line-clamp-1">{member.userName}</p>
+                      <p className="text-xs font-bold text-secondary-5">{member.percentage}%</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {message && (
         <div className="rounded-xl border border-neutral-1 bg-white px-3 py-2 body-3 text-neutral-5 shadow-sm">
