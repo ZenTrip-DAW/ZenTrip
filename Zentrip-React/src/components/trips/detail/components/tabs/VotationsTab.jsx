@@ -36,11 +36,11 @@ export default function VotationsTab({
   // ── Crear encuesta ─────────────────────────────────────────────────────────
   const handleCreated = {
     user: { uid: currentUser?.uid, name: userName },
-    onSuccess: (voteId) => {
+    onSuccess: (voteId, voteTitle) => {
       sendVoteCreatedNotifications(tripId, {
         creatorUid: currentUser?.uid,
         creatorName: userName,
-        voteTitle: modal?._title ?? '',
+        voteTitle: voteTitle ?? '',
         tripName: trip?.name,
       }).catch(() => {});
     },

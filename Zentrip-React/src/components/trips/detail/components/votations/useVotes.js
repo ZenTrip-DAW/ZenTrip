@@ -16,11 +16,11 @@ export function useVotes(tripId, currentUid, members = [], tripName = '') {
       orderBy('createdAt', 'desc'),
     );
 
-    const unsub = onSnapshot(q, async (snap) => {
+    const unsub = onSnapshot(q, (snap) => {
       const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-      // Comprueba si alguna encuesta activa acaba de completarse (todos han votado)
-      // y envía la notificación de resultados si aún no se ha enviado.
+      // Comprueba si alguna encuesta activa acaba de completarse y notifica resultados.
+      // Se hace sin await para no bloquear el callback síncrono de onSnapshot.
       const memberCount = members.length;
       if (memberCount > 0) {
         for (const vote of docs) {

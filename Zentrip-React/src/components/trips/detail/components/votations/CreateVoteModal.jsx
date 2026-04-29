@@ -73,7 +73,7 @@ export default function CreateVoteModal({ tripId, editingVote = null, onClose, o
           { title: title.trim(), category, type, options: cleanOptions },
           onCreated.user,
         );
-        onCreated.onSuccess(id);
+        onCreated.onSuccess(id, title.trim());
       }
       onClose();
     } catch (err) {
@@ -203,8 +203,7 @@ export default function CreateVoteModal({ tripId, editingVote = null, onClose, o
             Cancelar
           </button>
           <button
-            type="submit"
-            form=""
+            type="button"
             onClick={handleSubmit}
             disabled={saving}
             className="flex-1 py-2.5 rounded-xl bg-secondary-5 hover:bg-secondary-6 text-white body-2-semibold transition-colors disabled:opacity-50 cursor-pointer"
