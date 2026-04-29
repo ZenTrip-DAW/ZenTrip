@@ -14,6 +14,9 @@ function EmptyDay() {
 }
 
 export default function DayActivities({ selectedDay, activitiesByDate, onAddActivity, onViewActivity, onEditActivity, onDeleteActivity, onGoToReservas, weatherData, location, members = [] }) {
+  const today = new Date().toISOString().split('T')[0];
+  const isPast = selectedDay && selectedDay < today;
+
   if (!selectedDay) {
     return (
       <div className="bg-white rounded-2xl border border-neutral-1 p-6 flex flex-col items-center justify-center py-16 gap-2">
@@ -45,8 +48,14 @@ export default function DayActivities({ selectedDay, activitiesByDate, onAddActi
           <WeatherPanel weatherData={weatherData} />
           <button
             type="button"
-            onClick={() => onAddActivity?.(selectedDay)}
-            className="flex items-center gap-1.5 bg-primary-3 hover:bg-orange-400 text-white px-3 sm:px-4 py-2 rounded-full body-3 font-semibold transition-colors shadow-sm shrink-0"
+            onClick={() => !isPast && onAddActivity?.(selectedDay)}
+            disabled={isPast}
+            title={isPast ? 'No puedes añadir actividades en días pasados' : undefined}
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full body-3 font-semibold transition-colors shadow-sm shrink-0 ${
+              isPast
+                ? 'bg-neutral-2 text-neutral-4 cursor-not-allowed'
+                : 'bg-primary-3 hover:bg-orange-400 text-white'
+            }`}
           >
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">Actividad</span>

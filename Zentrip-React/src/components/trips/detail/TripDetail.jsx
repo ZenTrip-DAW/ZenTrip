@@ -95,6 +95,10 @@ export default function TripDetail() {
   const [addActivityModal, setAddActivityModal] = useState({ open: false, date: null, mode: 'create', activity: null });
 
   const handleAddActivity = (date) => {
+    const today = new Date().toISOString().split('T')[0];
+    if (!date || date < today) return;
+    if (trip?.startDate && date < trip.startDate) return;
+    if (trip?.endDate && date > trip.endDate) return;
     setAddActivityModal({ open: true, date, mode: 'create', activity: null });
   };
 
