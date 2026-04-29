@@ -1,11 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { ROUTES } from "../../config/routes";
 import CategoryBar from "./CategoryBar";
 import SplashScreen from "../shared/SplashScreen";
 
-const heroImg = '/img/background/home/hero/background_hero.jpg';
+const heroImages = [
+  '/img/background/home/hero/img_hero_1.jpg',
+  '/img/background/home/hero/img_hero_2.jpg',
+  '/img/background/home/hero/img_hero_3.jpg',
+  '/img/background/home/hero/img_hero_4.jpg',
+  '/img/background/home/hero/img_hero_5.jpg',
+];
+
 
 export default function Home() {
   const navigate = useNavigate();
@@ -13,6 +20,7 @@ export default function Home() {
   const { profile, user } = useAuth();
   const [showInviteError, setShowInviteError] = useState(searchParams.get('inviteError') === 'emailMismatch');
   const [imagenCargada, setImagenCargada] = useState(false);
+  const heroImg = useMemo(() => heroImages[Math.floor(Math.random() * heroImages.length)], []);
 
   useEffect(() => {
     if (!showInviteError) return;
@@ -58,7 +66,7 @@ export default function Home() {
       )}
       <div
       style={{
-        backgroundImage: "url('/img/background/home/hero/background_hero.jpg')",
+        backgroundImage: `url('${heroImg}')`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -72,12 +80,13 @@ export default function Home() {
         marginBottom: "-1.5rem",
       }}
     >
+      <div className="absolute inset-0" style={{ backgroundColor: "rgba(0,0,0,0.35)" }} />
       <div className="absolute left-5 right-5 top-24 sm:left-10 sm:top-32 sm:right-auto md:left-14 md:top-36 lg:left-16 lg:top-40 max-w-full sm:max-w-md md:max-w-lg lg:max-w-xl text-left">
-        <h1 className="title-h1-mobile md:title-h1-desktop text-sky-400">
+        <h1 className="title-h1-mobile md:title-h1-desktop text-white">
           ¡Bienvenid@, {registeredName}!
         </h1>
 
-        <h2 className="title-h2-mobile md:title-h2-desktop text-sky-400 mt-2">
+        <h2 className="title-h2-mobile md:title-h2-desktop text-white mt-2">
           Plan, Pack &amp; Go
         </h2>
 
