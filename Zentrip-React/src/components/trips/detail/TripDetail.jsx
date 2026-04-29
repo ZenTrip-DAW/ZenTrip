@@ -14,6 +14,7 @@ import BookingsTab from './components/tabs/BookingsTab';
 import InvitationsTab from './components/tabs/InvitationsTab';
 import GalleryTab from './components/tabs/GalleryTab';
 import LuggageTab from './components/tabs/LuggageTab';
+import VotationsTab from './components/tabs/VotationsTab';
 import PlaceholderTab from './components/tabs/PlaceholderTab';
 
 
@@ -43,7 +44,6 @@ function ErrorState({ message, onBack }) {
 }
 
 const TAB_PLACEHOLDERS = {
-  votaciones:  <PlaceholderTab label="Votaciones"  emoji="🗳️" />,
   presupuesto: <PlaceholderTab label="Presupuesto" emoji="💰" />,
   chat:        <PlaceholderTab label="Chat"        emoji="💬" />,
 };
@@ -231,6 +231,18 @@ export default function TripDetail() {
           highlightBookingId={highlightBookingId}
           onGoBook={handleGoBook}
           onOpenRoute={handleOpenRoute}
+        />
+      );
+    }
+    if (activeTab === 'votaciones') {
+      return (
+        <VotationsTab
+          tripId={tripId}
+          trip={trip}
+          members={members}
+          currentUser={user}
+          currentProfile={profile}
+          onActivitySaved={handleSaveActivity}
         />
       );
     }

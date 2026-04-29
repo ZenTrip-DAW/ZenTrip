@@ -159,6 +159,52 @@ export default function NotificationPanel({ onClose }) {
                 const isActivity = n.type === 'activity_booked';
                 const isManualActivity = n.type === 'activity_manual';
                 const isRoute = n.type === 'route_saved';
+                const isVoteCreated = n.type === 'vote_created';
+                const isVoteResults = n.type === 'vote_results';
+
+                // Notificaciones de votaciones
+                if (isVoteCreated || isVoteResults) {
+                  const handleNavigateVote = async () => {
+                    await markTripNotificationRead(n.id);
+                    goToTrip(n.tripId, { activeTab: 'votaciones' });
+                  };
+                  const voteEmoji = isVoteCreated ? '🗳️' : n.isTie ? '🤝' : '🏆';
+                  const voteTitle = isVoteCreated
+                    ? 'Nueva encuesta creada'
+                    : n.isTie ? 'Empate en la encuesta' : '¡Resultados de la encuesta!';
+                  const voteBody = isVoteCreated
+                    ? <><span className="font-semibold text-secondary-5">{n.creatorName}</span> ha creado la encuesta <span className="font-semibold text-neutral-7">"{n.voteTitle}"</span>{n.tripName ? <> en <span className="font-semibold text-neutral-7">"{n.tripName}"</span></> : ''}</>
+                    : n.isTie
+                      ? <>Empate en <span className="font-semibold text-neutral-7">"{n.voteTitle}"</span> entre {n.winners?.join(' y ')}</>
+                      : <><span className="font-semibold text-primary-3">{n.winners?.[0]}</span> gana en <span className="font-semibold text-neutral-7">"{n.voteTitle}"</span></>;
+
+                  return (
+                    <div
+                      key={n.id}
+                      onClick={handleNavigateVote}
+                      className="px-4 py-3 rounded-xl border cursor-pointer hover:brightness-95 transition-all bg-secondary-1 border-secondary-2"
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="text-xl shrink-0 mt-0.5">{voteEmoji}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="body-3 font-semibold text-neutral-7 mb-0.5">{voteTitle}</p>
+                          <p className="body-3 text-neutral-5 leading-snug">{voteBody}</p>
+                          {formatNotificationDate(n.createdAt) && (
+                            <p className="body-3 text-neutral-3 mt-2">{formatNotificationDate(n.createdAt)}</p>
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); markTripNotificationRead(n.id); }}
+                            className="mt-2 body-3 font-semibold text-neutral-3 hover:text-neutral-5 transition-colors cursor-pointer"
+                          >
+                            Marcar como leído ✕
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
                 const emoji = isFlight ? '✈️' : isRestaurant ? '🍽️' : isActivity ? '🎯' : isManualActivity ? '📌' : isRoute ? '🗺️' : '🏨';
                 const title = isFlight ? 'Nuevo vuelo reservado' : isRestaurant ? 'Nuevo restaurante anotado' : isActivity ? 'Nueva actividad anotada' : isManualActivity ? 'Nueva actividad en el itinerario' : isRoute ? 'Nueva ruta guardada' : 'Nueva reserva de hotel';
                 const itemName = isFlight ? n.flightLabel : isRestaurant ? n.restaurantName : isActivity || isManualActivity ? n.activityName : isRoute ? n.routeName : n.hotelName;
