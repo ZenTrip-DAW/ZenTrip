@@ -77,9 +77,9 @@ export default function NotificationPanel({ onClose }) {
   const hasAny = validInvitations.length > 0 || acceptedNotifications.length > 0 || tripNotifications.length > 0;
   const hasDismissable = tripNotifications.length > 0 || acceptedNotifications.length > 0;
 
-  const goToTrip = (tripId) => {
+  const goToTrip = (tripId, state = null) => {
     if (!tripId) return;
-    navigate(getTripDetailPath(tripId));
+    navigate(getTripDetailPath(tripId), state ? { state } : undefined);
     onClose();
   };
 
@@ -157,37 +157,42 @@ export default function NotificationPanel({ onClose }) {
                 const isFlight = n.type === 'flight_booked';
                 const isRestaurant = n.type === 'restaurant_booked';
                 const isActivity = n.type === 'activity_booked';
-                const emoji = isFlight ? '✈️' : isRestaurant ? '🍽️' : isActivity ? '🎯' : '🏨';
-                const title = isFlight ? 'Nuevo vuelo reservado' : isRestaurant ? 'Nuevo restaurante anotado' : isActivity ? 'Nueva actividad anotada' : 'Nueva reserva de hotel';
-                const itemName = isFlight ? n.flightLabel : isRestaurant ? n.restaurantName : isActivity ? n.activityName : n.hotelName;
-                const nameColor = isFlight ? 'text-secondary-4' : isRestaurant ? 'text-primary-3' : isActivity ? 'text-primary-4' : 'text-auxiliary-green-5';
-                const cardClass = isFlight
+                const isManualActivity = n.type === 'activity_manual';
+                const isRoute = n.type === 'route_saved';
+                const emoji = isFlight ? '✈️' : isRestaurant ? '🍽️' : isActivity ? '🎯' : isManualActivity ? '📌' : isRoute ? '🗺️' : '🏨';
+                const title = isFlight ? 'Nuevo vuelo reservado' : isRestaurant ? 'Nuevo restaurante anotado' : isActivity ? 'Nueva actividad anotada' : isManualActivity ? 'Nueva actividad en el itinerario' : isRoute ? 'Nueva ruta guardada' : 'Nueva reserva de hotel';
+                const itemName = isFlight ? n.flightLabel : isRestaurant ? n.restaurantName : isActivity || isManualActivity ? n.activityName : isRoute ? n.routeName : n.hotelName;
+                const nameColor = isFlight ? 'text-secondary-4' : isRestaurant ? 'text-primary-3' : isRoute ? 'text-secondary-4' : isActivity || isManualActivity ? 'text-primary-4' : 'text-auxiliary-green-5';
+                const cardClass = isFlight || isRoute
                   ? 'bg-secondary-1 border-secondary-2'
-                  : isRestaurant ? 'bg-primary-1 border-primary-2'
-                    : isActivity ? 'bg-primary-1 border-primary-2'
-                      : 'bg-auxiliary-green-1 border-auxiliary-green-3';
+                  : isRestaurant || isActivity || isManualActivity ? 'bg-primary-1 border-primary-2'
+                    : 'bg-auxiliary-green-1 border-auxiliary-green-3';
+
+                const handleNavigate = async () => {
+                  await markTripNotificationRead(n.id);
+                  if (isManualActivity) {
+                    goToTrip(n.tripId, { activeTab: 'itinerario', highlightActivityId: n.activityId, highlightDate: n.activityDate });
+                  } else if (isRoute) {
+                    goToTrip(n.tripId, { activeTab: 'reservas', subTab: 'rutas', highlightBookingId: n.bookingId });
+                  } else {
+                    goToTrip(n.tripId);
+                  }
+                };
+
                 return (
-                  <div key={n.id} className={`px-4 py-3 rounded-xl border ${cardClass}`}>
+                  <div
+                    key={n.id}
+                    onClick={handleNavigate}
+                    className={`px-4 py-3 rounded-xl border cursor-pointer hover:brightness-95 transition-all ${cardClass}`}
+                  >
                     <div className="flex items-start gap-3">
                       <span className="text-xl shrink-0 mt-0.5">{emoji}</span>
                       <div className="flex-1 min-w-0">
-                        <button
-                          type="button"
-                          onClick={async () => { await markTripNotificationRead(n.id); goToTrip(n.tripId); }}
-                          className="body-3 font-semibold text-neutral-7 mb-0.5 text-left hover:text-neutral-8 transition-colors cursor-pointer"
-                        >
-                          {title}
-                        </button>
+                        <p className="body-3 font-semibold text-neutral-7 mb-0.5">{title}</p>
                         <p className="body-3 text-neutral-5 leading-snug">
                           <span className={`font-semibold ${nameColor}`}>{n.bookerName}</span>
-                          {' '}ha anotado{' '}
-                          <button
-                            type="button"
-                            onClick={async () => { await markTripNotificationRead(n.id); goToTrip(n.tripId); }}
-                            className="font-semibold text-neutral-7 hover:text-neutral-8 transition-colors cursor-pointer"
-                          >
-                            "{itemName}"
-                          </button>
+                          {isRoute ? ' ha guardado ' : ' ha anotado '}
+                          <span className="font-semibold text-neutral-7">"{itemName}"</span>
                           {n.tripName ? <> en <span className="font-semibold text-neutral-7">"{n.tripName}"</span></> : ''}
                         </p>
                         {formatNotificationDate(n.createdAt) && (
@@ -195,7 +200,7 @@ export default function NotificationPanel({ onClose }) {
                         )}
                         <button
                           type="button"
-                          onClick={() => markTripNotificationRead(n.id)}
+                          onClick={(e) => { e.stopPropagation(); markTripNotificationRead(n.id); }}
                           className="mt-2 body-3 font-semibold text-neutral-3 hover:text-neutral-5 transition-colors cursor-pointer"
                         >
                           Marcar como leído ✕

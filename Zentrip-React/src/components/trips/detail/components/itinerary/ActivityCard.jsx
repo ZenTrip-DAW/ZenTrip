@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Trash2, Pencil, UserCircle, Users } from 'lucide-react';
 import { TYPE_CONFIG, STATUS_CONFIG } from './dayActivitiesUtils';
 
@@ -14,8 +14,16 @@ const TYPE_TO_SUBTAB = {
   tren:        'trenes',
 };
 
-export default function ActivityCard({ activity, members = [], onDelete, onView, onEdit, onGoToReservas }) {
+export default function ActivityCard({ activity, members = [], onDelete, onView, onEdit, onGoToReservas, highlighted = false }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    if (highlighted && cardRef.current) {
+      cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [highlighted]);
+
   const isManual = activity.source === 'manual';
   const isGenericPlan = isManual && activity.type === 'actividad';
   const typeCfg = TYPE_CONFIG[activity.type] || TYPE_CONFIG.actividad;
@@ -43,12 +51,13 @@ export default function ActivityCard({ activity, members = [], onDelete, onView,
 
       {/* Tarjeta */}
       <div
+        ref={cardRef}
         onClick={() => {
           if (confirmDelete) return;
           if (subtab) { onGoToReservas?.(subtab, activity.bookingId); return; }
           if (isDeletable) onView?.(activity);
         }}
-        className={`flex-1 min-w-0 rounded-2xl border p-3 sm:p-4 mb-3 ${subtab || isDeletable ? 'cursor-pointer hover:shadow-md hover:border-neutral-2' : ''} transition ${activity.status === 'reservado' ? 'bg-auxiliary-green-1 border-auxiliary-green-3' : 'bg-white border-neutral-1'}`}
+        className={`flex-1 min-w-0 rounded-2xl border p-3 sm:p-4 mb-3 ${subtab || isDeletable ? 'cursor-pointer hover:shadow-md hover:border-neutral-2' : ''} transition ${activity.status === 'reservado' ? 'bg-auxiliary-green-1 border-auxiliary-green-3' : 'bg-white border-neutral-1'} ${highlighted ? 'ring-2 ring-primary-3' : ''}`}
       >
         {confirmDelete ? (
           <div className="flex flex-col gap-2">

@@ -587,6 +587,47 @@ export async function sendActivityBookingNotifications(tripId, { bookerUid, book
   ));
 }
 
+export async function sendManualActivityNotifications(tripId, { creatorUid, creatorName, activityName, activityId, activityDate, tripName }) {
+  const membersSnap = await getDocs(collection(db, 'trips', tripId, 'members'));
+  const recipients = membersSnap.docs
+    .map((d) => d.data())
+    .filter((m) => m.uid && m.uid !== creatorUid);
+  await Promise.all(recipients.map((m) =>
+    addDoc(collection(db, 'notifications'), {
+      recipientUid: m.uid,
+      type: 'activity_manual',
+      tripId,
+      tripName: tripName || '',
+      activityName,
+      activityId,
+      activityDate,
+      bookerName: creatorName || 'Un miembro',
+      read: false,
+      createdAt: serverTimestamp(),
+    })
+  ));
+}
+
+export async function sendRouteNotifications(tripId, { creatorUid, creatorName, routeName, bookingId, tripName }) {
+  const membersSnap = await getDocs(collection(db, 'trips', tripId, 'members'));
+  const recipients = membersSnap.docs
+    .map((d) => d.data())
+    .filter((m) => m.uid && m.uid !== creatorUid);
+  await Promise.all(recipients.map((m) =>
+    addDoc(collection(db, 'notifications'), {
+      recipientUid: m.uid,
+      type: 'route_saved',
+      tripId,
+      tripName: tripName || '',
+      routeName,
+      bookingId,
+      bookerName: creatorName || 'Un miembro',
+      read: false,
+      createdAt: serverTimestamp(),
+    })
+  ));
+}
+
 // Trip gallery
 
 export async function getGalleryFolders(tripId) {

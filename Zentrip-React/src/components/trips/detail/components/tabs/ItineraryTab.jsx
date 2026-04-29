@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import BookingBar from '../itinerary/BookingBar';
 import TripSummaryCard from '../itinerary/TripSummaryCard';
@@ -39,12 +39,18 @@ export default function ItinerarioTab({
   onGoToReservas,
   weatherByDate = {},
   locationByDate = {},
+  initialSelectedDay = null,
+  highlightActivityId = null,
 }) {
   const today = new Date().toISOString().split('T')[0];
   const [selectedDay, setSelectedDay] = useState(() =>
-    tripDays.includes(today) ? today : (tripDays[0] ?? null)
+    initialSelectedDay ?? (tripDays.includes(today) ? today : (tripDays[0] ?? null))
   );
   const [activeBooking, setActiveBooking] = useState(initialActiveBooking);
+
+  useEffect(() => {
+    if (initialSelectedDay) setSelectedDay(initialSelectedDay);
+  }, [initialSelectedDay]);
 
   const handleBookingSelect = (key) => {
     const opening = activeBooking !== key;
@@ -160,6 +166,7 @@ export default function ItinerarioTab({
                     weatherData={selectedDay ? weatherByDate[selectedDay] : null}
                     location={selectedDay ? (locationByDate[selectedDay] || trip?.destination) : trip?.destination}
                     members={members}
+                    highlightActivityId={highlightActivityId}
                   />
                 </>
               )}

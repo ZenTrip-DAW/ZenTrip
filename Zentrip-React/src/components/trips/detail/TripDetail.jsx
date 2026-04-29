@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useTripDetail } from './hooks/useTripDetail';
 import { useWeather } from './hooks/useWeather';
-import { addActivity, updateActivity, deleteActivity, removeMemberFromTrip } from '../../../services/tripService';
+import { addActivity, updateActivity, deleteActivity, removeMemberFromTrip, sendManualActivityNotifications } from '../../../services/tripService';
 import ConfirmModal from '../../ui/ConfirmModal';
 import AddActivityModal from './components/itinerary/AddActivityModal';
 import TripDetailHeader from './components/TripDetailHeader';
@@ -56,9 +56,21 @@ export default function TripDetail() {
   const [activeTab, setActiveTab] = useState(location.state?.activeTab ?? 'itinerario');
   const [initialBooking, setInitialBooking]         = useState(null);
   const [initialRouteData, setInitialRouteData]     = useState(null);
-  const [initialBookingSubTab, setInitialBookingSubTab]   = useState('hoteles');
-  const [highlightBookingId, setHighlightBookingId]       = useState(null);
+  const [initialBookingSubTab, setInitialBookingSubTab]   = useState(location.state?.subTab ?? 'hoteles');
+  const [highlightBookingId, setHighlightBookingId]       = useState(location.state?.highlightBookingId ?? null);
+  const [highlightActivityId, setHighlightActivityId]     = useState(location.state?.highlightActivityId ?? null);
+  const [highlightDate, setHighlightDate]                 = useState(location.state?.highlightDate ?? null);
   const [showLeaveModal, setShowLeaveModal]         = useState(false);
+
+  useEffect(() => {
+    const s = location.state;
+    if (!s) return;
+    if (s.activeTab) setActiveTab(s.activeTab);
+    if (s.highlightActivityId !== undefined) setHighlightActivityId(s.highlightActivityId);
+    if (s.highlightDate !== undefined) setHighlightDate(s.highlightDate);
+    if (s.highlightBookingId !== undefined) setHighlightBookingId(s.highlightBookingId);
+    if (s.subTab) setInitialBookingSubTab(s.subTab);
+  }, [location.key]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleGoBook = (bookingKey) => {
     setInitialBooking(bookingKey);
@@ -95,6 +107,10 @@ export default function TripDetail() {
   const [addActivityModal, setAddActivityModal] = useState({ open: false, date: null, mode: 'create', activity: null });
 
   const handleAddActivity = (date) => {
+    const today = new Date().toISOString().split('T')[0];
+    if (!date || date < today) return;
+    if (trip?.startDate && date < trip.startDate) return;
+    if (trip?.endDate && date > trip.endDate) return;
     setAddActivityModal({ open: true, date, mode: 'create', activity: null });
   };
 
@@ -111,6 +127,16 @@ export default function TripDetail() {
       const id = await addActivity(tripId, activityData);
       setActivities((prev) => [...prev, { id, ...activityData }]);
       setAddActivityModal({ open: false, date: null, mode: 'create', activity: null });
+      if (profile) {
+        sendManualActivityNotifications(tripId, {
+          creatorUid: user.uid,
+          creatorName: profile.displayName || profile.username || user.email,
+          activityName: activityData.name || 'Nueva actividad',
+          activityId: id,
+          activityDate: activityData.date,
+          tripName: trip?.name,
+        }).catch(() => {});
+      }
     } catch (err) {
       console.error('[TripDetail] Error al añadir actividad:', err);
     }
@@ -175,6 +201,8 @@ export default function TripDetail() {
           onGoToReservas={handleGoToReservas}
           weatherByDate={weatherByDate}
           locationByDate={locationByDate}
+          initialSelectedDay={highlightDate}
+          highlightActivityId={highlightActivityId}
         />
       );
     }
