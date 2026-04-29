@@ -53,7 +53,7 @@ export default function HomeCalendar({ activeTripDayMap, pastTripDaySet, activit
 
   return (
     <div
-      className="rounded-2xl border border-white/40 bg-white/45 p-3 sm:p-4 w-full"
+      className="rounded-2xl border border-white/40 bg-white/70 p-3 sm:p-4 w-full"
     >
       <div className="flex items-center justify-between mb-3">
         <button
@@ -102,7 +102,7 @@ export default function HomeCalendar({ activeTripDayMap, pastTripDaySet, activit
           if (isActiveTripDay) {
             cellClass += isToday
               ? 'bg-secondary-5 cursor-pointer hover:bg-secondary-6'
-              : 'bg-white/40 border border-white/60 hover:bg-white/55 cursor-pointer';
+              : 'bg-secondary-1/60 border border-secondary-4 hover:bg-secondary-1 cursor-pointer';
           } else if (isPastTripDay || (isPast && !isToday)) {
             cellClass += 'cursor-default opacity-40';
           } else {
