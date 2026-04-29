@@ -783,26 +783,33 @@ export default function LuggageTab({ tripId }) {
         <div>
           <h2 className="title-h3-desktop text-secondary-5 mb-4"> Maleta grupal</h2>
 
-          {personalItems.filter(item => groupItems.some(g => g.item?.trim().toLowerCase() === item.item?.trim().toLowerCase())).length > 0 && (
+          {groupedGroupItems.length > 0 && (
             <div className="mb-4">
               {(() => {
-                const groupItemsInPersonal = personalItems.filter(item =>
-                  groupItems.some(g => g.item?.trim().toLowerCase() === item.item?.trim().toLowerCase())
-                );
-                const packedGroupItems = groupItemsInPersonal.filter(item => item.packed).length;
+                let totalSelections = 0;
+                let totalPacked = 0;
+
+                for (const group of groupedGroupItems) {
+                  const uniqueUserIds = new Set((group.selections || []).map((s) => s.userId));
+                  totalSelections += uniqueUserIds.size;
+                  totalPacked += (group.packedUserIds?.size || 0);
+                }
+
+                const percentage = totalSelections > 0 ? Math.round((totalPacked / totalSelections) * 100) : 0;
+
                 return (
                   <>
                     <div className="flex items-center justify-between mb-2">
                       <span className="body-4 font-semibold text-neutral-6">Items empaquetados</span>
                       <span className="body-4 font-semibold text-primary-4">
-                        {Math.round((packedGroupItems / groupItemsInPersonal.length) * 100)}%
+                        {percentage}%
                       </span>
                     </div>
                     <div className="w-full h-2 rounded-full bg-primary-2 overflow-hidden">
                       <div
                         className="h-full bg-primary-4 transition-all duration-300"
                         style={{
-                          width: `${(packedGroupItems / groupItemsInPersonal.length) * 100}%`
+                          width: `${percentage}%`
                         }}
                       />
                     </div>
