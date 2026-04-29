@@ -128,7 +128,7 @@ export default function HomeCalendar({ activeTripDayMap, pastTripDaySet, activit
               )}
               <span className={dayNumClass}>{dayNum}</span>
               {actCount > 0 && (
-                <span className="absolute -top-1 -right-1 text-[9px] font-bold bg-primary-3 text-white rounded-full min-w-[15px] h-[15px] flex items-center justify-center leading-none px-0.5">
+                <span className="absolute -top-1 -right-1 text-[9px] font-bold bg-primary-3 text-white rounded-full min-w-3.75 h-3.75 flex items-center justify-center leading-none px-0.5">
                   {actCount}
                 </span>
               )}
