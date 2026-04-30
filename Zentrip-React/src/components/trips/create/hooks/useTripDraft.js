@@ -13,7 +13,6 @@ const INITIAL_FORM = {
   startDate: '',
   endDate: '',
   currency: '',
-  budget: '',
   hasPet: false,
   members: [],
 };

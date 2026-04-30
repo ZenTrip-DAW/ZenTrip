@@ -342,11 +342,11 @@ function SettlementPanel({ debts, members, tripId, currency, currentUid, showAll
 
 // ─── Vista Grupo ──────────────────────────────────────────────────────────────
 
-function GroupView({ trip, members, expenses, payments, currency, currentUid, tripId, onAddExpense, onEditExpense, onDeleteExpense }) {
+function GroupView({ trip, members, expenses, payments, currency, currentUid, tripId, allPersonalBudgets, onAddExpense, onEditExpense, onDeleteExpense }) {
   const [filterCat, setFilterCat]       = useState('all');
   const [filterMember, setFilterMember] = useState('all');
 
-  const totalBudget = Number(trip?.budget) || 0;
+  const totalBudget = allPersonalBudgets.reduce((s, b) => s + (b.budget ?? 0), 0);
   const totalSpent  = expenses.reduce((s, e) => s + (e.tripAmount ?? e.amount ?? 0), 0);
   const overBudget  = totalBudget > 0 && totalSpent > totalBudget;
 
@@ -371,10 +371,11 @@ function GroupView({ trip, members, expenses, payments, currency, currentUid, tr
       <div className="bg-white border border-neutral-1 rounded-2xl p-4 flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <p className="body-3 text-neutral-4 font-medium uppercase tracking-wide">Presupuesto del grupo</p>
+          <p className="body-3 text-neutral-3 -mt-2">Suma de los presupuestos personales de cada miembro</p>
           <TrendingUp className="w-4 h-4 text-neutral-3" />
         </div>
         <p className="title-h2-desktop text-neutral-7">
-          {totalBudget > 0 ? fmt(totalBudget, currency) : <span className="body text-neutral-3">Sin definir en el viaje</span>}
+          {totalBudget > 0 ? fmt(totalBudget, currency) : <span className="body text-neutral-3">Los miembros aún no han definido su presupuesto personal</span>}
         </p>
         {totalBudget > 0 && (
           <>
@@ -424,7 +425,7 @@ function GroupView({ trip, members, expenses, payments, currency, currentUid, tr
                     <Avatar member={m} size="sm" />
                     <span className="body-3 text-neutral-6 flex-1 truncate">{m.name}</span>
                     <span className={`body-3 font-semibold ${pos ? 'text-auxiliary-green-5' : neg ? 'text-feedback-error' : 'text-neutral-4'}`}>
-                      {pos ? '+' : ''}{fmt(bal, currency)}
+                      {pos ? '+' : ''}{fmt((pos || neg) ? bal : 0, currency)}
                     </span>
                   </div>
                 );
@@ -715,7 +716,7 @@ function PersonalView({ trip, members, expenses, payments, myPersonalBudget, cur
 
 export default function BudgetTab({ tripId, trip, members = [], currentUser }) {
   const currentUid = currentUser?.uid;
-  const { expenses, payments, myPersonalBudget, loading, error } = useBudget(tripId, currentUid);
+  const { expenses, payments, myPersonalBudget, allPersonalBudgets, loading, error } = useBudget(tripId, currentUid);
 
   const [view,         setView]         = useState('group');
   const [expenseModal, setExpenseModal] = useState(null); // { mode: 'add'|'edit', expense?, personal: bool }
@@ -820,6 +821,7 @@ export default function BudgetTab({ tripId, trip, members = [], currentUser }) {
           currency={currency}
           currentUid={currentUid}
           tripId={tripId}
+          allPersonalBudgets={allPersonalBudgets}
           onAddExpense={() => setExpenseModal({ mode: 'add', personal: false })}
           onEditExpense={(exp) => setExpenseModal({ mode: 'edit', expense: exp, personal: false })}
           onDeleteExpense={setDeleteTarget}

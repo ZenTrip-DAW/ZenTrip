@@ -57,6 +57,14 @@ export function subscribeToMyPersonalBudget(tripId, uid, onData, onErr) {
   );
 }
 
+export function subscribeToAllPersonalBudgets(tripId, onData, onErr) {
+  return onSnapshot(
+    collection(db, 'trips', tripId, 'personalBudgets'),
+    (snap) => onData(snap.docs.map((d) => ({ uid: d.id, budget: d.data().budget ?? 0 }))),
+    (err) => { console.error('[budgetService] allPersonalBudgets', err); onErr?.(err); },
+  );
+}
+
 export async function setPersonalBudget(tripId, uid, budget) {
   await setDoc(doc(db, 'trips', tripId, 'personalBudgets', uid), {
     budget: Number(budget),

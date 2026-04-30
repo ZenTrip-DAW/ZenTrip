@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   subscribeToExpenses,
-  subscribeToMyPersonalBudget,
+  subscribeToAllPersonalBudgets,
   subscribeToPayments,
 } from '../../../../../services/budgetService';
 
@@ -94,11 +94,11 @@ export function computeCategoryTotals(expenses) {
 // ─── Hook principal ───────────────────────────────────────────────────────────
 
 export function useBudget(tripId, uid) {
-  const [expenses, setExpenses]             = useState([]);
-  const [payments, setPayments]             = useState([]);
-  const [myPersonalBudget, setMyPersonalBudget] = useState(0);
-  const [loading, setLoading]               = useState(true);
-  const [error, setError]                   = useState(null);
+  const [expenses,           setExpenses]           = useState([]);
+  const [payments,           setPayments]           = useState([]);
+  const [allPersonalBudgets, setAllPersonalBudgets] = useState([]);
+  const [loading,            setLoading]            = useState(true);
+  const [error,              setError]              = useState(null);
 
   useEffect(() => {
     if (!tripId) return;
@@ -110,10 +110,10 @@ export function useBudget(tripId, uid) {
       (data) => { setExpenses(data); setLoading(false); },
       (err) => { setError(err.message); setLoading(false); },
     );
-    const unsub2 = subscribeToMyPersonalBudget(
-      tripId, uid,
-      (budget) => setMyPersonalBudget(budget),
-      (err) => console.error('[useBudget] presupuesto personal:', err),
+    const unsub2 = subscribeToAllPersonalBudgets(
+      tripId,
+      (data) => setAllPersonalBudgets(data),
+      (err) => console.error('[useBudget] allPersonalBudgets:', err),
     );
     const unsub3 = subscribeToPayments(
       tripId,
@@ -124,5 +124,7 @@ export function useBudget(tripId, uid) {
     return () => { unsub1(); unsub2(); unsub3(); };
   }, [tripId, uid]);
 
-  return { expenses, payments, myPersonalBudget, loading, error };
+  const myPersonalBudget = allPersonalBudgets.find((b) => b.uid === uid)?.budget ?? 0;
+
+  return { expenses, payments, myPersonalBudget, allPersonalBudgets, loading, error };
 }
