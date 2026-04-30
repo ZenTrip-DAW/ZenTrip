@@ -324,28 +324,37 @@ function SettlementPanel({ debts, members, tripId, currency, currentUid, showAll
           const busy = marking === key;
 
           return (
-            <div key={i} className={`flex items-center gap-2 rounded-xl px-3 py-3 border ${
-              isMe ? 'bg-feedback-error-bg border-feedback-error' : 'bg-neutral-1/60 border-neutral-1'
+            <div key={i} className={`flex flex-col sm:flex-row sm:items-center gap-2 rounded-xl px-3 py-3 border ${
+              isMe ? 'bg-feedback-error-bg border-feedback-error' : 'bg-secondary-1 border-secondary-2'
             }`}>
+              {/* Quién debe a quién */}
               <div className="flex items-center gap-1.5 flex-1 min-w-0 flex-wrap">
-                <Avatar member={from} size="sm" />
+                <span className="hidden sm:inline-flex shrink-0"><Avatar member={from} size="sm" /></span>
                 <span className="body-3 font-semibold text-neutral-7 shrink-0">{from?.name ?? '?'}</span>
-                <span className="body-3 text-neutral-5 shrink-0">debe pagar a</span>
-                <Avatar member={to} size="sm" />
+                <span className="body-3 text-neutral-5 shrink-0">debe pagar</span>
+                {/* Importe integrado en la frase — solo en móvil */}
+                <span className={`sm:hidden body-2 font-bold shrink-0 ${isMe ? 'text-feedback-error' : 'text-neutral-7'}`}>
+                  {fmt(d.amount, currency)}
+                </span>
+                <span className="body-3 text-neutral-5 shrink-0">a</span>
+                <span className="hidden sm:inline-flex shrink-0"><Avatar member={to} size="sm" /></span>
                 <span className="body-3 font-semibold text-neutral-7 shrink-0">{to?.name ?? '?'}</span>
               </div>
-              <span className={`body-3 font-semibold shrink-0 ${isMe ? 'text-feedback-error' : 'text-neutral-7'}`}>
-                {fmt(d.amount, currency)}
-              </span>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => setConfirmDebt(d)}
-                className="ml-1 flex items-center gap-1 px-3 py-1.5 rounded-full body-3 font-medium border border-auxiliary-green-3 text-auxiliary-green-5 hover:bg-auxiliary-green-1 transition-colors disabled:opacity-50 shrink-0"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                {busy ? '...' : 'Marcar como pagado'}
-              </button>
+              {/* Importe (desktop) + botón */}
+              <div className="flex items-center justify-end sm:shrink-0 gap-2">
+                <span className={`hidden sm:inline body-2 font-bold shrink-0 ${isMe ? 'text-feedback-error' : 'text-neutral-7'}`}>
+                  {fmt(d.amount, currency)}
+                </span>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setConfirmDebt(d)}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 rounded-full body-3 font-medium bg-auxiliary-green-5 text-white hover:bg-auxiliary-green-5 transition-colors disabled:opacity-50"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  {busy ? '...' : 'Marcar como pagado'}
+                </button>
+              </div>
             </div>
           );
         })}
@@ -387,10 +396,12 @@ function GroupView({ trip, members, expenses, payments, currency, currentUid, tr
 
       {/* Resumen presupuesto */}
       <div className="bg-white border border-neutral-1 rounded-2xl p-4 flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <p className="body-3 text-neutral-4 font-medium uppercase tracking-wide">Presupuesto del grupo</p>
-          <p className="body-3 text-neutral-3 -mt-2">Suma de los presupuestos personales de cada miembro</p>
-          <TrendingUp className="w-4 h-4 text-neutral-3" />
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <p className="body-3 text-neutral-4 font-medium uppercase tracking-wide">Presupuesto del grupo</p>
+            <p className="body-3 text-neutral-3 mt-0.5">Suma de los presupuestos personales de cada miembro</p>
+          </div>
+          <TrendingUp className="w-4 h-4 text-neutral-3 shrink-0 mt-0.5" />
         </div>
         <p className="title-h2-desktop text-neutral-7">
           {totalBudget > 0 ? fmt(totalBudget, currency) : <span className="body text-neutral-3">Los miembros aún no han definido su presupuesto personal</span>}
@@ -508,12 +519,12 @@ function GroupView({ trip, members, expenses, payments, currency, currentUid, tr
         <div className="flex flex-wrap gap-2 items-center">
           <p className="body-3 text-neutral-4 font-medium uppercase tracking-wide mr-1">Filtrar</p>
           <select value={filterCat} onChange={(e) => setFilterCat(e.target.value)}
-            className="border border-neutral-2 rounded-full px-3 py-1 body-3 bg-white focus:outline-none focus:ring-2 focus:ring-primary-3">
+            className="w-full sm:w-auto cursor-pointer border border-neutral-2 rounded-full px-4 py-1.5 body-3 font-medium text-neutral-6 bg-neutral-1 hover:bg-neutral-2 focus:outline-none focus:ring-2 focus:ring-primary-3 transition-colors">
             <option value="all">Todas las categorías</option>
             {CATEGORIES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
           </select>
           <select value={filterMember} onChange={(e) => setFilterMember(e.target.value)}
-            className="border border-neutral-2 rounded-full px-3 py-1 body-3 bg-white focus:outline-none focus:ring-2 focus:ring-primary-3">
+            className="w-full sm:w-auto cursor-pointer border border-neutral-2 rounded-full px-4 py-1.5 body-3 font-medium text-neutral-6 bg-neutral-1 hover:bg-neutral-2 focus:outline-none focus:ring-2 focus:ring-primary-3 transition-colors">
             <option value="all">Cualquier pagador</option>
             {members.map((m) => <option key={m.uid} value={m.uid}>Pagó {m.name}</option>)}
           </select>
@@ -681,9 +692,11 @@ function PersonalView({ trip, members, expenses, payments, myPersonalBudget, cur
                 <div key={`d-${i}`} className="flex items-center gap-2 bg-feedback-error-bg border border-feedback-error rounded-xl px-3 py-2.5">
                   <ArrowRight className="w-4 h-4 text-feedback-error shrink-0" />
                   <span className="body-3 text-neutral-7 flex-1 flex items-center gap-1.5 flex-wrap">
-                    Debes pagar <span className="font-semibold text-feedback-error">{fmt(d.amount, currency)}</span> a
+                    <span className="shrink-0">Debes pagar</span>
+                    <span className="font-semibold text-feedback-error shrink-0">{fmt(d.amount, currency)}</span>
+                    <span className="shrink-0">a</span>
                     <Avatar member={to} size="sm" />
-                    <span className="font-semibold">{to?.name ?? '?'}</span>
+                    <span className="font-semibold shrink-0">{to?.name ?? '?'}</span>
                   </span>
                 </div>
               );
@@ -695,7 +708,9 @@ function PersonalView({ trip, members, expenses, payments, myPersonalBudget, cur
                   <ArrowRight className="w-4 h-4 text-auxiliary-green-5 shrink-0 rotate-180" />
                   <span className="body-3 text-neutral-7 flex-1 flex items-center gap-1.5 flex-wrap">
                     <Avatar member={from} size="sm" />
-                    <span className="font-semibold">{from?.name ?? '?'}</span> te debe <span className="font-semibold text-auxiliary-green-5">{fmt(d.amount, currency)}</span>
+                    <span className="font-semibold shrink-0">{from?.name ?? '?'}</span>
+                    <span className="shrink-0">te debe</span>
+                    <span className="font-semibold text-auxiliary-green-5 shrink-0">{fmt(d.amount, currency)}</span>
                   </span>
                 </div>
               );
@@ -717,8 +732,8 @@ function PersonalView({ trip, members, expenses, payments, myPersonalBudget, cur
         <div className="flex items-center gap-3">
           <p className="body-3 text-neutral-4 font-medium uppercase tracking-wide shrink-0">Mis gastos</p>
           <select value={filterCat} onChange={(e) => setFilterCat(e.target.value)}
-            className="border border-neutral-2 rounded-full px-3 py-1 body-3 bg-white focus:outline-none focus:ring-2 focus:ring-primary-3">
-            <option value="all">Todas las categorías</option>
+            className="flex-1 cursor-pointer border border-neutral-1 rounded-full px-4 py-1.5 body-3 font-medium text-neutral-6 bg-neutral-1 hover:bg-neutral-2 focus:outline-none focus:ring-2 focus:ring-primary-3 transition-colors">
+            <option value="all" >Todas las categorías</option>
             {CATEGORIES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
           </select>
         </div>
