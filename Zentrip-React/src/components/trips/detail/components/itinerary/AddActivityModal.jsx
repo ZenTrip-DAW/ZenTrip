@@ -89,6 +89,7 @@ export default function AddActivityModal({
   const [notes, setNotes] = useState(initialActivity?.notes ?? '');
   const [selectedMembers, setSelectedMembers] = useState(initialActivity?.members ?? 'all');
   const [receiptUrls, setReceiptUrls] = useState(initialActivity?.receiptUrls ?? []);
+  const [docUrls, setDocUrls] = useState(initialActivity?.docUrls ?? []);
   const [price, setPrice] = useState(initialActivity?.price != null ? String(initialActivity.price) : '');
   const [priceCurrency, setPriceCurrency] = useState(initialActivity?.priceCurrency ?? tripCurrency);
   const [saving, setSaving] = useState(false);
@@ -188,7 +189,7 @@ const handlePlaceChanged = () => {
       await onUpdate(initialActivity.id, {
         name: name.trim(), startTime, endTime,
         address: finalAddress, notes: notes.trim() || null,
-        type: activityType, status, members: selectedMembers, receiptUrls,
+        type: activityType, status, members: selectedMembers, receiptUrls, docUrls,
         ...flightExtra, ...priceExtra,
       });
     } else {
@@ -196,7 +197,7 @@ const handlePlaceChanged = () => {
         date, name: name.trim(), startTime, endTime,
         address: finalAddress, notes: notes.trim() || null,
         type: activityType, status, source: 'manual',
-        createdBy: creator ?? null, members: selectedMembers, receiptUrls,
+        createdBy: creator ?? null, members: selectedMembers, receiptUrls, docUrls,
         ...flightExtra, ...priceExtra,
       });
     }
@@ -534,13 +535,43 @@ const handlePlaceChanged = () => {
               )
             )}
 
-            {/* Comprobantes */}
+            {/* Documentación */}
+            {isView ? (
+              docUrls.length > 0 && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="body-3 font-semibold text-neutral-5 flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-primary-3" />
+                    Documentación
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {docUrls.map((url, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setViewingUrl(url)}
+                        className="aspect-square rounded-lg overflow-hidden border border-neutral-2 bg-neutral-1 block hover:opacity-90 transition"
+                      >
+                        <img src={url} alt={`Documento ${i + 1}`} className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )
+            ) : (
+              <BookingReceiptUpload
+                initialUrls={docUrls}
+                onUpdate={(urls) => setDocUrls(urls)}
+                label="Documentación"
+              />
+            )}
+
+            {/* Comprobante de pago */}
             {isView ? (
               receiptUrls.length > 0 && (
                 <div className="flex flex-col gap-1.5">
                   <label className="body-3 font-semibold text-neutral-5 flex items-center gap-1.5">
                     <Image className="w-3.5 h-3.5 text-primary-3" />
-                    Comprobantes
+                    Comprobante de pago
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {receiptUrls.map((url, i) => (
@@ -560,7 +591,7 @@ const handlePlaceChanged = () => {
               <BookingReceiptUpload
                 initialUrls={receiptUrls}
                 onUpdate={(urls) => setReceiptUrls(urls)}
-                label="Documentos y comprobantes"
+                label="Comprobante de pago"
               />
             )}
 
