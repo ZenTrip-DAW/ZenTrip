@@ -19,7 +19,15 @@ export function getExpenseShare(expense, uid) {
     // customAmounts están en la moneda original del gasto → convertir
     return (expense.customAmounts?.[uid] ?? 0) * rate;
   }
-  return base / (expense.splitAmong.length || 1);
+  const n = expense.splitAmong.length || 1;
+  const each = Math.floor((base / n) * 100) / 100;
+  const remainder = Math.round((base - each * n) * 100);
+  if (remainder === 0) return each;
+  const seed = expense.id
+    ? [...expense.id].reduce((s, c) => s + c.charCodeAt(0), 0)
+    : 0;
+  const extraIdx = seed % n;
+  return expense.splitAmong[extraIdx] === uid ? each + remainder / 100 : each;
 }
 
 // ─── Algoritmo de liquidación (greedy, estilo Tricount) ───────────────────────

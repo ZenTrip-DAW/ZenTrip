@@ -372,7 +372,11 @@ function GroupView({ trip, members, expenses, payments, currency, currentUid, tr
   const filtered = useMemo(() => {
     let list = [...expenses];
     if (filterCat    !== 'all') list = list.filter((e) => e.category === filterCat);
-    if (filterMember !== 'all') list = list.filter((e) => e.splitAmong?.includes(filterMember) || e.paidBy === filterMember);
+    if (filterMember !== 'all') list = list.filter((e) => e.paidBy === filterMember);
+    list.sort((a, b) => {
+      if (b.date !== a.date) return b.date > a.date ? 1 : -1;
+      return (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0);
+    });
     return list;
   }, [expenses, filterCat, filterMember]);
 
@@ -510,8 +514,8 @@ function GroupView({ trip, members, expenses, payments, currency, currentUid, tr
           </select>
           <select value={filterMember} onChange={(e) => setFilterMember(e.target.value)}
             className="border border-neutral-2 rounded-full px-3 py-1 body-3 bg-white focus:outline-none focus:ring-2 focus:ring-primary-3">
-            <option value="all">Todos los miembros</option>
-            {members.map((m) => <option key={m.uid} value={m.uid}>{m.name}</option>)}
+            <option value="all">Cualquier pagador</option>
+            {members.map((m) => <option key={m.uid} value={m.uid}>Pagó {m.name}</option>)}
           </select>
           {(filterCat !== 'all' || filterMember !== 'all') && (
             <button type="button" onClick={() => { setFilterCat('all'); setFilterMember('all'); }}
@@ -561,7 +565,14 @@ function PersonalView({ trip, members, expenses, payments, myPersonalBudget, cur
   const myDebts   = debts.filter((d) => d.from === currentUid);
   const owedToMe  = debts.filter((d) => d.to   === currentUid);
 
-  const filtered = filterCat === 'all' ? myExpenses : myExpenses.filter((e) => e.category === filterCat);
+  const filtered = useMemo(() => {
+    const list = filterCat === 'all' ? [...myExpenses] : myExpenses.filter((e) => e.category === filterCat);
+    list.sort((a, b) => {
+      if (b.date !== a.date) return b.date > a.date ? 1 : -1;
+      return (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0);
+    });
+    return list;
+  }, [myExpenses, filterCat]);
 
   const handleSaveBudget = async () => {
     const val = Number(budgetInput);
@@ -669,10 +680,11 @@ function PersonalView({ trip, members, expenses, payments, myPersonalBudget, cur
               return (
                 <div key={`d-${i}`} className="flex items-center gap-2 bg-feedback-error-bg border border-feedback-error rounded-xl px-3 py-2.5">
                   <ArrowRight className="w-4 h-4 text-feedback-error shrink-0" />
-                  <span className="body-3 text-neutral-7 flex-1">
-                    Debes pagar <span className="font-semibold text-feedback-error">{fmt(d.amount, currency)}</span> a <span className="font-semibold">{to?.name ?? '?'}</span>
+                  <span className="body-3 text-neutral-7 flex-1 flex items-center gap-1.5 flex-wrap">
+                    Debes pagar <span className="font-semibold text-feedback-error">{fmt(d.amount, currency)}</span> a
+                    <Avatar member={to} size="sm" />
+                    <span className="font-semibold">{to?.name ?? '?'}</span>
                   </span>
-                  <Avatar member={to} size="sm" />
                 </div>
               );
             })}
@@ -681,10 +693,10 @@ function PersonalView({ trip, members, expenses, payments, myPersonalBudget, cur
               return (
                 <div key={`o-${i}`} className="flex items-center gap-2 bg-auxiliary-green-1 border border-auxiliary-green-3 rounded-xl px-3 py-2.5">
                   <ArrowRight className="w-4 h-4 text-auxiliary-green-5 shrink-0 rotate-180" />
-                  <span className="body-3 text-neutral-7 flex-1">
+                  <span className="body-3 text-neutral-7 flex-1 flex items-center gap-1.5 flex-wrap">
+                    <Avatar member={from} size="sm" />
                     <span className="font-semibold">{from?.name ?? '?'}</span> te debe <span className="font-semibold text-auxiliary-green-5">{fmt(d.amount, currency)}</span>
                   </span>
-                  <Avatar member={from} size="sm" />
                 </div>
               );
             })}
@@ -702,8 +714,8 @@ function PersonalView({ trip, members, expenses, payments, myPersonalBudget, cur
 
       {/* Mis gastos */}
       <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap gap-2 items-center">
-          <p className="body-3 text-neutral-4 font-medium uppercase tracking-wide flex-1">Mis gastos</p>
+        <div className="flex items-center gap-3">
+          <p className="body-3 text-neutral-4 font-medium uppercase tracking-wide shrink-0">Mis gastos</p>
           <select value={filterCat} onChange={(e) => setFilterCat(e.target.value)}
             className="border border-neutral-2 rounded-full px-3 py-1 body-3 bg-white focus:outline-none focus:ring-2 focus:ring-primary-3">
             <option value="all">Todas las categorías</option>
