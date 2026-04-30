@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { DIVISAS } from '../../../../../utils/divisas';
 import { fetchExchangeRate } from '../../../../../utils/exchangeRate';
+import BookingReceiptUpload from '../bookings/BookingReceiptUpload';
 
 export const CATEGORIES = [
   { key: 'alojamiento',  label: 'Alojamiento',  Icon: BedDouble       },
@@ -64,6 +65,7 @@ export default function AddExpenseModal({
 
   const [errors, setErrors]         = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [receiptUrls, setReceiptUrls] = useState(initialExpense?.receiptUrls ?? []);
   // tipo de cambio: null | { loading } | { rate } | { error }
   const [rateInfo, setRateInfo]     = useState(null);
   const [manualRate, setManualRate] = useState('');
@@ -183,6 +185,7 @@ export default function AddExpenseModal({
         customAmounts: (!personalMode && form.splitType === 'amounts')    ? { ...form.customAmounts } : null,
         notes:         form.notes.trim() || null,
         isPersonal:    personalMode,
+        receiptUrls,
       });
     } catch (err) {
       setErrors({ submit: err?.message ?? 'Error al guardar el gasto.' });
@@ -508,6 +511,13 @@ export default function AddExpenseModal({
               className={`${fi} ${ok} resize-none`}
             />
           </div>
+
+          {/* Comprobantes */}
+          <BookingReceiptUpload
+            initialUrls={receiptUrls}
+            onUpdate={setReceiptUrls}
+            label="Comprobantes"
+          />
 
           {errors.submit && (
             <div className="flex items-center gap-2 bg-feedback-error-bg border border-feedback-error rounded-xl px-3 py-2">

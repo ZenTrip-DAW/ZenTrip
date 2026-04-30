@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, MapPin, Clock, FileText, Tag, UserCircle, AlertCircle, AlertTriangle, Pencil, Image, CalendarDays, Plane, Hotel, Utensils, Car, Train } from 'lucide-react';
+import { X, MapPin, Clock, FileText, Tag, UserCircle, AlertCircle, AlertTriangle, Pencil, Image, CalendarDays, Plane, Hotel, Utensils, Car, Train, DollarSign } from 'lucide-react';
 import AirportInput from '../bookings/flights/AirportInput';
 import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
 import Button from '../../../../ui/Button';
 import PassengerSelector from '../../../shared/PassengerSelector';
 import BookingReceiptUpload from '../bookings/BookingReceiptUpload';
+import { DIVISAS } from '../../../../../utils/divisas';
 const LIBRARIES = ['places'];
 const NOTES_MAX = 300;
 const NAME_MAX = 50;
@@ -52,6 +53,7 @@ export default function AddActivityModal({
   date, creator, existingActivities = [], members = [],
   onClose, onSave, onUpdate,
   mode = 'create', initialActivity = null,
+  tripCurrency = 'EUR',
 }) {
   const isView = mode === 'view';
   const isEdit = mode === 'edit';
@@ -87,6 +89,8 @@ export default function AddActivityModal({
   const [notes, setNotes] = useState(initialActivity?.notes ?? '');
   const [selectedMembers, setSelectedMembers] = useState(initialActivity?.members ?? 'all');
   const [receiptUrls, setReceiptUrls] = useState(initialActivity?.receiptUrls ?? []);
+  const [price, setPrice] = useState(initialActivity?.price != null ? String(initialActivity.price) : '');
+  const [priceCurrency, setPriceCurrency] = useState(initialActivity?.priceCurrency ?? tripCurrency);
   const [saving, setSaving] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [showOverlapWarn, setShowOverlapWarn] = useState(false);
@@ -176,12 +180,16 @@ const handlePlaceChanged = () => {
     const flightExtra = arrivalName
       ? { arrivalAirportAddress: arrivalName, arrivalAirportName: arrivalName }
       : {};
+    const parsedPrice = parseFloat(price);
+    const priceExtra = !isNaN(parsedPrice) && parsedPrice > 0
+      ? { price: parsedPrice, priceCurrency }
+      : {};
     if (isEdit) {
       await onUpdate(initialActivity.id, {
         name: name.trim(), startTime, endTime,
         address: finalAddress, notes: notes.trim() || null,
         type: activityType, status, members: selectedMembers, receiptUrls,
-        ...flightExtra,
+        ...flightExtra, ...priceExtra,
       });
     } else {
       await onSave({
@@ -189,7 +197,7 @@ const handlePlaceChanged = () => {
         address: finalAddress, notes: notes.trim() || null,
         type: activityType, status, source: 'manual',
         createdBy: creator ?? null, members: selectedMembers, receiptUrls,
-        ...flightExtra,
+        ...flightExtra, ...priceExtra,
       });
     }
     setSaving(false);
@@ -357,6 +365,45 @@ const handlePlaceChanged = () => {
                     </span>
                   </div>
                 </>
+              )}
+            </div>
+
+            {/* Precio */}
+            <div className="flex flex-col gap-1.5">
+              <label className="body-3 font-semibold text-neutral-5 flex items-center gap-1.5">
+                <DollarSign className="w-3.5 h-3.5 text-primary-3" />
+                Precio
+                {!isView && <span className="body-3 font-normal text-neutral-3">(opcional)</span>}
+              </label>
+              {isView ? (
+                initialActivity?.price != null && initialActivity.price > 0 ? (
+                  <p className={`${inputReadOnly} px-3 py-2`}>
+                    {initialActivity.price} {initialActivity.priceCurrency || tripCurrency}
+                  </p>
+                ) : (
+                  <p className={`${inputReadOnly} px-3 py-2`}>—</p>
+                )
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    placeholder="0.00"
+                    className={`flex-1 ${inputOk}`}
+                  />
+                  <select
+                    value={priceCurrency}
+                    onChange={(e) => setPriceCurrency(e.target.value)}
+                    className={`${inputOk} w-28 shrink-0`}
+                  >
+                    {DIVISAS.map((d) => (
+                      <option key={d.code} value={d.code}>{d.code}</option>
+                    ))}
+                  </select>
+                </div>
               )}
             </div>
 

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useBudget, computeSettlement, computeCategoryTotals, getExpenseShare } from '../budget/useBudget';
 import { addExpense, updateExpense, deleteExpense, setPersonalBudget, addPayment } from '../../../../../services/budgetService';
+import { updateActivity } from '../../../../../services/tripService';
 import AddExpenseModal, { CATEGORIES } from '../budget/AddExpenseModal';
 import { DIVISAS } from '../../../../../utils/divisas';
 import ConfirmModal from '../../../../ui/ConfirmModal';
@@ -170,6 +171,19 @@ function ExpenseCard({ expense, members, currentUid, tripCurrency, onEdit, onDel
             <DetailRow label="Notas">
               <span className="body-3 text-neutral-5 text-right max-w-45">{expense.notes}</span>
             </DetailRow>
+          )}
+          {expense.receiptUrls?.length > 0 && (
+            <div>
+              <p className="body-3 text-neutral-4 mb-1.5">Comprobantes</p>
+              <div className="grid grid-cols-3 gap-2">
+                {expense.receiptUrls.map((url, i) => (
+                  <a key={i} href={url} target="_blank" rel="noopener noreferrer"
+                    className="aspect-square rounded-lg overflow-hidden border border-neutral-2 bg-neutral-1 block">
+                    <img src={url} alt={`Comprobante ${i + 1}`} className="w-full h-full object-cover" />
+                  </a>
+                ))}
+              </div>
+            </div>
           )}
           <div className="flex gap-2 mt-1">
             <button type="button" onClick={() => onEdit(expense)}
@@ -728,6 +742,13 @@ export default function BudgetTab({ tripId, trip, members = [], currentUser }) {
   const handleSaveExpense = async (data) => {
     if (expenseModal?.mode === 'edit') {
       await updateExpense(tripId, expenseModal.expense.id, data);
+      const linkedActivityId = expenseModal.expense.linkedActivityId;
+      if (linkedActivityId) {
+        updateActivity(tripId, linkedActivityId, {
+          price: data.amount,
+          priceCurrency: data.currency,
+        }).catch(() => {});
+      }
     } else {
       await addExpense(tripId, { ...data, createdBy: currentUid });
     }
@@ -738,6 +759,10 @@ export default function BudgetTab({ tripId, trip, members = [], currentUser }) {
     setDeleteError(null);
     try {
       await deleteExpense(tripId, deleteTarget.id);
+      const linkedActivityId = deleteTarget.linkedActivityId;
+      if (linkedActivityId) {
+        updateActivity(tripId, linkedActivityId, { price: null, priceCurrency: null }).catch(() => {});
+      }
       setDeleteTarget(null);
     } catch {
       setDeleteError('No se pudo eliminar el gasto. Inténtalo de nuevo.');

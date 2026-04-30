@@ -5,6 +5,8 @@ import { useAuth } from '../../../context/AuthContext';
 import { useTripDetail } from './hooks/useTripDetail';
 import { useWeather } from './hooks/useWeather';
 import { addActivity, updateActivity, deleteActivity, removeMemberFromTrip, sendManualActivityNotifications } from '../../../services/tripService';
+import { addExpense, updateExpense, getExpenseByLinkedActivity, deleteExpensesByLinkedActivity } from '../../../services/budgetService';
+import { fetchExchangeRate } from '../../../utils/exchangeRate';
 import ConfirmModal from '../../ui/ConfirmModal';
 import AddActivityModal from './components/itinerary/AddActivityModal';
 import TripDetailHeader from './components/TripDetailHeader';
@@ -46,6 +48,15 @@ function ErrorState({ message, onBack }) {
 
 const TAB_PLACEHOLDERS = {
   chat: <PlaceholderTab label="Chat" emoji="💬" />,
+};
+
+const ACTIVITY_EXPENSE_CATEGORY = {
+  actividad:   'actividades',
+  vuelo:       'transporte',
+  hotel:       'alojamiento',
+  restaurante: 'comida',
+  coche:       'transporte',
+  tren:        'transporte',
 };
 
 export default function TripDetail() {
@@ -137,6 +148,44 @@ export default function TripDetail() {
           tripName: trip?.name,
         }).catch(() => {});
       }
+      const price = activityData.price;
+      if (typeof price === 'number' && price > 0) {
+        const category = ACTIVITY_EXPENSE_CATEGORY[activityData.type] ?? 'otros';
+        const tripCurrency = trip?.currency || 'EUR';
+        const expCurrency = activityData.priceCurrency || tripCurrency;
+        const acceptedUids = members
+          .filter((m) => m.invitationStatus === 'accepted' && m.uid)
+          .map((m) => m.uid);
+        const splitAmong = acceptedUids.length > 0 ? acceptedUids : [user.uid];
+        let exchangeRate = 1;
+        let tripAmount = price;
+        if (expCurrency !== tripCurrency) {
+          try {
+            exchangeRate = await fetchExchangeRate(expCurrency, tripCurrency);
+            tripAmount = Math.round(price * exchangeRate * 100) / 100;
+          } catch { /* keep tripAmount = price */ }
+        }
+        addExpense(tripId, {
+          description: activityData.name || 'Actividad',
+          amount: price,
+          currency: expCurrency,
+          tripAmount,
+          tripCurrency,
+          exchangeRate,
+          category,
+          date: activityData.date || new Date().toISOString().split('T')[0],
+          paidBy: user.uid,
+          paidByName: profile?.displayName || profile?.username || user.email || '',
+          splitAmong,
+          splitType: 'equal',
+          percentages: null,
+          customAmounts: null,
+          notes: null,
+          isPersonal: false,
+          linkedActivityId: id,
+          receiptUrls: activityData.receiptUrls ?? [],
+        }).catch((err) => console.error('[TripDetail] createExpenseFromActivity:', err));
+      }
     } catch (err) {
       console.error('[TripDetail] Error al añadir actividad:', err);
     }
@@ -151,6 +200,55 @@ export default function TripDetail() {
       await updateActivity(tripId, activityId, data);
       setActivities((prev) => prev.map((a) => a.id === activityId ? { ...a, ...data } : a));
       setAddActivityModal({ open: false, date: null, mode: 'create', activity: null });
+
+      const price = typeof data.price === 'number' && data.price > 0 ? data.price : null;
+      const tripCurrency = trip?.currency || 'EUR';
+      const expCurrency = data.priceCurrency || tripCurrency;
+      const existingAct = activities.find((a) => a.id === activityId);
+
+      if (price) {
+        let exchangeRate = 1;
+        let tripAmount = price;
+        if (expCurrency !== tripCurrency) {
+          try {
+            exchangeRate = await fetchExchangeRate(expCurrency, tripCurrency);
+            tripAmount = Math.round(price * exchangeRate * 100) / 100;
+          } catch { /* keep tripAmount = price */ }
+        }
+        const acceptedUids = members
+          .filter((m) => m.invitationStatus === 'accepted' && m.uid)
+          .map((m) => m.uid);
+        const splitAmong = acceptedUids.length > 0 ? acceptedUids : [user.uid];
+        const expenseData = {
+          description: data.name || 'Actividad',
+          amount: price,
+          currency: expCurrency,
+          tripAmount,
+          tripCurrency,
+          exchangeRate,
+          category: ACTIVITY_EXPENSE_CATEGORY[data.type] ?? 'otros',
+          date: existingAct?.date || new Date().toISOString().split('T')[0],
+          paidBy: user.uid,
+          paidByName: profile?.displayName || profile?.username || user.email || '',
+          splitAmong,
+          splitType: 'equal',
+          percentages: null,
+          customAmounts: null,
+          notes: null,
+          isPersonal: false,
+          linkedActivityId: activityId,
+          receiptUrls: data.receiptUrls ?? existingAct?.receiptUrls ?? [],
+        };
+        getExpenseByLinkedActivity(tripId, activityId).then((linked) => {
+          if (linked) {
+            updateExpense(tripId, linked.id, expenseData).catch((err) => console.error('[TripDetail] updateExpense:', err));
+          } else {
+            addExpense(tripId, expenseData).catch((err) => console.error('[TripDetail] addExpense:', err));
+          }
+        }).catch((err) => console.error('[TripDetail] getExpenseByLinkedActivity:', err));
+      } else {
+        deleteExpensesByLinkedActivity(tripId, activityId).catch((err) => console.error('[TripDetail] deleteExpensesByLinkedActivity:', err));
+      }
     } catch (err) {
       console.error('[TripDetail] Error al editar actividad:', err);
     }
@@ -160,6 +258,7 @@ export default function TripDetail() {
     try {
       await deleteActivity(tripId, activityId);
       setActivities((prev) => prev.filter((a) => a.id !== activityId));
+      deleteExpensesByLinkedActivity(tripId, activityId).catch(() => {});
     } catch (err) {
       console.error('[TripDetail] Error al eliminar actividad:', err);
     }
@@ -275,7 +374,8 @@ export default function TripDetail() {
           creator={profile ? { uid: user.uid, name: profile.displayName || profile.username || user.email } : null}
           existingActivities={addActivityModal.date ? (activitiesByDate[addActivityModal.date] || []) : []}
           members={members}
-onClose={() => setAddActivityModal({ open: false, date: null, mode: 'create', activity: null })}
+          tripCurrency={trip?.currency || 'EUR'}
+          onClose={() => setAddActivityModal({ open: false, date: null, mode: 'create', activity: null })}
           onSave={handleSaveActivity}
           onUpdate={handleUpdateActivity}
         />

@@ -3,12 +3,14 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
 } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
 
@@ -92,4 +94,29 @@ export async function addPayment(tripId, data) {
 
 export async function deletePayment(tripId, paymentId) {
   await deleteDoc(doc(db, 'trips', tripId, 'payments', paymentId));
+}
+
+// ─── Recibos de gastos vinculados a reservas ──────────────────────────────────
+
+export async function updateExpenseReceiptsByBooking(tripId, bookingId, receiptUrls) {
+  const snap = await getDocs(
+    query(collection(db, 'trips', tripId, 'expenses'), where('linkedBookingId', '==', bookingId))
+  );
+  await Promise.all(snap.docs.map((d) => updateDoc(d.ref, { receiptUrls })));
+}
+
+// ─── Gastos vinculados a actividades manuales ─────────────────────────────────
+
+export async function getExpenseByLinkedActivity(tripId, activityId) {
+  const snap = await getDocs(
+    query(collection(db, 'trips', tripId, 'expenses'), where('linkedActivityId', '==', activityId))
+  );
+  return snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
+}
+
+export async function deleteExpensesByLinkedActivity(tripId, activityId) {
+  const snap = await getDocs(
+    query(collection(db, 'trips', tripId, 'expenses'), where('linkedActivityId', '==', activityId))
+  );
+  await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
 }
