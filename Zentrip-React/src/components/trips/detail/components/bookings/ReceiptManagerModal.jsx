@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import BookingReceiptUpload from './BookingReceiptUpload';
 import { updateBooking } from '../../../../../services/tripService';
+import { updateExpenseReceiptsByBooking } from '../../../../../services/budgetService';
 
 export default function ReceiptManagerModal({ booking, tripId, onClose, onUpdated }) {
   const [receiptUrls, setReceiptUrls] = useState(booking.receiptUrls ?? []);
@@ -11,6 +12,7 @@ export default function ReceiptManagerModal({ booking, tripId, onClose, onUpdate
     try {
       await updateBooking(tripId, booking.id, { receiptUrls: urls });
       onUpdated?.(urls);
+      updateExpenseReceiptsByBooking(tripId, booking.id, urls).catch(() => {});
     } catch (err) {
       console.error('[ReceiptManagerModal] Error al guardar comprobante:', err);
     }

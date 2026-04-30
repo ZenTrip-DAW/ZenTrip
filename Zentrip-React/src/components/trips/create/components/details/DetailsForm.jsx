@@ -267,24 +267,7 @@ export default function DetailsForm({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-          <div>
-            <Input
-              variant="light"
-              label="Presupuesto"
-              name="budget"
-              type="number"
-              placeholder="Ej. 1200"
-              value={form.budget}
-              onChange={onChange}
-              error={fieldErrors.budget}
-              min="0"
-              max="999999999"
-              className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-            {Number(form.budget) > 999999999 && (
-              <p className="mt-1 body-3 text-feedback-error">El presupuesto no puede superar 999.999.999</p>
-            )}
-          </div>
+          <div />
           <div className="flex items-center gap-3 pb-2">
             <span className="body text-slate-600">¿Viajas con Mascota?</span>
             <button

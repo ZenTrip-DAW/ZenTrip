@@ -2,6 +2,8 @@ import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, l
 import { db, auth } from '../config/firebaseConfig';
 import { apiClient } from './apiClient';
 import { deleteCloudinaryPhoto } from './cloudinaryService';
+import { fetchExchangeRate } from '../utils/exchangeRate';
+import { addExpense } from './budgetService';
 
 function deriveDatesFromStops(stops, fallbackStart, fallbackEnd) {
   let startDate = fallbackStart || '';
@@ -270,6 +272,79 @@ export async function deleteActivity(tripId, activityId) {
   await deleteDoc(doc(db, 'trips', tripId, 'activities', activityId));
 }
 
+// ─── Gastos automáticos desde reservas ───────────────────────────────────────
+
+const BOOKING_EXPENSE_CATEGORY = {
+  hotel:    'alojamiento',
+  vuelo:    'transporte',
+  car:      'transporte',
+  actividad:'actividades',
+};
+
+async function createExpenseFromBooking(tripId, booking, bookingId, tripData) {
+  const category = BOOKING_EXPENSE_CATEGORY[booking.type];
+  if (!category) return;
+
+  const price = booking.totalPrice ?? booking.price;
+  if (typeof price !== 'number' || !(price > 0)) return;
+
+  const bookingCurrency = booking.currency || 'EUR';
+  const tripCurrency    = tripData?.currency || 'EUR';
+
+  const membersSnap = await getDocs(collection(db, 'trips', tripId, 'members'));
+  const splitAmong  = membersSnap.docs
+    .map((d) => d.data())
+    .filter((m) => m.invitationStatus === 'accepted' && m.uid)
+    .map((m) => m.uid);
+
+  if (splitAmong.length === 0) return;
+
+  let exchangeRate = 1;
+  let tripAmount   = price;
+  if (bookingCurrency !== tripCurrency) {
+    try {
+      exchangeRate = await fetchExchangeRate(bookingCurrency, tripCurrency);
+      tripAmount   = Math.round(price * exchangeRate * 100) / 100;
+    } catch { /* keep tripAmount = price */ }
+  }
+
+  const date = booking.checkIn
+    || (booking.segments?.[0]?.departureTime ?? '').slice(0, 10)
+    || booking.pickUpDate
+    || booking.date
+    || new Date().toISOString().split('T')[0];
+
+  const description = booking.flightLabel || booking.carName || booking.name || 'Reserva';
+
+  await addExpense(tripId, {
+    description,
+    amount:        price,
+    currency:      bookingCurrency,
+    tripAmount,
+    tripCurrency,
+    exchangeRate,
+    category,
+    date,
+    paidBy:        booking.createdBy?.uid   ?? '',
+    paidByName:    booking.createdBy?.name  ?? '',
+    splitAmong,
+    splitType:     'equal',
+    percentages:   null,
+    customAmounts: null,
+    notes:         null,
+    isPersonal:    false,
+    linkedBookingId: bookingId,
+    receiptUrls:   booking.receiptUrls ?? [],
+  });
+}
+
+async function deleteLinkedExpense(tripId, bookingId) {
+  const snap = await getDocs(
+    query(collection(db, 'trips', tripId, 'expenses'), where('linkedBookingId', '==', bookingId))
+  );
+  await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
+}
+
 export async function addBooking(tripId, booking) {
   const docRef = await addDoc(collection(db, 'trips', tripId, 'bookings'), {
     ...booking,
@@ -280,7 +355,6 @@ export async function addBooking(tripId, booking) {
   const tripSnap = await getDoc(doc(db, 'trips', tripId));
   const trip = tripSnap.exists() ? tripSnap.data() : null;
   if (trip && (!trip.stops || trip.stops.length === 0)) {
-    // Obtener todas las actividades y bookings para calcular el rango
     const acts = await getDocs(collection(db, 'trips', tripId, 'activities'));
     const bookings = await getDocs(collection(db, 'trips', tripId, 'bookings'));
     const fechas = [];
@@ -294,6 +368,12 @@ export async function addBooking(tripId, booking) {
       await updateDoc(doc(db, 'trips', tripId), { startDate, endDate });
     }
   }
+
+  // --- CREAR GASTO AUTOMÁTICO SI LA RESERVA TIENE PRECIO ---
+  createExpenseFromBooking(tripId, booking, docRef.id, trip).catch((err) => {
+    console.error('[tripService] createExpenseFromBooking:', err);
+  });
+
   return docRef.id;
 }
 
@@ -307,7 +387,10 @@ export async function updateBooking(tripId, bookingId, data) {
 }
 
 export async function deleteBooking(tripId, bookingId) {
-  await deleteDoc(doc(db, 'trips', tripId, 'bookings', bookingId));
+  await Promise.all([
+    deleteDoc(doc(db, 'trips', tripId, 'bookings', bookingId)),
+    deleteLinkedExpense(tripId, bookingId).catch(() => {}),
+  ]);
 }
 
 // Elimina una reserva de vuelo junto con su actividad y las paradas que creó.
@@ -315,7 +398,10 @@ export async function deleteFlightBooking(tripId, bookingId) {
   const bookingSnap = await getDoc(doc(db, 'trips', tripId, 'bookings', bookingId));
   const booking = bookingSnap.exists() ? bookingSnap.data() : {};
 
-  await deleteDoc(doc(db, 'trips', tripId, 'bookings', bookingId));
+  await Promise.all([
+    deleteDoc(doc(db, 'trips', tripId, 'bookings', bookingId)),
+    deleteLinkedExpense(tripId, bookingId).catch(() => {}),
+  ]);
 
   const activityIds = booking.activityIds ?? (booking.activityId ? [booking.activityId] : []);
   for (const actId of activityIds) {

@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, MapPin, Clock, FileText, Tag, UserCircle, AlertCircle, AlertTriangle, Pencil, Image, CalendarDays, Plane, Hotel, Utensils, Car, Train } from 'lucide-react';
+import { X, MapPin, Clock, FileText, Tag, UserCircle, AlertCircle, AlertTriangle, Pencil, Image, CalendarDays, Plane, Hotel, Utensils, Car, Train, DollarSign } from 'lucide-react';
 import AirportInput from '../bookings/flights/AirportInput';
 import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
 import Button from '../../../../ui/Button';
 import PassengerSelector from '../../../shared/PassengerSelector';
 import BookingReceiptUpload from '../bookings/BookingReceiptUpload';
+import { DIVISAS } from '../../../../../utils/divisas';
 const LIBRARIES = ['places'];
 const NOTES_MAX = 300;
 const NAME_MAX = 50;
@@ -52,6 +53,7 @@ export default function AddActivityModal({
   date, creator, existingActivities = [], members = [],
   onClose, onSave, onUpdate,
   mode = 'create', initialActivity = null,
+  tripCurrency = 'EUR',
 }) {
   const isView = mode === 'view';
   const isEdit = mode === 'edit';
@@ -87,6 +89,9 @@ export default function AddActivityModal({
   const [notes, setNotes] = useState(initialActivity?.notes ?? '');
   const [selectedMembers, setSelectedMembers] = useState(initialActivity?.members ?? 'all');
   const [receiptUrls, setReceiptUrls] = useState(initialActivity?.receiptUrls ?? []);
+  const [docUrls, setDocUrls] = useState(initialActivity?.docUrls ?? []);
+  const [price, setPrice] = useState(initialActivity?.price != null ? String(initialActivity.price) : '');
+  const [priceCurrency, setPriceCurrency] = useState(initialActivity?.priceCurrency ?? tripCurrency);
   const [saving, setSaving] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [showOverlapWarn, setShowOverlapWarn] = useState(false);
@@ -176,20 +181,24 @@ const handlePlaceChanged = () => {
     const flightExtra = arrivalName
       ? { arrivalAirportAddress: arrivalName, arrivalAirportName: arrivalName }
       : {};
+    const parsedPrice = parseFloat(price);
+    const priceExtra = !isNaN(parsedPrice) && parsedPrice > 0
+      ? { price: parsedPrice, priceCurrency }
+      : {};
     if (isEdit) {
       await onUpdate(initialActivity.id, {
         name: name.trim(), startTime, endTime,
         address: finalAddress, notes: notes.trim() || null,
-        type: activityType, status, members: selectedMembers, receiptUrls,
-        ...flightExtra,
+        type: activityType, status, members: selectedMembers, receiptUrls, docUrls,
+        ...flightExtra, ...priceExtra,
       });
     } else {
       await onSave({
         date, name: name.trim(), startTime, endTime,
         address: finalAddress, notes: notes.trim() || null,
         type: activityType, status, source: 'manual',
-        createdBy: creator ?? null, members: selectedMembers, receiptUrls,
-        ...flightExtra,
+        createdBy: creator ?? null, members: selectedMembers, receiptUrls, docUrls,
+        ...flightExtra, ...priceExtra,
       });
     }
     setSaving(false);
@@ -360,6 +369,45 @@ const handlePlaceChanged = () => {
               )}
             </div>
 
+            {/* Precio */}
+            <div className="flex flex-col gap-1.5">
+              <label className="body-3 font-semibold text-neutral-5 flex items-center gap-1.5">
+                <DollarSign className="w-3.5 h-3.5 text-primary-3" />
+                Precio
+                {!isView && <span className="body-3 font-normal text-neutral-3">(opcional)</span>}
+              </label>
+              {isView ? (
+                initialActivity?.price != null && initialActivity.price > 0 ? (
+                  <p className={`${inputReadOnly} px-3 py-2`}>
+                    {initialActivity.price} {initialActivity.priceCurrency || tripCurrency}
+                  </p>
+                ) : (
+                  <p className={`${inputReadOnly} px-3 py-2`}>—</p>
+                )
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    placeholder="0.00"
+                    className={`flex-1 ${inputOk}`}
+                  />
+                  <select
+                    value={priceCurrency}
+                    onChange={(e) => setPriceCurrency(e.target.value)}
+                    className={`${inputOk} w-28 shrink-0`}
+                  >
+                    {DIVISAS.map((d) => (
+                      <option key={d.code} value={d.code}>{d.code}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
             {/* Horario */}
             <div className="flex flex-col gap-1.5">
               <label className="body-3 font-semibold text-neutral-5 flex items-center gap-1.5">
@@ -487,13 +535,43 @@ const handlePlaceChanged = () => {
               )
             )}
 
-            {/* Comprobantes */}
+            {/* Documentación */}
+            {isView ? (
+              docUrls.length > 0 && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="body-3 font-semibold text-neutral-5 flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-primary-3" />
+                    Documentación
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {docUrls.map((url, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setViewingUrl(url)}
+                        className="aspect-square rounded-lg overflow-hidden border border-neutral-2 bg-neutral-1 block hover:opacity-90 transition"
+                      >
+                        <img src={url} alt={`Documento ${i + 1}`} className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )
+            ) : (
+              <BookingReceiptUpload
+                initialUrls={docUrls}
+                onUpdate={(urls) => setDocUrls(urls)}
+                label="Documentación"
+              />
+            )}
+
+            {/* Comprobante de pago */}
             {isView ? (
               receiptUrls.length > 0 && (
                 <div className="flex flex-col gap-1.5">
                   <label className="body-3 font-semibold text-neutral-5 flex items-center gap-1.5">
                     <Image className="w-3.5 h-3.5 text-primary-3" />
-                    Comprobantes
+                    Comprobante de pago
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {receiptUrls.map((url, i) => (
@@ -513,7 +591,7 @@ const handlePlaceChanged = () => {
               <BookingReceiptUpload
                 initialUrls={receiptUrls}
                 onUpdate={(urls) => setReceiptUrls(urls)}
-                label="Documentos y comprobantes"
+                label="Comprobante de pago"
               />
             )}
 
