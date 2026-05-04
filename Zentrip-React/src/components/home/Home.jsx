@@ -13,6 +13,7 @@ const heroImages = [
   '/img/background/home/hero/img_hero_3.jpg',
   '/img/background/home/hero/img_hero_4.jpg',
   '/img/background/home/hero/img_hero_5.jpg',
+  '/img/background/home/hero/img_hero_6.jpg',
 ];
 
 
