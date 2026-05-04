@@ -107,8 +107,8 @@ export default function Home() {
           Crear un nuevo viaje
         </button>
 
-        {/* Calendar below text on mobile only */}
-        <div className="mt-6 w-full max-w-xs md:hidden">
+        {/* Calendar below text — oculto solo cuando pantalla ancha Y corta */}
+        <div className="mt-6 w-full max-w-xs [@media(min-width:768px)_and_(max-height:800px)]:hidden">
           <HomeCalendar
             activeTripDayMap={activeTripDayMap}
             pastTripDaySet={pastTripDaySet}
@@ -117,8 +117,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Calendar — right side on md+ */}
-      <div className="hidden md:block absolute right-14 top-36 lg:right-16 lg:top-40 w-72 lg:w-80">
+      {/* Calendar derecha — solo cuando pantalla ancha Y corta */}
+      <div className="hidden [@media(min-width:768px)_and_(max-height:800px)]:block absolute right-14 top-36 lg:right-16 lg:top-40 w-72 lg:w-80">
         <HomeCalendar
           activeTripDayMap={activeTripDayMap}
           pastTripDaySet={pastTripDaySet}
