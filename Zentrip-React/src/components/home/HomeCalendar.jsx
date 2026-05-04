@@ -52,9 +52,7 @@ export default function HomeCalendar({ activeTripDayMap, pastTripDaySet, activit
   };
 
   return (
-    <div
-      className="rounded-2xl border border-white/40 bg-white/70 p-3 sm:p-4 w-full"
-    >
+    <div className="rounded-2xl border border-white/40 bg-white/70 p-2 sm:p-3 md:p-4 w-full">
       <div className="flex items-center justify-between mb-3">
         <button
           type="button"

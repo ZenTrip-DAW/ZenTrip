@@ -84,6 +84,8 @@ export default function Home() {
       }}
     >
       <div className="absolute inset-0" style={{ backgroundColor: "rgba(0,0,0,0.2)" }} />
+
+      {/* Text content — left side */}
       <div className="absolute left-5 right-5 top-24 sm:left-10 sm:top-32 sm:right-auto md:left-14 md:top-36 lg:left-16 lg:top-40 max-w-full sm:max-w-md md:max-w-lg lg:max-w-xl text-left">
         <h1 className="title-h1-mobile md:title-h1-desktop text-white">
           ¡Bienvenid@, {registeredName}!
@@ -105,13 +107,23 @@ export default function Home() {
           Crear un nuevo viaje
         </button>
 
-        <div className="mt-8 w-full sm:max-w-xs">
+        {/* Calendar below text on mobile only */}
+        <div className="mt-6 w-full max-w-xs md:hidden">
           <HomeCalendar
             activeTripDayMap={activeTripDayMap}
             pastTripDaySet={pastTripDaySet}
             activitiesByDate={activitiesByDate}
           />
         </div>
+      </div>
+
+      {/* Calendar — right side on md+ */}
+      <div className="hidden md:block absolute right-14 top-36 lg:right-16 lg:top-40 w-72 lg:w-80">
+        <HomeCalendar
+          activeTripDayMap={activeTripDayMap}
+          pastTripDaySet={pastTripDaySet}
+          activitiesByDate={activitiesByDate}
+        />
       </div>
 
       <div className="absolute bottom-0 left-0 right-0">
