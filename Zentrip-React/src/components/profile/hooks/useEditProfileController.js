@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { ROUTES } from '../../../config/routes';
 import { saveUserProfile } from '../../../services/profileService';
@@ -28,6 +28,7 @@ export function useEditProfileController(navigate) {
   const [fieldErrors, setFieldErrors] = useState({});
   const [activeSection, setActiveSection] = useState('personal');
   const [form, setForm] = useState(INITIAL_FORM);
+  const [savedForm, setSavedForm] = useState(INITIAL_FORM);
 
   // En onboarding, solo permitimos salir cuando los datos obligatorios ya están guardados en perfil.
   const hasSavedOnce = Boolean(
@@ -38,18 +39,21 @@ export function useEditProfileController(navigate) {
     if (authLoading || profileLoading || !user) return;
 
     if (profile) {
-      setForm((prev) => ({ ...prev, ...profile }));
+      const loaded = { ...INITIAL_FORM, ...profile };
+      setForm(loaded);
+      setSavedForm(loaded);
       return;
     }
 
-    setForm((prev) => ({
-      ...prev,
-      firstName: '',
-      lastName: '',
-      profilePhoto: '',
-      avatarColor: '',
-    }));
+    const empty = { ...INITIAL_FORM, firstName: '', lastName: '', profilePhoto: '', avatarColor: '' };
+    setForm(empty);
+    setSavedForm(empty);
   }, [user, authLoading, profileLoading, profile]);
+
+  const isDirty = useMemo(
+    () => JSON.stringify(form) !== JSON.stringify(savedForm),
+    [form, savedForm]
+  );
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -101,6 +105,7 @@ export function useEditProfileController(navigate) {
         displayName: `${form.firstName} ${form.lastName}`.trim(),
       }));
       await refreshProfile();
+      setSavedForm({ ...form });
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
@@ -122,6 +127,7 @@ export function useEditProfileController(navigate) {
     form,
     activeSection,
     hasSavedOnce,
+    isDirty,
     setActiveSection,
     handleChange,
     handleSave,
