@@ -119,7 +119,7 @@ export default function HomeCalendar({ activeTripDayMap, tripNameMap, pastTripDa
             <button
               key={dateStr}
               type="button"
-              onClick={() => tripId && navigate(`/trips/${tripId}`)}
+              onClick={() => tripId && navigate(`/trips/${tripId}`, { state: { activeTab: 'itinerario', highlightDate: dateStr } })}
               className={cellClass}
             >
               {isToday && !isActiveTripDay && (
