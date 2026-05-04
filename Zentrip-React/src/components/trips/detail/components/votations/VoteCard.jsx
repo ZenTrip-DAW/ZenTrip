@@ -103,7 +103,7 @@ export default function VoteCard({
               </span>
             )}
           </div>
-          <h3 className="title-h3-desktop text-secondary-6 leading-snug">{vote.title}</h3>
+          <h3 className="title-h3-desktop text-secondary-5 leading-snug">{vote.title}</h3>
           <p className="body-3 text-neutral-3">
             {vote.createdBy?.name} · {totalVoters}/{memberCount} {totalVoters === 1 ? 'voto' : 'votos'}
           </p>

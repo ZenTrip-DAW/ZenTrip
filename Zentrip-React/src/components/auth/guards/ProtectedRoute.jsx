@@ -8,10 +8,10 @@ function isProfileComplete(profile) {
 }
 
 export default function ProtectedRoute() {
-  const { user, loading, profile } = useAuth();
+  const { user, authLoading, profileLoading, profile } = useAuth();
   const location = useLocation();
 
-  if (loading) {
+  if (authLoading || (profileLoading && !profile)) {
     return <SplashScreen />;
   }
 

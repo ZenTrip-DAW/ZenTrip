@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useBlocker } from 'react-router-dom';
 import { useEditProfileController } from './hooks/useEditProfileController';
 import EditProfileLeftPanel from './components/EditProfileLeftPanel';
 import EditProfileForm from './components/EditProfileForm';
@@ -21,12 +21,25 @@ export default function EditProfile({ isOnboarding = false }) {
     form,
     activeSection,
     hasSavedOnce,
+    isDirty,
     setActiveSection,
     handleChange,
     handleSave,
     handleClose,
     setForm,
   } = useEditProfileController(navigate);
+
+  const blocker = useBlocker(isDirty);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (!isDirty) return;
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
 
   if (loading) {
     return (
@@ -74,6 +87,34 @@ export default function EditProfile({ isOnboarding = false }) {
               onClose={handleClose}
               setForm={setForm}
             />
+          </div>
+        </div>
+      )}
+
+      {blocker.state === 'blocked' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-neutral-7/60 backdrop-blur-sm" onClick={() => blocker.reset()} />
+          <div className="relative z-10 w-full max-w-sm mx-4 bg-white rounded-2xl shadow-2xl p-6">
+            <h3 className="title-h3-desktop text-neutral-7 mb-2">¿Salir sin guardar?</h3>
+            <p className="body-2 text-neutral-5 mb-4">
+              Tienes cambios sin guardar. Si sales ahora, se perderán.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => blocker.reset()}
+                className="flex-1 h-10 rounded-lg border border-neutral-2 body-3 font-bold text-neutral-5 hover:bg-neutral-1 transition cursor-pointer"
+              >
+                Seguir editando
+              </button>
+              <button
+                type="button"
+                onClick={() => blocker.proceed()}
+                className="flex-1 h-10 rounded-lg bg-red-600 text-white body-3 font-bold hover:bg-red-700 transition cursor-pointer"
+              >
+                Sí, salir
+              </button>
+            </div>
           </div>
         </div>
       )}
