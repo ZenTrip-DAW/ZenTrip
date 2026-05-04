@@ -389,7 +389,7 @@ export default function EditProfileForm({
         {activeSection === 'security' && <SecuritySection />}
 
         <AlertMessage message={error} variant="error" />
-        <AlertMessage message={success ? '¡Perfil guardado correctamente!' : null} variant="success" />
+        <AlertMessage message={success ? '¡Datos guardados correctamente!' : null} variant="success" />
 
         <div className="flex gap-3 pt-2">
           <Button

@@ -25,6 +25,7 @@ export function useEditProfileController(navigate) {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
+
   const [fieldErrors, setFieldErrors] = useState({});
   const [activeSection, setActiveSection] = useState('personal');
   const [form, setForm] = useState(INITIAL_FORM);
@@ -107,7 +108,7 @@ export function useEditProfileController(navigate) {
       await refreshProfile();
       setSavedForm({ ...form });
       setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+      setTimeout(() => setSuccess(false), 4000);
     } catch (err) {
       console.error('Error saving profile:', err);
       setError('No se pudo guardar el perfil. Inténtalo de nuevo.');
