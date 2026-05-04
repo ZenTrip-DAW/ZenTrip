@@ -24,7 +24,7 @@ export default function Home() {
   const [showInviteError, setShowInviteError] = useState(searchParams.get('inviteError') === 'emailMismatch');
   const [imagenCargada, setImagenCargada] = useState(false);
   const heroImg = useMemo(() => heroImages[Math.floor(Math.random() * heroImages.length)], []);
-  const { activeTripDayMap, pastTripDaySet, activitiesByDate } = useHomeCalendarData();
+  const { activeTripDayMap, tripNameMap, pastTripDaySet, activitiesByDate } = useHomeCalendarData();
 
   useEffect(() => {
     if (!showInviteError) return;
@@ -112,6 +112,7 @@ export default function Home() {
         <div className="mt-6 w-full max-w-xs [@media(min-width:768px)_and_(max-height:800px)]:hidden">
           <HomeCalendar
             activeTripDayMap={activeTripDayMap}
+            tripNameMap={tripNameMap}
             pastTripDaySet={pastTripDaySet}
             activitiesByDate={activitiesByDate}
           />
@@ -122,6 +123,7 @@ export default function Home() {
       <div className="hidden [@media(min-width:768px)_and_(max-height:800px)]:block absolute right-14 top-36 lg:right-16 lg:top-40 w-72 lg:w-80">
         <HomeCalendar
           activeTripDayMap={activeTripDayMap}
+          tripNameMap={tripNameMap}
           pastTripDaySet={pastTripDaySet}
           activitiesByDate={activitiesByDate}
         />

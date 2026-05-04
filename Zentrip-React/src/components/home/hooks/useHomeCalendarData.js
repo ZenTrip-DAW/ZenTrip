@@ -44,6 +44,15 @@ export function useHomeCalendarData() {
     return map;
   }, [activeTrips]);
 
+  // Map tripId -> tripName for tooltips
+  const tripNameMap = useMemo(() => {
+    const map = {};
+    for (const trip of activeTrips) {
+      map[trip.id] = trip.name;
+    }
+    return map;
+  }, [activeTrips]);
+
   // Set of days belonging to past trips (just for subtle marking, no navigation)
   const pastTripDaySet = useMemo(() => {
     const set = new Set();
@@ -80,6 +89,7 @@ export function useHomeCalendarData() {
 
   return {
     activeTripDayMap,
+    tripNameMap,
     pastTripDaySet,
     activitiesByDate,
     loading: tripsLoading || activitiesLoading,

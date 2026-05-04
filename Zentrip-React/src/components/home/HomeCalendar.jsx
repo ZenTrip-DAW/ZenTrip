@@ -31,7 +31,7 @@ function generateMonthGrid(year, month) {
   return days;
 }
 
-export default function HomeCalendar({ activeTripDayMap, pastTripDaySet, activitiesByDate }) {
+export default function HomeCalendar({ activeTripDayMap, tripNameMap, pastTripDaySet, activitiesByDate }) {
   const navigate = useNavigate();
   const todayStr = toISO(new Date());
   const todayDate = new Date();
@@ -89,13 +89,14 @@ export default function HomeCalendar({ activeTripDayMap, pastTripDaySet, activit
           const isActiveTripDay = !!tripId && inMonth;
           const isPastTripDay = !isActiveTripDay && pastTripDaySet.has(dateStr) && inMonth;
           const actCount = isActiveTripDay ? (activitiesByDate[dateStr]?.length ?? 0) : 0;
+          const tripName = isActiveTripDay ? (tripNameMap?.[tripId] ?? null) : null;
           const dayNum = parseDate(dateStr).getDate();
 
           if (!inMonth) {
             return <div key={dateStr} className="h-9" />;
           }
 
-          let cellClass = 'relative flex flex-col items-center justify-center rounded-lg h-9 transition-all ';
+          let cellClass = 'group relative flex flex-col items-center justify-center rounded-lg h-9 transition-all ';
 
           if (isActiveTripDay) {
             cellClass += isToday
@@ -125,6 +126,13 @@ export default function HomeCalendar({ activeTripDayMap, pastTripDaySet, activit
                 <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-primary-3" />
               )}
               <span className={dayNumClass}>{dayNum}</span>
+              {tripName && (
+                <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-20">
+                  <span className="whitespace-nowrap rounded-md bg-neutral-7 px-2 py-1 text-[10px] font-semibold text-white shadow-lg">
+                    {tripName}
+                  </span>
+                </span>
+              )}
               {actCount > 0 && (
                 <span className="absolute -top-1 -right-1 text-[9px] font-bold bg-primary-3 text-white rounded-full min-w-3.75 h-3.75 flex items-center justify-center leading-none px-0.5">
                   {actCount}
