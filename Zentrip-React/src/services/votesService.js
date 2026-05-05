@@ -43,9 +43,10 @@ export async function closeVote(tripId, voteId) {
   });
 }
 
-export async function markVoteAddedToItinerary(tripId, voteId) {
+export async function markVoteAddedToItinerary(tripId, voteId, itineraryDate = null) {
   await updateDoc(doc(db, 'trips', tripId, 'votes', voteId), {
     addedToItinerary: true,
+    itineraryDate,
   });
 }
 

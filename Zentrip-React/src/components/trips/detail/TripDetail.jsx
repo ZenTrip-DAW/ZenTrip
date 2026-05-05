@@ -338,6 +338,7 @@ export default function TripDetail() {
         <VotationsTab
           tripId={tripId}
           trip={trip}
+          tripDays={tripDays}
           members={members}
           currentUser={user}
           currentProfile={profile}
