@@ -98,10 +98,11 @@ function VotesSummaryPanel({ votes, myVotes, memberCount }) {
 export default function VotationsTab({
   tripId,
   trip,
+  tripDays = [],
   members = [],
   currentUser,
   currentProfile,
-  onActivitySaved,   // (activityData) => Promise — callback de TripDetail para guardar actividad
+  onActivitySaved,
 }) {
   const { votes, loading, myVotes } = useVotes(
     tripId,
@@ -110,8 +111,9 @@ export default function VotationsTab({
     trip?.name,
   );
 
-  const [modal, setModal] = useState(null);          // null | { mode: 'create' } | { mode: 'edit', vote }
-  const [activityModal, setActivityModal] = useState(null); // null | { voteId, winnerLabel }
+  const [modal, setModal] = useState(null);
+  const [daySelector, setDaySelector] = useState(null);   // null | { voteId, winnerLabel }
+  const [activityModal, setActivityModal] = useState(null); // null | { voteId, winnerLabel, date }
 
   const tripOrganizerUid = trip?.uid;
   const memberCount      = members.length;
@@ -137,7 +139,12 @@ export default function VotationsTab({
 
   // ── Añadir ganador al itinerario ───────────────────────────────────────────
   const handleAddToItinerary = (vote, winner) => {
-    setActivityModal({ voteId: vote.id, winnerLabel: winner.label });
+    setDaySelector({ voteId: vote.id, winnerLabel: winner.label });
+  };
+
+  const handleDaySelected = (date) => {
+    setActivityModal({ ...daySelector, date });
+    setDaySelector(null);
   };
 
   const handleActivitySaved = async (activityData) => {
@@ -225,7 +232,7 @@ export default function VotationsTab({
                   mySelectedOptions={myVotes[vote.id] ?? []}
                   memberCount={memberCount}
                   tripId={tripId}
-                  tripDays={trip?.tripDays ?? []}
+                  tripDays={tripDays}
                   onEdit={(v) => setModal({ mode: 'edit', vote: v })}
                   onAddToItinerary={handleAddToItinerary}
                 />
@@ -260,9 +267,43 @@ export default function VotationsTab({
       )}
 
       {/* Modal añadir al itinerario */}
+      {/* Selector de día */}
+      {daySelector && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-neutral-7/60 backdrop-blur-sm" onClick={() => setDaySelector(null)} />
+          <div className="relative z-10 w-full max-w-sm mx-4 bg-white rounded-2xl shadow-2xl p-6">
+            <h3 className="title-h3-desktop text-secondary-5 mb-1">¿En qué día?</h3>
+            <p className="body-3 text-neutral-4 mb-4">Selecciona el día del viaje donde añadir esta actividad</p>
+            <div className="flex flex-col gap-2 max-h-72 overflow-y-auto">
+              {tripDays.map((day) => {
+                const [y, m, d] = day.split('-').map(Number);
+                const label = new Date(y, m - 1, d).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => handleDaySelected(day)}
+                    className="w-full text-left px-4 py-3 rounded-xl bg-slate-50 hover:bg-secondary-1 hover:text-secondary-6 body-3 font-medium text-neutral-6 transition-colors cursor-pointer capitalize"
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              type="button"
+              onClick={() => setDaySelector(null)}
+              className="mt-4 w-full h-10 rounded-lg border border-neutral-2 body-3 font-bold text-neutral-5 hover:bg-neutral-1 transition cursor-pointer"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
       {activityModal && (
         <AddActivityModal
-          date={null}
+          date={activityModal.date}
           creator={{ uid: currentUser?.uid, name: userName }}
           existingActivities={[]}
           members={members}
