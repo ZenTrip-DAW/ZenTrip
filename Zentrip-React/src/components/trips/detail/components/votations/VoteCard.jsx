@@ -255,7 +255,13 @@ export default function VoteCard({
       {isClosed && vote.addedToItinerary && (
         <div className="flex items-center gap-2 bg-auxiliary-green-1 border border-auxiliary-green-3 rounded-xl px-4 py-2.5">
           <CheckCircle2 className="w-4 h-4 text-auxiliary-green-5 shrink-0" />
-          <span className="body-3 font-semibold text-auxiliary-green-5">Añadido al itinerario</span>
+          <span className="body-3 font-semibold text-auxiliary-green-5">
+            Añadido al itinerario
+            {vote.itineraryDate && (() => {
+              const [y,m,d] = vote.itineraryDate.split('-').map(Number);
+              return ' · ' + new Date(y,m-1,d).toLocaleDateString('es-ES',{day:'numeric',month:'long'});
+            })()}
+          </span>
         </div>
       )}
 

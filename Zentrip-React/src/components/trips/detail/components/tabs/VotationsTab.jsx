@@ -64,7 +64,10 @@ function VotesSummaryPanel({ votes, myVotes, memberCount }) {
                   <span className="body-3 text-neutral-4 line-clamp-1">→ {winner}</span>
                   {vote.addedToItinerary ? (
                     <span className="flex items-center gap-1 body-3 font-medium text-auxiliary-green-5">
-                      <CalendarCheck className="w-3.5 h-3.5" />En itinerario
+                      <CalendarCheck className="w-3.5 h-3.5" />
+                      {vote.itineraryDate
+                        ? (() => { const [y,m,d] = vote.itineraryDate.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('es-ES',{day:'numeric',month:'short'}); })()
+                        : 'En itinerario'}
                     </span>
                   ) : (
                     <span className="body-3 text-neutral-3">Sin añadir</span>
@@ -151,7 +154,7 @@ export default function VotationsTab({
     try {
       await onActivitySaved(activityData);
       if (activityModal?.voteId) {
-        await markVoteAddedToItinerary(tripId, activityModal.voteId);
+        await markVoteAddedToItinerary(tripId, activityModal.voteId, activityModal.date ?? null);
       }
     } catch (err) {
       console.error('[VotationsTab] handleActivitySaved', err);
